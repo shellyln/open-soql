@@ -3,16 +3,17 @@
 // https://github.com/shellyln
 
 
-import { parserInput }         from 'fruitsconfits/modules/lib/types';
-import { formatErrorMessage }  from 'fruitsconfits/modules/lib/parser';
-import { getStringParsers }    from 'fruitsconfits/modules/lib/string-parser';
-import { getObjectParsers }    from 'fruitsconfits/modules/lib/object-parser';
+import { parserInput,
+         templateStringsParserInput } from 'fruitsconfits/modules/lib/types';
+import { formatErrorMessage }         from 'fruitsconfits/modules/lib/parser';
+import { getStringParsers }           from 'fruitsconfits/modules/lib/string-parser';
+import { getObjectParsers }           from 'fruitsconfits/modules/lib/object-parser';
 import { PreparedValue,
          PreparedFieldListItem,
          PreparedResolver,
          PreparedCondition,
          PreparedOrderByField,
-         PreparedQuery }       from '../types';
+         PreparedQuery }              from '../types';
 
 
 
@@ -820,8 +821,11 @@ const program =
 
 export function parse(strings: TemplateStringsArray | string, ...values: any[]): PreparedQuery {
     // TODO: deny dangerous names
-    const s = (typeof strings === 'string' ? [strings] : strings).join('\u0000');       // TODO:
-    const z = program(parserInput(s, {/* TODO: set initial state to the context */}));  // TODO:
+    const z = program(
+        typeof strings === 'string'
+            ? parserInput(strings, {})
+            : templateStringsParserInput(strings, values, {})
+        );
 
     if (! z.succeeded) {
         throw new Error(formatErrorMessage(z));
