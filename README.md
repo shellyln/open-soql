@@ -1,5 +1,7 @@
 # Open SOQL
 
+<img src="https://shellyln.github.io/assets/image/open-soql-logo.svg" title="Open SOQL logo" style="width: 100px">
+
 Open source implementation of the [SOQL](https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql.htm).  
 You can query everything you want by defining the resolvers.
 
