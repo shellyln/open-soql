@@ -14,6 +14,8 @@ import { PreparedValue,
          PreparedCondition,
          PreparedOrderByField,
          PreparedQuery }              from '../types';
+import { DatePattern,
+         DateTimePattern }            from './util';
 
 
 
@@ -61,7 +63,7 @@ const $o = getObjectParsers<Ast[], Ctx, Ast>({
     comparator: (a, b) => a === b,
 });
 
-const {seq, cls, notCls, clsFn, classes, numbers, cat,
+const {seq, cls, notCls, clsFn, classes, numbers, isParam, cat,
        once, repeat, qty, zeroWidth, err, beginning, end,
        first, or, combine, erase, trans, ahead, rules,
        makeProgram} = $s;
@@ -329,6 +331,38 @@ const dateTimeValue =
 
 const literalValue =
     first(
+        isParam(o => {
+            switch (typeof o) {
+            case 'number': case 'string': case 'boolean':
+                return true;
+            case 'object':
+                if (o === null) {
+                    return true;
+                }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                if ((o as any).type) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    switch ((o as any).type) {
+                    case 'date':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        if (typeof (o as any).value === 'string') {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            return DatePattern.test((o as any).value);
+                        }
+                        break;
+                    case 'datetime':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        if (typeof (o as any).value === 'string') {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            return DateTimePattern.test((o as any).value);
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+            return false;
+        }),
         dateTimeValue,
         dateValue,
         numberValue,
