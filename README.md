@@ -36,10 +36,14 @@ const { soql } = build({
                     ...o,
                     id: 'Account/1',
                     numOfEmployees: 5,
+                    created: '2020-01-02',
+                    updated: '2020-01-02',
                 }, {
                     ...o,
                     id: 'Account/2',
                     numOfEmployees: 5,
+                    created: '2020-01-02',
+                    updated: '2020-01-02',
                 }]);
             },
             Contact: (fields, conditions, limit, offset, ctx) => {
@@ -138,7 +142,8 @@ const result = await soql`
       , (
           Select id, Name
           from acc.Opportunities
-          where Amount > 10000
+          where Amount > ${10000}
+                         -- It can be number, string, boolean or null.
           order by DueDate desc limit 5
         )
       , string(id)
@@ -149,7 +154,8 @@ const result = await soql`
     where
       (
             number(acc.numOfEmployees) = 5
-        and acc.created > 2020-01-01
+        and acc.created > ${{type: 'date', value: '2020-01-01'}}
+                             -- It can be 'date' or 'datetime'.
         and acc.updated > 2020-01-01
       ) or (
             acc.foo = 1
@@ -162,6 +168,8 @@ const result = await soql`
       )
     order by aid, reg, cat
     limit 10 offset 2
+    -- line comment
+    /* block comment */
 `;
 ```
 
@@ -277,7 +285,7 @@ const aggregationResult = await soql`
 
 ### Other features
 * [ ] DML
-* [ ] Template string
+* [x] Template string
 
 
 ---

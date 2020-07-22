@@ -92,10 +92,14 @@ describe("foo", function() {
                             ...o,
                             id: 'Account/1',
                             numOfEmployees: 5,
+                            created: '2020-01-02',
+                            updated: '2020-01-02',
                         }, {
                             ...o,
                             id: 'Account/2',
                             numOfEmployees: 5,
+                            created: '2020-01-02',
+                            updated: '2020-01-02',
                         }]);
                     },
                     Contact: (fields, conditions, limit, offset, ctx) => {
@@ -180,7 +184,8 @@ describe("foo", function() {
               , (
                   Select id, Name
                   from aCc.OpportunitiEs
-                  -- where Amount > 10000
+                  -- where Amount > ${10001}
+                  where Amount > ${10000}
                   order by DueDate desc limit 5
                 )
               , string(id)
@@ -191,7 +196,7 @@ describe("foo", function() {
             where
               (
                     number(acc.numOfEmployees) = 5
-                and acc.created > 2020-01-01
+                and acc.created > ${{type: 'date', value: '2020-01-01'}}
                 and acc.updated > 2020-01-01
               ) or (
                     acc.foo = 1
@@ -206,6 +211,7 @@ describe("foo", function() {
             limit 10 offset 2
             for update viewstat, tracking
             -- for view, reference
+            /* comment */
         `;
         console.log(JSON.stringify(z, null, 2));
         // expect(z).toEqual([] as any);
@@ -214,7 +220,7 @@ describe("foo", function() {
                 count(),
                 count(id) cnt,
                 sum(bar) sum,
-                cast_string(12345) str,
+                cast_string(${12345}) str,
                 cast_number('2234') num
             from
                 Contact

@@ -432,7 +432,7 @@ export async function executeQuery(
                         (builder.relationships[parentResolverName!] ?? {})
                         [resolverName] as any
                     )
-                ) ?? {}); // TODO: If property `id` is not set, use default name.
+                ) ?? {});
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const masterIdField = masterRelationshipInfo.id
@@ -457,12 +457,32 @@ export async function executeQuery(
             const groupFields: string[] =
                 (i === 0 && query.groupBy) ? query.groupBy : [];
 
+            const relationshipIdFields: string[] = [];
+            for (let j = i + 1; j < query.from.length; j++) {
+                const c = query.from[j];
+                if (x.name.length + 1 === c.name.length && isEqualComplexName(x.name, c.name.slice(0, x.name.length))) {
+                    const childResolverName = c.resolverName ?? '';
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+                    const childRelationshipInfo = ((builder.relationships[resolverName] ?? {})[childResolverName] as any) ?? {};
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    const childIdField = childRelationshipInfo.id
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        ? childRelationshipInfo.id as string
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        : builder.rules.masterIdFieldName!(resolverName);
+                    if (childIdField) {
+                        relationshipIdFields.push(childIdField);
+                    }
+                }
+            }
+
             const resolvingFields =
                 Array.from(
                     new Set<string>(queryFields
                         .concat(condFields)
                         .concat(builder.rules.idFieldName ? [builder.rules.idFieldName(resolverName)] : [])
                         .concat(groupFields)
+                        .concat(relationshipIdFields)
                     ).values());
 
             let condWhere = deepCloneObject(condWhereTemplate);

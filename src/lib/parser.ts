@@ -3,16 +3,19 @@
 // https://github.com/shellyln
 
 
-import { parserInput }         from 'fruitsconfits/modules/lib/types';
-import { formatErrorMessage }  from 'fruitsconfits/modules/lib/parser';
-import { getStringParsers }    from 'fruitsconfits/modules/lib/string-parser';
-import { getObjectParsers }    from 'fruitsconfits/modules/lib/object-parser';
+import { parserInput,
+         templateStringsParserInput } from 'fruitsconfits/modules/lib/types';
+import { formatErrorMessage }         from 'fruitsconfits/modules/lib/parser';
+import { getStringParsers }           from 'fruitsconfits/modules/lib/string-parser';
+import { getObjectParsers }           from 'fruitsconfits/modules/lib/object-parser';
 import { PreparedValue,
          PreparedFieldListItem,
          PreparedResolver,
          PreparedCondition,
          PreparedOrderByField,
-         PreparedQuery }       from '../types';
+         PreparedQuery }              from '../types';
+import { DatePattern,
+         DateTimePattern }            from './util';
 
 
 
@@ -60,7 +63,7 @@ const $o = getObjectParsers<Ast[], Ctx, Ast>({
     comparator: (a, b) => a === b,
 });
 
-const {seq, cls, notCls, clsFn, classes, numbers, cat,
+const {seq, cls, notCls, clsFn, classes, numbers, isParam, cat,
        once, repeat, qty, zeroWidth, err, beginning, end,
        first, or, combine, erase, trans, ahead, rules,
        makeProgram} = $s;
@@ -328,6 +331,38 @@ const dateTimeValue =
 
 const literalValue =
     first(
+        isParam(o => {
+            switch (typeof o) {
+            case 'number': case 'string': case 'boolean':
+                return true;
+            case 'object':
+                if (o === null) {
+                    return true;
+                }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                if ((o as any).type) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    switch ((o as any).type) {
+                    case 'date':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        if (typeof (o as any).value === 'string') {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            return DatePattern.test((o as any).value);
+                        }
+                        break;
+                    case 'datetime':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        if (typeof (o as any).value === 'string') {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            return DateTimePattern.test((o as any).value);
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+            return false;
+        }),
         dateTimeValue,
         dateValue,
         numberValue,
@@ -820,8 +855,11 @@ const program =
 
 export function parse(strings: TemplateStringsArray | string, ...values: any[]): PreparedQuery {
     // TODO: deny dangerous names
-    const s = (typeof strings === 'string' ? [strings] : strings).join('\u0000');       // TODO:
-    const z = program(parserInput(s, {/* TODO: set initial state to the context */}));  // TODO:
+    const z = program(
+        typeof strings === 'string'
+            ? parserInput(strings, {})
+            : templateStringsParserInput(strings, values, {})
+        );
 
     if (! z.succeeded) {
         throw new Error(formatErrorMessage(z));
