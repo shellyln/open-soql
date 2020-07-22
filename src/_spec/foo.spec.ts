@@ -211,6 +211,7 @@ describe("foo", function() {
             limit 10 offset 2
             for update viewstat, tracking
             -- for view, reference
+            /* comment */
         `;
         console.log(JSON.stringify(z, null, 2));
         // expect(z).toEqual([] as any);

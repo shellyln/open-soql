@@ -432,7 +432,7 @@ export async function executeQuery(
                         (builder.relationships[parentResolverName!] ?? {})
                         [resolverName] as any
                     )
-                ) ?? {}); // TODO: If property `id` is not set, use default name.
+                ) ?? {});
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const masterIdField = masterRelationshipInfo.id
@@ -457,6 +457,7 @@ export async function executeQuery(
             const groupFields: string[] =
                 (i === 0 && query.groupBy) ? query.groupBy : [];
 
+            // TODO: BUG: Add master id fields
             const resolvingFields =
                 Array.from(
                     new Set<string>(queryFields
