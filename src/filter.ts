@@ -157,23 +157,23 @@ function convertPattern(v: string) {
             if (prev === '\\') {
                 pattern += '_';
             } else {
-                pattern += '.*';
+                pattern += '.';
             }
             break;
         case '\\':
             break;
         default:
             if (prev === '\\') {
-                pattern += '\\\\';
+                pattern += '\\';
             }
             pattern += c;
         }
         prev = c;
     }
     if (prev === '\\') {
-        pattern += '\\\\';
+        pattern += '\\';
     }
-    return pattern;
+    return `^${pattern}$`;
 }
 
 
@@ -243,7 +243,7 @@ function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: Prepa
                     throw new Error(`Operator "like": operand(2) should be string.`);
                 }
                 {
-                    const re = new RegExp(convertPattern(v2));
+                    const re = new RegExp(convertPattern(v2), 'i');
                     if (! re.test(v1)) {
                         ret = false;
                     }
@@ -254,7 +254,7 @@ function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: Prepa
                     throw new Error(`Operator "not_like": operand(2) should be string.`);
                 }
                 {
-                    const re = new RegExp(convertPattern(v2));
+                    const re = new RegExp(convertPattern(v2), 'i');
                     if (re.test(v1)) {
                         ret = false;
                     }

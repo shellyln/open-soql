@@ -94,6 +94,7 @@ describe("foo", function() {
                             numOfEmployees: 5,
                             created: '2020-01-02',
                             updated: '2020-01-02',
+                            foo: `field:foo/1:\\%_`,
                         }, {
                             ...o,
                             id: 'Account/2',
@@ -198,6 +199,7 @@ describe("foo", function() {
                     number(acc.numOfEmployees) = 5
                 and acc.created > ${{type: 'date', value: '2020-01-01'}}
                 and acc.updated > 2020-01-01
+                and acc.foo like 'FI%:f__/%\\\\%\\_'
               ) or (
                     acc.foo = 1
                 and acc.bar = 2
