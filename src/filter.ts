@@ -138,6 +138,45 @@ function evalRecursiveCondition(isAggregation: boolean, ctx: ResolverContext, w:
 }
 
 
+function convertPattern(v: string) {
+    // NOTE: wildcards are '%' (= /.*/) and '_' (= /./)
+    //       wildcard escape sequences are '\%' and '\_'
+    const pat0 = v.replace(/[.*+?^=!:${}()|[\]\/]/g, '\\$&');
+    let pattern = '';
+    let prev: string | undefined = void 0;
+    for (const c of pat0) {
+        switch (c) {
+        case '%':
+            if (prev === '\\') {
+                pattern += '%';
+            } else {
+                pattern += '.*';
+            }
+            break;
+        case '_':
+            if (prev === '\\') {
+                pattern += '_';
+            } else {
+                pattern += '.';
+            }
+            break;
+        case '\\':
+            break;
+        default:
+            if (prev === '\\') {
+                pattern += '\\';
+            }
+            pattern += c;
+        }
+        prev = c;
+    }
+    if (prev === '\\') {
+        pattern += '\\';
+    }
+    return `^${pattern}$`;
+}
+
+
 function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: PreparedCondition, record: any): boolean {
     let ret = true;
 
@@ -200,13 +239,25 @@ function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: Prepa
                 }
                 break;
             case 'like':
-                if (! (v1 === v2)) { // TODO:
-                    ret = false;
+                if (typeof v2 !== 'string') {
+                    throw new Error(`Operator "like": operand(2) should be string.`);
+                }
+                {
+                    const re = new RegExp(convertPattern(v2), 'i');
+                    if (! re.test(v1)) {
+                        ret = false;
+                    }
                 }
                 break;
             case 'not_like':
-                if (! (v1 !== v2)) { // TODO:
-                    ret = false;
+                if (typeof v2 !== 'string') {
+                    throw new Error(`Operator "not_like": operand(2) should be string.`);
+                }
+                {
+                    const re = new RegExp(convertPattern(v2), 'i');
+                    if (re.test(v1)) {
+                        ret = false;
+                    }
                 }
                 break;
             case 'in':

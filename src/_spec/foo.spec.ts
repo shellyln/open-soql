@@ -86,7 +86,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
@@ -94,12 +94,14 @@ describe("foo", function() {
                             numOfEmployees: 5,
                             created: '2020-01-02',
                             updated: '2020-01-02',
+                            foo: `field:foo/${offset ?? 1}:\\%_`,
                         }, {
                             ...o,
                             id: 'Account/2',
                             numOfEmployees: 5,
                             created: '2020-01-02',
                             updated: '2020-01-02',
+                            foo: `field:foo/${offset !== null ? offset + 1 : 1}:\\%_`,
                         }]);
                     },
                     Contact: (fields, conditions, limit, offset, ctx) => {
@@ -109,7 +111,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
@@ -126,7 +128,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
@@ -147,7 +149,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
@@ -198,6 +200,7 @@ describe("foo", function() {
                     number(acc.numOfEmployees) = 5
                 and acc.created > ${{type: 'date', value: '2020-01-01'}}
                 and acc.updated > 2020-01-01
+                and acc.foo like 'FI%:f__/%\\\\%\\_'
               ) or (
                     acc.foo = 1
                 and acc.bar = 2
