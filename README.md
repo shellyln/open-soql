@@ -26,6 +26,45 @@ import { build } from 'open-soql/modules/exec';
 
 const { soql } = build({
     // See `src/types.ts` > `QueryBuilderInfo`
+    functions: [{ // optional: for defining custom functions
+        type: 'scalar',
+        name: 'string',
+        fn: (ctx, args, records) => {
+            return String(args[0]);
+        },
+    }, {
+        type: 'scalar',
+        name: 'number',
+        fn: (ctx, args, records) => {
+            return Number(args[0]);
+        },
+    }, {
+        type: 'immediate-scalar',
+        name: 'cast_string',
+        fn: (ctx, args) => {
+            return String(args[0]);
+        },
+    }, {
+        type: 'immediate-scalar',
+        name: 'cast_number',
+        fn: (ctx, args) => {
+            return Number(args[0]);
+        },
+    }, {
+        type: 'aggregate',
+        name: 'count_twice',
+        fn: (ctx, args, records) => {
+            return records.length * 2;
+        },
+    }],
+    events: { // optional: for resolving transaction and N+1 query problem
+        beginExecute: (evt) => Promise.resolve(),
+        endExecute: (evt) => Promise.resolve(),
+        beforeMasterSubQueries: (evt) => Promise.resolve(),
+        afterMasterSubQueries: (evt) => Promise.resolve(),
+        beforeDetailSubQueries: (evt) => Promise.resolve(),
+        afterDetailSubQueries: (evt) => Promise.resolve(),
+    },
     resolvers: {
         query: {
             Account: (fields, conditions, limit, offset, ctx) => {
@@ -234,8 +273,8 @@ const aggregationResult = await soql`
     * [x] `<=`
     * [x] `>`
     * [x] `>=`
-    * [ ] `like`
-    * [ ] `not_like`
+    * [x] `like`
+    * [x] `not_like`
     * [x] `in`
     * [x] `not_in`
     * [ ] `includes`
@@ -262,8 +301,8 @@ const aggregationResult = await soql`
     * [x] `<=`
     * [x] `>`
     * [x] `>=`
-    * [ ] `like`
-    * [ ] `not_like`
+    * [x] `like`
+    * [x] `not_like`
     * [x] `in`
     * [x] `not_in`
     * [ ] `includes`
@@ -283,7 +322,7 @@ const aggregationResult = await soql`
 * [x] `Limit` clause
 * [x] `Offset` clause
 * [ ] `With` clause
-* [ ] `For` clause
+* [x] `For` clause
 
 ### Other features
 * [ ] DML

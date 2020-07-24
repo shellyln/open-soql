@@ -86,7 +86,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
@@ -94,13 +94,14 @@ describe("foo", function() {
                             numOfEmployees: 5,
                             created: '2020-01-02',
                             updated: '2020-01-02',
-                            foo: `field:foo/1:\\%_`,
+                            foo: `field:foo/${offset ?? 1}:\\%_`,
                         }, {
                             ...o,
                             id: 'Account/2',
                             numOfEmployees: 5,
                             created: '2020-01-02',
                             updated: '2020-01-02',
+                            foo: `field:foo/${offset !== null ? offset + 1 : 1}:\\%_`,
                         }]);
                     },
                     Contact: (fields, conditions, limit, offset, ctx) => {
@@ -110,7 +111,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
@@ -127,7 +128,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
@@ -148,7 +149,7 @@ describe("foo", function() {
                         // console.log('----------------------------------------');
                         const o = {};
                         for (const field of fields) {
-                            o[field] = `field:${field}/1`;
+                            o[field] = `field:${field}/${offset ?? 1}`;
                         }
                         return Promise.resolve([{
                             ...o,
