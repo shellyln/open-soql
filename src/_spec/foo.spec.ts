@@ -96,6 +96,8 @@ describe("foo", function() {
                             updated: '2020-01-02',
                             foo: `field:foo/${offset ?? 1}:\\%_`,
                             bar: 'aaa;bbb;ccc',
+                            quux: 'Event/2',
+                            corge: 'Event/22',
                         }, {
                             ...o,
                             id: 'Account/2',
@@ -104,6 +106,8 @@ describe("foo", function() {
                             updated: '2020-01-02',
                             foo: `field:foo/${offset !== null ? offset + 1 : 1}:\\%_`,
                             bar: 'aaa;bbb;ccc',
+                            quux: 'Event/2',
+                            corge: 'Event/22',
                         }]);
                     },
                     Contact: (fields, conditions, limit, offset, ctx) => {
@@ -156,6 +160,9 @@ describe("foo", function() {
                         return Promise.resolve([{
                             ...o,
                             id: 'Event/1',
+                        }, {
+                            ...o,
+                            id: 'Event/2',
                         }]);
                     },
                 },
@@ -206,6 +213,8 @@ describe("foo", function() {
                 and acc.foo not like 'EI%:f__/%\\\\%\\_'
                 and acc.bar includes ('aaa;ccc', 'ccc')
                 and acc.bar excludes ('aaa;cc', 'cca')
+                and acc.quux in (Select id from Event)
+                and acc.corge not in (Select id from Event)
               ) or (
                     acc.foo = 1
                 and acc.bar = 2
