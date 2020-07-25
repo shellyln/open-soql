@@ -530,9 +530,9 @@ const conditionalOperator =
                   erase(wordBoundary, repeat(commentOrSpace)), ),
           combine(seqI('in'),
                   erase(wordBoundary, repeat(commentOrSpace)), ),
-          combine(seqI('include'),
+          combine(seqI('includes'),
                   erase(wordBoundary, repeat(commentOrSpace)), ),
-          combine(seqI('exclude'),
+          combine(seqI('excludes'),
                   erase(wordBoundary, repeat(commentOrSpace)), ));
 
 

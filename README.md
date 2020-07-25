@@ -277,8 +277,8 @@ const aggregationResult = await soql`
     * [x] `not_like`
     * [x] `in`
     * [x] `not_in`
-    * [ ] `includes`
-    * [ ] `excludes`
+    * [x] `includes`
+    * [x] `excludes`
 * `Having` clause
   * [x] field
   * data types
@@ -305,8 +305,8 @@ const aggregationResult = await soql`
     * [x] `not_like`
     * [x] `in`
     * [x] `not_in`
-    * [ ] `includes`
-    * [ ] `excludes`
+    * [x] `includes`
+    * [x] `excludes`
 * `Group by` clause
     * [x] fields
     * [x] field alias name
