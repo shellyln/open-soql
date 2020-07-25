@@ -15,7 +15,9 @@ import { PreparedValue,
          PreparedOrderByField,
          PreparedQuery }              from '../types';
 import { DatePattern,
-         DateTimePattern }            from './util';
+         DateTimePattern,
+         dummyTargetObject,
+         isUnsafeVarNames }           from './util';
 
 
 
@@ -373,7 +375,13 @@ const literalValue =
 
 
 const symbolStringValue =
-    trans(tokens => [tokens[0] ?? ''])(
+    trans(tokens => {
+        const sym = tokens[0] ?? '';
+        if (isUnsafeVarNames(dummyTargetObject, sym as string)) {
+            throw new Error(`Unsafe symbol name is appeared: ${sym as string}`);
+        }
+        return [sym];
+    })(
         erase(seq('"')),
             cat(repeat(first(
                 stringEscapeSeq,
@@ -384,7 +392,12 @@ const symbolStringValue =
 
 
 const symbolName =
-    trans(tokens => tokens)(cat(combine(
+    trans(tokens => {
+        if (isUnsafeVarNames(dummyTargetObject, tokens[0] as string)) {
+            throw new Error(`Unsafe symbol name is appeared: ${tokens[0] as string}`);
+        }
+        return tokens;
+    })(cat(combine(
         first(classes.alpha, cls('$', '_')),
         repeat(first(classes.alnum, cls('$', '_'))), )));
 

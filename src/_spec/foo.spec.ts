@@ -203,6 +203,9 @@ describe("foo", function() {
               , string(foo)
               , string(reg)
               , string(acC.qux)
+              -- , __proto__
+              -- , "__proto__"
+              -- , wwwww __proto__
             from ContAct con, cOn.AccOunt Acc
             where
               (
@@ -215,6 +218,9 @@ describe("foo", function() {
                 and acc.bar excludes ('aaa;cc', 'cca')
                 and acc.quux in (Select id from Event)
                 and acc.corge not in (Select id from Event)
+                -- and __proto__ = 1
+                -- and __proto__.foo = 1
+                -- and acc.__proto__ = 1
               ) or (
                     acc.foo = 1
                 and acc.bar = 2
