@@ -7,7 +7,6 @@ import { PreparedQuery,
          QueryFuncInfo,
          QueryBuilderInfo,
          QueryBuilderInfoInternal } from '../types';
-import { getObjectValue }           from './util';
 import { parse }                    from './parser';
 import { compile }                  from './compiler';
 
@@ -59,7 +58,20 @@ const builtinFunctions: QueryFuncInfo[] = [{
     type: 'aggregate',
     name: 'sum',
     fn: (ctx, args, records) => {
-        return 0;
+        if (args.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const arg = args[0];
+            if (Array.isArray(arg)) {
+                const w = arg
+                    .filter(r => (typeof r === 'number' && !Number.isNaN(r)) ? true : false);
+                if (w.length) {
+                    return w.reduce((a, b) => (a as number) + (b as number));
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "sum" should be field.`);
     },
 }, {
     type: 'aggregate',
