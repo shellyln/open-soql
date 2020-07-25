@@ -95,6 +95,7 @@ describe("foo", function() {
                             created: '2020-01-02',
                             updated: '2020-01-02',
                             foo: `field:foo/${offset ?? 1}:\\%_`,
+                            bar: 'aaa;bbb;ccc',
                         }, {
                             ...o,
                             id: 'Account/2',
@@ -102,6 +103,7 @@ describe("foo", function() {
                             created: '2020-01-02',
                             updated: '2020-01-02',
                             foo: `field:foo/${offset !== null ? offset + 1 : 1}:\\%_`,
+                            bar: 'aaa;bbb;ccc',
                         }]);
                     },
                     Contact: (fields, conditions, limit, offset, ctx) => {
@@ -201,6 +203,9 @@ describe("foo", function() {
                 and acc.created > ${{type: 'date', value: '2020-01-01'}}
                 and acc.updated > 2020-01-01
                 and acc.foo like 'FI%:f__/%\\\\%\\_'
+                and acc.foo not like 'EI%:f__/%\\\\%\\_'
+                and acc.bar includes ('aaa;ccc', 'ccc')
+                and acc.bar excludes ('aaa;cc', 'cca')
               ) or (
                     acc.foo = 1
                 and acc.bar = 2
