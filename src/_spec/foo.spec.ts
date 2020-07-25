@@ -245,9 +245,15 @@ describe("foo", function() {
                 count(),
                 count(id) cnt,
                 sum(bar) sum_bar,
+                avg(bar) avg_bar,
+                max(bar) max_bar,
+                min(bar) min_bar,
                 cast_string(${12345}) str,
                 cast_number('2234') num,
-                sum(baz) sum_baz
+                sum(baz) sum_baz,
+                avg(baz) avg_baz,
+                max(baz) max_baz,
+                min(baz) min_baz
             from
                 Contact
             where

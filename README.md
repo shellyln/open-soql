@@ -242,10 +242,10 @@ const aggregationResult = await soql`
   * [x] function call (scalar | immediate_scalar | aggregate)
     * [x] `count`
     * [x] `count_distinct`
-    * [ ] `sum`
-    * [ ] `avg`
-    * [ ] `min`
-    * [ ] `max`
+    * [x] `sum`
+    * [x] `avg`
+    * [x] `min`
+    * [x] `max`
     * [ ] `grouping`
     * [ ] `format`
   * [ ] `TYPEOF` expression

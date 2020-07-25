@@ -77,19 +77,58 @@ const builtinFunctions: QueryFuncInfo[] = [{
     type: 'aggregate',
     name: 'avg',
     fn: (ctx, args, records) => {
-        return 0;
+        if (args.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const arg = args[0];
+            if (Array.isArray(arg)) {
+                const w = arg
+                    .filter(r => (typeof r === 'number' && !Number.isNaN(r)) ? true : false);
+                if (w.length) {
+                    return (w.reduce((a, b) => (a as number) + (b as number)) as number) / w.length;
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "avg" should be field.`);
     },
 }, {
     type: 'aggregate',
     name: 'max',
     fn: (ctx, args, records) => {
-        return 0;
+        if (args.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const arg = args[0];
+            if (Array.isArray(arg)) {
+                const w = arg
+                    .filter(r => ((typeof r === 'number' && !Number.isNaN(r)) || typeof r === 'string') ? true : false);
+                if (w.length) {
+                    return w.reduce((a, b) => (a as number | string) > (b as number | string) ? a : b);
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "max" should be field.`);
     },
 }, {
     type: 'aggregate',
     name: 'min',
     fn: (ctx, args, records) => {
-        return 0;
+        if (args.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const arg = args[0];
+            if (Array.isArray(arg)) {
+                const w = arg
+                    .filter(r => ((typeof r === 'number' && !Number.isNaN(r)) || typeof r === 'string') ? true : false);
+                if (w.length) {
+                    return w.reduce((a, b) => (a as number | string) < (b as number | string) ? a : b);
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "min" should be field.`);
     },
 }];
 
