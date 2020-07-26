@@ -3,7 +3,8 @@
 // https://github.com/shellyln
 
 
-import { PreparedFnCall,
+import { FieldResultType,
+         PreparedFnCall,
          ResolverContext,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
@@ -13,18 +14,30 @@ import { getObjectValue }         from './util';
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function callScalarFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: ScalarQueryFuncInfo, record: any): any {
+export function callScalarFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: ScalarQueryFuncInfo, fieldResultType: FieldResultType, record: any): any {
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
             switch (a.type) {
             case 'field':
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return getObjectValue(record, a.name[a.name.length - 1]);
-            case 'date':
-                return a.value; // TODO:
-            case 'datetime':
-                return a.value; // TODO:
+                {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    let z = getObjectValue(record, a.name[a.name.length - 1]);
+                    switch (fieldResultType) {
+                    case 'date': case 'datetime':
+                        z = new Date(z).getTime();
+                        break;
+                    }
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    return z;
+                }
+            case 'date': case 'datetime':
+                switch (fieldResultType) {
+                case 'date': case 'datetime':
+                    return new Date(a.value).getTime();
+                default:
+                    return a.value;
+                }
             }
         default:
             return a;
@@ -32,22 +45,25 @@ export function callScalarFunction(ctx: ResolverContext, field: PreparedFnCall, 
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fnInfo.fn(ctx, args, record); // TODO:
+    return fnInfo.fn(ctx, args, record);
 }
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function callImmediateScalarFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo): any {
+export function callImmediateScalarFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType): any {
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
             switch (a.type) {
             case 'field':
                 throw new Error(`Immediate scalar function should not refer the field (${a.name.join('.')}).`);
-            case 'date':
-                return a.value; // TODO:
-            case 'datetime':
-                return a.value; // TODO:
+            case 'date': case 'datetime':
+                switch (fieldResultType) {
+                case 'date': case 'datetime':
+                    return new Date(a.value).getTime();
+                default:
+                    return a.value;
+                }
             }
         default:
             return a;
@@ -55,22 +71,34 @@ export function callImmediateScalarFunction(ctx: ResolverContext, field: Prepare
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fnInfo.fn(ctx, args); // TODO:
+    return fnInfo.fn(ctx, args);
 }
 
 
-export function callAggregateFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: AggregateQueryFuncInfo, records: any[]): any {
+export function callAggregateFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: AggregateQueryFuncInfo, fieldResultType: FieldResultType, records: any[]): any {
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
             switch (a.type) {
             case 'field':
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return records.map(w => getObjectValue(w, a.name[a.name.length - 1]));
-            case 'date':
-                return a.value; // TODO:
-            case 'datetime':
-                return a.value; // TODO:
+                {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    let z = records.map(w => getObjectValue(w, a.name[a.name.length - 1]));
+                    switch (fieldResultType) {
+                    case 'date': case 'datetime':
+                        z = z.map(w => new Date(w).getTime());
+                        break;
+                    }
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    return z;
+                }
+            case 'date': case 'datetime':
+                switch (fieldResultType) {
+                case 'date': case 'datetime':
+                    return new Date(a.value).getTime();
+                default:
+                    return a.value;
+                }
             }
         default:
             return a;
@@ -78,5 +106,5 @@ export function callAggregateFunction(ctx: ResolverContext, field: PreparedFnCal
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fnInfo.fn(ctx, args, records); // TODO:
+    return fnInfo.fn(ctx, args, records);
 }

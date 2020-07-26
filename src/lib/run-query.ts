@@ -205,11 +205,11 @@ function mapSelectFields(ctx: ResolverContext, x: PreparedResolver, records: any
                     switch (fnInfo?.type) {
                     case 'scalar':
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName!] = callScalarFunction(ctx, field, fnInfo, record);
+                        record[field.aliasName!] = callScalarFunction(ctx, field, fnInfo, 'any', record);
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo);
+                        record[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
                         break;
                     default:
                         // Nothing to do.
@@ -283,11 +283,11 @@ function aggregateFields(ctx: ResolverContext, x: PreparedResolver, records: any
                     switch (fnInfo?.type) {
                     case 'aggregate':
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName!] = callAggregateFunction(ctx, field, fnInfo, g);
+                        agg[field.aliasName!] = callAggregateFunction(ctx, field, fnInfo, 'any', g);
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo);
+                        agg[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
                         break;
                     default:
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);

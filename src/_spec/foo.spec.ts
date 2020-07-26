@@ -69,6 +69,12 @@ describe("foo", function() {
                 fn: (ctx, args) => {
                     return Number(args[0]);
                 },
+            }, {
+                type: 'immediate-scalar',
+                name: 'pass_thru',
+                fn: (ctx, args) => {
+                    return args[0];
+                },
             }],
             events: {
                 beginExecute: () => Promise.resolve(),
@@ -206,6 +212,7 @@ describe("foo", function() {
               , string(foo)
               , string(reg)
               , string(acC.qux)
+              , pass_thru(2020-01-01)
               -- , __proto__
               -- , "__proto__"
               -- , wwwww __proto__
@@ -254,7 +261,8 @@ describe("foo", function() {
                 sum(baz) sum_baz,
                 avg(baz) avg_baz,
                 max(baz) max_baz,
-                min(baz) min_baz
+                min(baz) min_baz,
+                pass_thru(2020-01-01)
             from
                 Contact
             where

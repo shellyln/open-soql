@@ -3,7 +3,8 @@
 // https://github.com/shellyln
 
 
-import { PreparedConditionOperand,
+import { FieldResultType,
+         PreparedConditionOperand,
          PreparedCondition,
          ResolverContext }             from './types';
 import { getObjectValue }              from './lib/util';
@@ -17,6 +18,23 @@ function getOp1Value(isAggregation: boolean, ctx: ResolverContext, cond: Prepare
     let v = null;
     const op = cond.operands[0];
 
+    const op2 = cond.operands[1];
+    let op2IsDateOrDatetime = false;
+    let op2FieldResultType: FieldResultType = 'any';
+    switch (typeof op2) {
+    case 'object':
+        if (Array.isArray(op2)) {
+            // nothing to do
+        } else {
+            switch (op2.type) {
+            case 'date': case 'datetime':
+                op2IsDateOrDatetime = true;
+                op2FieldResultType = op2.type;
+                break;
+            }
+        }
+    }
+
     switch (typeof op) {
     case 'object':
         if (Array.isArray(op)) {
@@ -26,6 +44,9 @@ function getOp1Value(isAggregation: boolean, ctx: ResolverContext, cond: Prepare
             case 'field':
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 v = getObjectValue(record, op.name[op.name.length - 1]);
+                if (op2IsDateOrDatetime) {
+                    v = new Date(v).getTime();
+                }
                 break;
             case 'fncall':
                 {
@@ -37,18 +58,18 @@ function getOp1Value(isAggregation: boolean, ctx: ResolverContext, cond: Prepare
                             throw new Error(`Aggregate function ${fnInfo.name} is not allowed.`);
                         }
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callAggregateFunction(ctx, op, fnInfo, record);
+                        v = callAggregateFunction(ctx, op, fnInfo, op2FieldResultType, record);
                         break;
                     case 'scalar':
                         if (isAggregation) {
                             throw new Error(`Scalar function ${fnInfo.name} is not allowed.`);
                         }
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callScalarFunction(ctx, op, fnInfo, record);
+                        v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, record);
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callImmediateScalarFunction(ctx, op, fnInfo);
+                        v = callImmediateScalarFunction(ctx, op, fnInfo, op2FieldResultType);
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(1).`);
@@ -86,7 +107,7 @@ function getOp2Value(ctx: ResolverContext, cond: PreparedCondition, record: any)
                     switch (fnInfo?.type) {
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callImmediateScalarFunction(ctx, op, fnInfo);
+                        v = callImmediateScalarFunction(ctx, op, fnInfo, 'any');
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(2).`);
@@ -95,7 +116,7 @@ function getOp2Value(ctx: ResolverContext, cond: PreparedCondition, record: any)
             default:
                 switch (op.type) {
                 case 'date': case 'datetime':
-                    v = op.value; // TODO:
+                    v = new Date(op.value).getTime();
                     break;
                 default:
                     throw new Error(`Unexpected type appears in the operand(2).`);
