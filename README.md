@@ -240,6 +240,8 @@ const aggregationResult = await soql`
   * [x] resolver (relationship) alias name
   * [x] field alias name
   * [x] function call (aggregate | scalar | immediate_scalar)
+  * [ ] nested function call (call functions in actual parameters of functions)
+  * functions
     * Aggregate functions
       * [x] `count()`, `count(field)`
       * [x] `count_distinct(field)`
@@ -280,7 +282,6 @@ const aggregationResult = await soql`
         * [ ] `hour_in_day_lc(field)`
         * [ ] `week_in_month_lc(field)`
         * [ ] `week_in_year_lc(field)`
-  * [ ] nested function call (call functions in actual parameters of functions)
   * [ ] `TYPEOF` expression
 * `From` clause
   * [x] resolver (relationship name) alias
@@ -358,7 +359,13 @@ const aggregationResult = await soql`
 * [x] `For` clause
 
 ### Other features
-* [ ] DML
+* standard query resolvers
+  * [ ] JSON
+  * [ ] CSV
+* DML
+  * [ ] `create`
+  * [ ] `update`
+  * [ ] `remove`
 * [x] Template string
 
 
