@@ -239,15 +239,48 @@ const aggregationResult = await soql`
   * [x] detail-master relationship name
   * [x] resolver (relationship) alias name
   * [x] field alias name
-  * [x] function call (scalar | immediate_scalar | aggregate)
-    * [x] `count`
-    * [x] `count_distinct`
-    * [x] `sum`
-    * [x] `avg`
-    * [x] `min`
-    * [x] `max`
-    * [ ] `grouping`
-    * [ ] `format`
+  * [x] function call (aggregate | scalar | immediate_scalar)
+    * Aggregate functions
+      * [x] `count()`, `count(field)`
+      * [x] `count_distinct(field)`
+      * [x] `sum(field)`
+      * [x] `avg(field)`
+      * [x] `min(field)`
+      * [x] `max(field)`
+      * [ ] `grouping(field)`
+    * Scalar functions
+      * String functions
+        * [ ] `format(field | function call)`
+      * Date and datetime functions (UTC)
+        * [ ] `convertTimezone(field)`
+        * [ ] `calendar_month(field | convertTimezone(field))`
+        * [ ] `calendar_quarter(field | convertTimezone(field))`
+        * [ ] `calendar_year(field | convertTimezone(field))`
+        * [ ] `day_in_month(field | convertTimezone(field))`
+        * [ ] `day_in_week(field | convertTimezone(field))`
+        * [ ] `day_in_year(field | convertTimezone(field))`
+        * [ ] `day_only(field | convertTimezone(field))`
+        * [ ] `fiscal_month(field | convertTimezone(field))`
+        * [ ] `fiscal_quarter(field | convertTimezone(field))`
+        * [ ] `fiscal_year(field | convertTimezone(field))`
+        * [ ] `hour_in_day(field | convertTimezone(field))`
+        * [ ] `week_in_month(field | convertTimezone(field))`
+        * [ ] `week_in_year(field | convertTimezone(field))`
+      * Date and datetime functions (local timezone)
+        * [ ] `calendar_month_lc(field)`
+        * [ ] `calendar_quarter_lc(field)`
+        * [ ] `calendar_year_lc(field)`
+        * [ ] `day_in_month_lc(field)`
+        * [ ] `day_in_week_lc(field)`
+        * [ ] `day_in_year_lc(field)`
+        * [ ] `day_only_lc(field)`
+        * [ ] `fiscal_month_lc(field)`
+        * [ ] `fiscal_quarter_lc(field)`
+        * [ ] `fiscal_year_lc(field)`
+        * [ ] `hour_in_day_lc(field)`
+        * [ ] `week_in_month_lc(field)`
+        * [ ] `week_in_year_lc(field)`
+  * [ ] nested function call (call functions in actual parameters of functions)
   * [ ] `TYPEOF` expression
 * `From` clause
   * [x] resolver (relationship name) alias
