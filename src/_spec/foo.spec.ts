@@ -1,9 +1,10 @@
 
-import { parse } from '../lib/parser';
-import { prepareQuery, prepareBuilderInfo } from '../lib/prepare';
-import { build } from '../exec';
+import { parse }                    from '../lib/parser';
+import { prepareQuery,
+         prepareBuilderInfo }       from '../lib/prepare';
+import { getObjectValue }           from '../lib/util';
 import { QueryBuilderInfoInternal } from '../types';
-import { getObjectValue } from '../lib/util';
+import { build }                    from '../builder';
 
 
 

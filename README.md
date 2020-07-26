@@ -21,10 +21,10 @@ npm install open-soql
 
 Set up the resolvers
 ```ts
-import { build } from 'open-soql/modules/exec';
+import { build } from 'open-soql/modules/builder';
 
 
-const { soql } = build({
+const { soql, create, update, remove } = build({
     // See `src/types.ts` > `QueryBuilderInfo`
     functions: [{ // optional: for defining custom functions
         type: 'scalar',
@@ -359,6 +359,7 @@ const aggregationResult = await soql`
 * [x] `For` clause
 
 ### Other features
+* prepared query (pre-compiled query)
 * standard query resolvers
   * [ ] JSON
   * [ ] CSV
@@ -432,7 +433,7 @@ export function build(builder: QueryBuilderInfo): {
 
 
 
-### Module 'open-soql/modules/filter'
+### Module 'open-soql/modules/filters'
 
 #### applyWhereConditions
 

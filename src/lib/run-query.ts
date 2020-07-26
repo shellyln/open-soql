@@ -19,7 +19,7 @@ import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction } from './call';
 import { applyWhereConditions,
-         applyHavingConditions }       from '../filter';
+         applyHavingConditions }       from '../filters';
 
 
 
