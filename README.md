@@ -283,6 +283,15 @@ const aggregationResult = await soql`
         * [ ] `week_in_month_lc(field)`
         * [ ] `week_in_year_lc(field)`
   * [ ] `TYPEOF` expression
+* field expressions
+  * [x] field
+  * [x] field alias name
+  * data types
+    * [x] string
+    * [x] number
+    * [x] date
+    * [x] datetime
+    * [x] null
 * `From` clause
   * [x] resolver (relationship name) alias
 * `Where` clause
@@ -290,8 +299,8 @@ const aggregationResult = await soql`
   * data types
     * [x] string
     * [x] number
-    * [ ] date
-    * [ ] datetime
+    * [x] date
+    * [x] datetime
     * [x] null
   * [x] op1 function call (scalar | immediate_scalar)
   * [x] op2 function call (immediate_scalar)
@@ -318,8 +327,8 @@ const aggregationResult = await soql`
   * data types
     * [x] string
     * [x] number
-    * [ ] date
-    * [ ] datetime
+    * [x] date
+    * [x] datetime
     * [x] null
   * [x] op1 function call (immediate_scalar | aggregate)
   * [x] op2 function call (immediate_scalar)

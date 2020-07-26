@@ -15,6 +15,10 @@ export type LogicalOperators =
     'true';
 
 
+export type FieldResultType =
+    'any' | 'number' | 'string' | 'boolean' | 'date' | 'datetime';
+
+
 export interface PreparedDateValue {
     type: 'date';
     value: string;
