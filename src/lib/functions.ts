@@ -3,7 +3,9 @@
 // https://github.com/shellyln
 
 
-import { QueryFuncInfo } from '../types';
+import { QueryFuncInfo }   from '../types';
+import { DatePattern,
+         DateTimePattern } from './util';
 
 
 
@@ -140,11 +142,20 @@ export const fnInfo_calendar_month: QueryFuncInfo = {
             const arg = args[0];
             switch (typeof arg) {
             case 'object':
+                if (arg === null) {
+                    // TODO: Nothing to do. (throw error)
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getUTCMonth() + 1;
+                    }
+                }
                 break;
             case 'string':
-                break;
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getUTCMonth() + 1;
+                }
             }
-            return 0;
         }
         throw new Error(`Argument of function "calendar_month" should be field.`);
     },
@@ -156,7 +167,23 @@ export const fnInfo_calendar_quarter: QueryFuncInfo = {
     name: 'calendar_quarter',
     fn: (ctx, args, record) => {
         if (args.length > 0) {
-            return 0;
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    // TODO: Nothing to do. (throw error)
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return (new Date(arg.value).getUTCMonth() % 4) + 1;
+                    }
+                }
+                break;
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return (new Date(arg).getUTCMonth() % 4) + 1;
+                }
+            }
         }
         throw new Error(`Argument of function "calendar_quarter" should be field.`);
     },
@@ -168,7 +195,23 @@ export const fnInfo_calendar_year: QueryFuncInfo = {
     name: 'calendar_year',
     fn: (ctx, args, record) => {
         if (args.length > 0) {
-            return 0;
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    // TODO: Nothing to do. (throw error)
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getUTCFullYear();
+                    }
+                }
+                break;
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getUTCFullYear();
+                }
+            }
         }
         throw new Error(`Argument of function "calendar_year" should be field.`);
     },
@@ -180,7 +223,23 @@ export const fnInfo_day_in_month: QueryFuncInfo = {
     name: 'day_in_month',
     fn: (ctx, args, record) => {
         if (args.length > 0) {
-            return 0;
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    // TODO: Nothing to do. (throw error)
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getUTCDate();
+                    }
+                }
+                break;
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getUTCDate();
+                }
+            }
         }
         throw new Error(`Argument of function "day_in_month" should be field.`);
     },
@@ -192,7 +251,23 @@ export const fnInfo_day_in_week: QueryFuncInfo = {
     name: 'day_in_week',
     fn: (ctx, args, record) => {
         if (args.length > 0) {
-            return 0;
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    // TODO: Nothing to do. (throw error)
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getUTCDay() + 1;
+                    }
+                }
+                break;
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getUTCDay() + 1;
+                }
+            }
         }
         throw new Error(`Argument of function "day_in_week" should be field.`);
     },
@@ -216,7 +291,23 @@ export const fnInfo_day_only: QueryFuncInfo = {
     name: 'day_only',
     fn: (ctx, args, record) => {
         if (args.length > 0) {
-            return 0;
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    // TODO: Nothing to do. (throw error)
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).toISOString().split('T')[0];
+                    }
+                }
+                break;
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).toISOString().split('T')[0];
+                }
+            }
         }
         throw new Error(`Argument of function "day_only" should be field.`);
     },
@@ -228,7 +319,23 @@ export const fnInfo_hour_in_day: QueryFuncInfo = {
     name: 'hour_in_day',
     fn: (ctx, args, record) => {
         if (args.length > 0) {
-            return 0;
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    // TODO: Nothing to do. (throw error)
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getUTCHours();
+                    }
+                }
+                break;
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getUTCHours();
+                }
+            }
         }
         throw new Error(`Argument of function "hour_in_day" should be field.`);
     },
