@@ -115,7 +115,7 @@ function flatConditions(
         for (const x of cond.operands) {
             switch (typeof x) {
             case 'object':
-                if (Array.isArray(x)) {
+                if (x === null || Array.isArray(x)) {
                     throw new Error(`Unexpected AST is found.`);
                 } else {
                     switch (x.type) {
@@ -168,8 +168,10 @@ function recureseForEachConditionFields(
         for (const x of cond.operands) {
             switch (typeof x) {
             case 'object':
-                if (Array.isArray(x)) {
-                    // it is data
+                if (x === null) {
+                    // NOTE: never reach here.
+                } else if (Array.isArray(x)) {
+                    // NOTE: Nothing to do. It is data.
                 } else {
                     switch (x.type) {
                     case 'condition':
@@ -182,10 +184,14 @@ function recureseForEachConditionFields(
                         for (const arg of x.args) {
                             switch (typeof arg) {
                             case 'object':
-                                switch (arg.type) {
-                                case 'field':
-                                    fn(arg);
-                                    break;
+                                if (arg === null) {
+                                    // NOTE: Nothing to do.
+                                } else {
+                                    switch (arg.type) {
+                                    case 'field':
+                                        fn(arg);
+                                        break;
+                                    }
                                 }
                                 break;
                             }
@@ -335,10 +341,14 @@ function normalize(
         for (const arg of x.args) {
             switch (typeof arg) {
             case 'object':
-                switch (arg.type) {
-                case 'field':
-                    normalizeSelectField(arg);
-                    break;
+                if (arg === null) {
+                    // NOTE: Nothing to do.
+                } else {
+                    switch (arg.type) {
+                    case 'field':
+                        normalizeSelectField(arg);
+                        break;
+                    }
                 }
                 break;
             }
@@ -354,7 +364,9 @@ function normalize(
                 const x = cond.operands[i];
                 switch (typeof x) {
                 case 'object':
-                    if (Array.isArray(x)) {
+                    if (x === null) {
+                        // NOTE: never reach here.
+                    } else if (Array.isArray(x)) {
                         // NOTE: Nothing to do. It is data.
                     } else {
                         switch (x.type) {
@@ -464,13 +476,17 @@ function normalize(
                 for (const arg of x.args) {
                     switch (typeof arg) {
                     case 'object':
-                        switch (arg.type) {
-                        case 'field':
-                            registerQueryFields(arg);
-                            if (! resolver) {
-                                resolver = findResolver(query, arg);
+                        if (arg === null) {
+                            // NOTE: Nothing to do.
+                        } else {
+                            switch (arg.type) {
+                            case 'field':
+                                registerQueryFields(arg);
+                                if (! resolver) {
+                                    resolver = findResolver(query, arg);
+                                }
+                                break;
                             }
-                            break;
                         }
                         break;
                     }

@@ -32,7 +32,7 @@ export interface PreparedDateTimeValue {
 
 
 export type PreparedAtomValue =
-    number | string | PreparedDateValue | PreparedDateTimeValue;
+    number | string | null | PreparedDateValue | PreparedDateTimeValue;
 
 
 export type PreparedValue =

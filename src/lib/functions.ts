@@ -130,3 +130,130 @@ export const fnInfo_min: QueryFuncInfo = {
         throw new Error(`Argument of function "min" should be field.`);
     },
 };
+
+
+export const fnInfo_calendar_month: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'calendar_month',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                break;
+            case 'string':
+                break;
+            }
+            return 0;
+        }
+        throw new Error(`Argument of function "calendar_month" should be field.`);
+    },
+};
+
+
+export const fnInfo_calendar_quarter: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'calendar_quarter',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "calendar_quarter" should be field.`);
+    },
+};
+
+
+export const fnInfo_calendar_year: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'calendar_year',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "calendar_year" should be field.`);
+    },
+};
+
+
+export const fnInfo_day_in_month: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_in_month',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "day_in_month" should be field.`);
+    },
+};
+
+
+export const fnInfo_day_in_week: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_in_week',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "day_in_week" should be field.`);
+    },
+};
+
+
+export const fnInfo_day_in_year: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_in_year',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "day_in_year" should be field.`);
+    },
+};
+
+
+export const fnInfo_day_only: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_only',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "day_only" should be field.`);
+    },
+};
+
+
+export const fnInfo_hour_in_day: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'hour_in_day',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "hour_in_day" should be field.`);
+    },
+};
+
+
+export const fnInfo_week_in_month: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'week_in_month',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "week_in_month" should be field.`);
+    },
+};
+
+
+export const fnInfo_week_in_year: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'week_in_year',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            return 0;
+        }
+        throw new Error(`Argument of function "week_in_year" should be field.`);
+    },
+};

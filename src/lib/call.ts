@@ -18,6 +18,9 @@ export function callScalarFunction(ctx: ResolverContext, field: PreparedFnCall, 
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
+            if (a === null) {
+                return a;
+            }
             switch (a.type) {
             case 'field':
                 {
@@ -38,6 +41,8 @@ export function callScalarFunction(ctx: ResolverContext, field: PreparedFnCall, 
                 default:
                     return a.value;
                 }
+            default:
+                return a;
             }
         default:
             return a;
@@ -54,6 +59,9 @@ export function callImmediateScalarFunction(ctx: ResolverContext, field: Prepare
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
+            if (a === null) {
+                return a;
+            }
             switch (a.type) {
             case 'field':
                 throw new Error(`Immediate scalar function should not refer the field (${a.name.join('.')}).`);
@@ -64,6 +72,8 @@ export function callImmediateScalarFunction(ctx: ResolverContext, field: Prepare
                 default:
                     return a.value;
                 }
+            default:
+                return a;
             }
         default:
             return a;
@@ -79,6 +89,9 @@ export function callAggregateFunction(ctx: ResolverContext, field: PreparedFnCal
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
+            if (a === null) {
+                return a;
+            }
             switch (a.type) {
             case 'field':
                 {
@@ -99,6 +112,8 @@ export function callAggregateFunction(ctx: ResolverContext, field: PreparedFnCal
                 default:
                     return a.value;
                 }
+            default:
+                return a;
             }
         default:
             return a;
