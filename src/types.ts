@@ -179,6 +179,21 @@ export type QueryResolverFn = (
     ctx: ResolverContext,
     ) => Promise<any[]>;
 
+export type CreateResolverFn = (
+    records: any[],
+    ctx: ResolverContext,
+    ) => Promise<any[]>;
+
+export type UpdateResolverFn = (
+    records: any[],
+    ctx: ResolverContext,
+    ) => Promise<any[]>;
+
+export type RemoveResolverFn = (
+    records: any[],
+    ctx: ResolverContext,
+    ) => Promise<void>;
+
 
 export type AggregateFunction = (ctx: ResolverContext, args: Array<PreparedAtomValue | PreparedAtomValue[]>, records: any[]) => any;
 
@@ -237,11 +252,17 @@ export interface QueryBuilderInfo {
             [resolverNames: string]: QueryResolverFn;
         };
         // eslint-disable-next-line @typescript-eslint/ban-types
-        create?: {};
+        create?: {
+            [resolverNames: string]: CreateResolverFn;
+        };
         // eslint-disable-next-line @typescript-eslint/ban-types
-        update?: {};
+        update?: {
+            [resolverNames: string]: UpdateResolverFn;
+        };
         // eslint-disable-next-line @typescript-eslint/ban-types
-        remove?: {};
+        remove?: {
+            [resolverNames: string]: RemoveResolverFn;
+        };
     };
     /** */
     relationships: {
