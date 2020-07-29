@@ -40,21 +40,32 @@ export async function executeInsertDML(
     };
 
     if (builder.events.beginExecute) {
-        const z = await builder.events.beginExecute(evt);
+        await builder.events.beginExecute(evt);
     }
 
-    const ctx = {
-        functions: builder.functions,
-        graphPath: [],
-        resolverName: resolverName,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        resolverData: evt.resolverData,
-    };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    let ret: any [] = null as any;
 
-    const ret = await resolverInfo(records, ctx);
+    try {
+        const ctx = {
+            functions: builder.functions,
+            graphPath: [],
+            resolverName: resolverName,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            resolverData: evt.resolverData,
+        };
 
-    if (builder.events.endExecute) {
-        const z = await builder.events.endExecute(evt);
+        ret = await resolverInfo(records, ctx);
+
+        if (builder.events.endExecute) {
+            await builder.events.endExecute(evt);
+        }
+    } catch(e) {
+        if (builder.events.endExecute) {
+            await builder.events.endExecute(evt);
+        }
+
+        throw e;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -85,21 +96,32 @@ export async function executeUpdateDML(
     };
 
     if (builder.events.beginExecute) {
-        const z = await builder.events.beginExecute(evt);
+        await builder.events.beginExecute(evt);
     }
 
-    const ctx = {
-        functions: builder.functions,
-        graphPath: [],
-        resolverName: resolverName,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        resolverData: evt.resolverData,
-    };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    let ret: any [] = null as any;
 
-    const ret = await resolverInfo(records, ctx);
+    try {
+        const ctx = {
+            functions: builder.functions,
+            graphPath: [],
+            resolverName: resolverName,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            resolverData: evt.resolverData,
+        };
 
-    if (builder.events.endExecute) {
-        const z = await builder.events.endExecute(evt);
+        ret = await resolverInfo(records, ctx);
+
+        if (builder.events.endExecute) {
+            await builder.events.endExecute(evt);
+        }
+    } catch(e) {
+        if (builder.events.endExecute) {
+            await builder.events.endExecute(evt);
+        }
+
+        throw e;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -130,23 +152,28 @@ export async function executeRemoveDML(
     };
 
     if (builder.events.beginExecute) {
-        const z = await builder.events.beginExecute(evt);
+        await builder.events.beginExecute(evt);
     }
 
-    const ctx = {
-        functions: builder.functions,
-        graphPath: [],
-        resolverName: resolverName,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        resolverData: evt.resolverData,
-    };
+    try {
+        const ctx = {
+            functions: builder.functions,
+            graphPath: [],
+            resolverName: resolverName,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            resolverData: evt.resolverData,
+        };
 
-    const ret = await resolverInfo(records, ctx);
+        await resolverInfo(records, ctx);
 
-    if (builder.events.endExecute) {
-        const z = await builder.events.endExecute(evt);
+        if (builder.events.endExecute) {
+            await builder.events.endExecute(evt);
+        }
+    } catch(e) {
+        if (builder.events.endExecute) {
+            await builder.events.endExecute(evt);
+        }
+
+        throw e;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return ret;
 }

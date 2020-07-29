@@ -242,7 +242,9 @@ const inserted = await insert('Contact', [{
 // inserted is [{ Id: '12345', Name: 'foo' }]
 
 const updated = await update('Contact', inserted);
-const removed = await remove('Contact', updated);
+// updated is [{ Id: '12345', Name: 'foo' }]
+
+await remove('Contact', updated);
 ```
 
 
@@ -390,7 +392,8 @@ const removed = await remove('Contact', updated);
   * [x] `insert`
   * [x] `update`
   * [x] `remove`
-* [x] Template string
+* [ ] transaction scope
+* [x] template string
 
 
 ---
