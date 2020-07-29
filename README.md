@@ -255,33 +255,33 @@ const aggregationResult = await soql`
         * [ ] `format(field | function call)`
       * Date and datetime functions (UTC)
         * [ ] `convertTimezone(field)`
-        * [ ] `calendar_month(field | convertTimezone(field))`
-        * [ ] `calendar_quarter(field | convertTimezone(field))`
-        * [ ] `calendar_year(field | convertTimezone(field))`
-        * [ ] `day_in_month(field | convertTimezone(field))`
-        * [ ] `day_in_week(field | convertTimezone(field))`
-        * [ ] `day_in_year(field | convertTimezone(field))`
-        * [ ] `day_only(field | convertTimezone(field))`
+        * [x] `calendar_month(field | convertTimezone(field))`
+        * [x] `calendar_quarter(field | convertTimezone(field))`
+        * [x] `calendar_year(field | convertTimezone(field))`
+        * [x] `day_in_month(field | convertTimezone(field))`
+        * [x] `day_in_week(field | convertTimezone(field))`
+        * [x] `day_in_year(field | convertTimezone(field))`
+        * [x] `day_only(field | convertTimezone(field))`
         * [ ] `fiscal_month(field | convertTimezone(field))`
         * [ ] `fiscal_quarter(field | convertTimezone(field))`
         * [ ] `fiscal_year(field | convertTimezone(field))`
-        * [ ] `hour_in_day(field | convertTimezone(field))`
-        * [ ] `week_in_month(field | convertTimezone(field))`
-        * [ ] `week_in_year(field | convertTimezone(field))`
+        * [x] `hour_in_day(field | convertTimezone(field))`
+        * [x] `week_in_month(field | convertTimezone(field))`
+        * [x] `week_in_year(field | convertTimezone(field))`
       * Date and datetime functions (local timezone)
-        * [ ] `calendar_month_lc(field)`
-        * [ ] `calendar_quarter_lc(field)`
-        * [ ] `calendar_year_lc(field)`
-        * [ ] `day_in_month_lc(field)`
-        * [ ] `day_in_week_lc(field)`
-        * [ ] `day_in_year_lc(field)`
-        * [ ] `day_only_lc(field)`
+        * [x] `calendar_month_lc(field)`
+        * [x] `calendar_quarter_lc(field)`
+        * [x] `calendar_year_lc(field)`
+        * [x] `day_in_month_lc(field)`
+        * [x] `day_in_week_lc(field)`
+        * [x] `day_in_year_lc(field)`
+        * [x] `day_only_lc(field)`
         * [ ] `fiscal_month_lc(field)`
         * [ ] `fiscal_quarter_lc(field)`
         * [ ] `fiscal_year_lc(field)`
-        * [ ] `hour_in_day_lc(field)`
-        * [ ] `week_in_month_lc(field)`
-        * [ ] `week_in_year_lc(field)`
+        * [x] `hour_in_day_lc(field)`
+        * [x] `week_in_month_lc(field)`
+        * [x] `week_in_year_lc(field)`
   * [ ] `TYPEOF` expression
 * field expressions
   * [x] field

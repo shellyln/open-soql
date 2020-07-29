@@ -45,6 +45,10 @@ function filterCondOperands(name: string[], cond: PreparedCondition) {
             if (Array.isArray(x)) {
                 return x;
             } else {
+                if (x === null) {
+                    // NOTE: never reach here.
+                    return x;
+                }
                 switch (x.type) {
                 case 'condition':
                     return pruneCondition(name, x);
@@ -59,7 +63,7 @@ function filterCondOperands(name: string[], cond: PreparedCondition) {
     .filter(x => {
         switch (typeof x) {
         case 'object':
-            if (!Array.isArray(x) && x.type === 'condition') {
+            if (x !== null && !Array.isArray(x) && x.type === 'condition') {
                 return filterZeroLengthCondFn(x);
             }
         }
@@ -76,7 +80,10 @@ function pruneCondition(name: string[], cond: PreparedCondition): PreparedCondit
 
         switch (typeof x) {
         case 'object':
-            if (Array.isArray(x)) {
+            if (x === null) {
+                // NOTE: never reach here.
+                // NOTE: Nothing to do.
+            } else if (Array.isArray(x)) {
                 // NOTE: Nothing to do. It is data.
             } else {
                 switch (x.type) {
@@ -95,19 +102,23 @@ function pruneCondition(name: string[], cond: PreparedCondition): PreparedCondit
                     for (const arg of x.args) {
                         switch (typeof arg) {
                         case 'object':
-                            switch (arg.type) {
-                            case 'field':
-                                // TODO: Check all arguments' resolver are equal
-                                if (! isEqualComplexName(name, arg.name.slice(0, arg.name.length - 1))) {
-                                    return ({
-                                        type: 'condition',
-                                        op: 'true',
-                                        operands: [],
-                                    });
-                                } else {
-                                    arg.name = arg.name.slice(arg.name.length - 1); // TODO:
+                            if (arg === null) {
+                                // NOTE: Nothing to do.
+                            } else {
+                                switch (arg.type) {
+                                case 'field':
+                                    // TODO: Check all arguments' resolver are equal
+                                    if (! isEqualComplexName(name, arg.name.slice(0, arg.name.length - 1))) {
+                                        return ({
+                                            type: 'condition',
+                                            op: 'true',
+                                            operands: [],
+                                        });
+                                    } else {
+                                        arg.name = arg.name.slice(arg.name.length - 1); // TODO:
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                             break;
                         }
@@ -133,7 +144,10 @@ function collectSubQueriesFromCondition(
 
             switch (typeof x) {
             case 'object':
-                if (Array.isArray(x)) {
+                if (x === null) {
+                    // NOTE: never reach here.
+                    // NOTE: Nothing to do.
+                } else if (Array.isArray(x)) {
                     // NOTE: Nothing to do. It is data.
                 } else {
                     switch (x.type) {

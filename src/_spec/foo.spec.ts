@@ -213,6 +213,8 @@ describe("foo", function() {
               , string(reg)
               , string(acC.qux)
               , pass_thru(2020-01-01)
+              , day_in_year(2020-04-01)
+              , day_in_year(acc.updated)
               -- , __proto__
               -- , "__proto__"
               -- , wwwww __proto__

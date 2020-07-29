@@ -23,7 +23,9 @@ function getOp1Value(isAggregation: boolean, ctx: ResolverContext, cond: Prepare
     let op2FieldResultType: FieldResultType = 'any';
     switch (typeof op2) {
     case 'object':
-        if (Array.isArray(op2)) {
+        if (op2 === null) {
+            // nothing to do
+        } else if (Array.isArray(op2)) {
             // nothing to do
         } else {
             switch (op2.type) {
@@ -37,7 +39,9 @@ function getOp1Value(isAggregation: boolean, ctx: ResolverContext, cond: Prepare
 
     switch (typeof op) {
     case 'object':
-        if (Array.isArray(op)) {
+        if (op === null) {
+            // nothing to do (v is null)
+        } else if (Array.isArray(op)) {
             throw new Error(`Array is not allowed in the operand(1).`);
         } else {
             switch (op.type) {
@@ -96,7 +100,9 @@ function getOp2Value(ctx: ResolverContext, cond: PreparedCondition, record: any)
 
     switch (typeof op) {
     case 'object':
-        if (Array.isArray(op)) {
+        if (op === null) {
+            // nothing to do (v is null)
+        } else if (Array.isArray(op)) {
             v = op;
         } else {
             switch (op.type) {
@@ -142,6 +148,9 @@ function evalRecursiveCondition(isAggregation: boolean, ctx: ResolverContext, w:
         if (Array.isArray(w)) {
             throw new Error(`Array is not allowed in the condition.`);
         } else {
+            if (w === null) {
+                throw new Error(`Unexpected type appears in the condition.`);
+            }
             switch (w.type) {
             case 'condition':
                 ret = evalCondition(isAggregation, ctx, w, record);
