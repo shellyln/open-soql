@@ -24,7 +24,7 @@ Set up the resolvers
 import { build } from 'open-soql/modules/builder';
 
 
-const { soql, create, update, remove } = build({
+const { soql, insert, update, remove } = build({
     // See `src/types.ts` > `QueryBuilderInfo`
     functions: [{ // optional: for defining custom functions
         type: 'scalar',
@@ -212,6 +212,7 @@ const result = await soql`
     -- line comment
     /* block comment */
 `;
+// result is [{...}, ...]
 ```
 
 Aggregate
@@ -230,7 +231,20 @@ const aggregationResult = await soql`
     group by Region
     having count(id) > 0
 `;
+// aggregationResult is [{...}, ...]
 ```
+
+DML
+```ts
+const inserted = await insert('Contact', [{
+    Name: 'foo',
+}]);
+// inserted is [{ Id: '12345', Name: 'foo' }]
+
+const updated = await update('Contact', inserted);
+const removed = await remove('Contact', updated);
+```
+
 
 ## Features
 ### Syntax
