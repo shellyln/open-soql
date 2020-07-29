@@ -368,14 +368,14 @@ const aggregationResult = await soql`
 * [x] `For` clause
 
 ### Other features
-* prepared query (pre-compiled query)
+* [ ] prepared query (pre-compiled query)
 * standard query resolvers
   * [ ] JSON
   * [ ] CSV
 * DML
-  * [ ] `insert`
-  * [ ] `update`
-  * [ ] `remove`
+  * [x] `insert`
+  * [x] `update`
+  * [x] `remove`
 * [x] Template string
 
 
@@ -406,9 +406,15 @@ export interface QueryBuilderInfo {
         query: {
             [resolverNames: string]: QueryResolverFn;
         };
-        create?: { /* Not designed yet */ };
-        update?: { /* Not designed yet */ };
-        remove?: { /* Not designed yet */ };
+        insert?: {
+            [resolverNames: string]: InsertResolverFn;
+        };
+        update?: {
+            [resolverNames: string]: UpdateResolverFn;
+        };
+        remove?: {
+            [resolverNames: string]: RemoveResolverFn;
+        };
     };
     relationships: {
         [detailOrMasterResolverNames: string]: {
