@@ -449,11 +449,14 @@ export async function executeQuery(
                 ) ?? {});
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const masterIdField = masterRelationshipInfo.id
+            const masterIdField = (typeof masterRelationshipInfo === 'object' && masterRelationshipInfo.id)
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 ? masterRelationshipInfo.id as string
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                : builder.rules.masterIdFieldName!(parentResolverName!);
+                : i === 0
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    ? builder.rules.masterIdFieldName!(parentResolverName!)
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    : builder.rules.masterIdFieldName!(resolverName!) ;
 
             if (! x.resolver) {
                 throw new Error(`Resolver name ${x.name.join('.')} is not resolved.`);
@@ -483,7 +486,7 @@ export async function executeQuery(
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         ? childRelationshipInfo.id as string
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        : builder.rules.masterIdFieldName!(resolverName);
+                        : builder.rules.masterIdFieldName!(childResolverName);
                     if (childIdField) {
                         relationshipIdFields.push(childIdField);
                     }
