@@ -6,6 +6,8 @@
 import { QueryFuncInfo }   from '../types';
 import { DatePattern,
          DateTimePattern } from './util';
+import { getUTCDayInYear,
+         getDayInYear }    from './datetime-util';
 
 
 
@@ -152,7 +154,6 @@ export const fnInfo_calendar_month: QueryFuncInfo = {
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
                     return new Date(arg).getUTCMonth() + 1;
@@ -162,6 +163,37 @@ export const fnInfo_calendar_month: QueryFuncInfo = {
             }
         }
         throw new Error(`Argument of function "calendar_month" should be field.`);
+    },
+};
+
+
+export const fnInfo_calendar_month_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'calendar_month_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getMonth() + 1;
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getMonth() + 1;
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "calendar_month_lc" should be field.`);
     },
 };
 
@@ -179,21 +211,51 @@ export const fnInfo_calendar_quarter: QueryFuncInfo = {
                 } else {
                     switch (arg.type) {
                     case 'date': case 'datetime':
-                        return (new Date(arg.value).getUTCMonth() % 4) + 1;
+                        return (new Date(arg.value).getUTCMonth() / 4) + 1;
                     default:
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return (new Date(arg).getUTCMonth() % 4) + 1;
+                    return (new Date(arg).getUTCMonth() / 4) + 1;
                 } else {
                     return null;
                 }
             }
         }
         throw new Error(`Argument of function "calendar_quarter" should be field.`);
+    },
+};
+
+
+export const fnInfo_calendar_quarter_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'calendar_quarter_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return (new Date(arg.value).getMonth() / 4) + 1;
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return (new Date(arg).getMonth() / 4) + 1;
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "calendar_quarter_lc" should be field.`);
     },
 };
 
@@ -216,7 +278,6 @@ export const fnInfo_calendar_year: QueryFuncInfo = {
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
                     return new Date(arg).getUTCFullYear();
@@ -226,6 +287,37 @@ export const fnInfo_calendar_year: QueryFuncInfo = {
             }
         }
         throw new Error(`Argument of function "calendar_year" should be field.`);
+    },
+};
+
+
+export const fnInfo_calendar_year_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'calendar_year_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getFullYear();
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getFullYear();
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "calendar_year_lc" should be field.`);
     },
 };
 
@@ -248,7 +340,6 @@ export const fnInfo_day_in_month: QueryFuncInfo = {
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
                     return new Date(arg).getUTCDate();
@@ -258,6 +349,37 @@ export const fnInfo_day_in_month: QueryFuncInfo = {
             }
         }
         throw new Error(`Argument of function "day_in_month" should be field.`);
+    },
+};
+
+
+export const fnInfo_day_in_month_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_in_month_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getDate();
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getDate();
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "day_in_month_lc" should be field.`);
     },
 };
 
@@ -280,7 +402,6 @@ export const fnInfo_day_in_week: QueryFuncInfo = {
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
                     return new Date(arg).getUTCDay() + 1;
@@ -294,11 +415,35 @@ export const fnInfo_day_in_week: QueryFuncInfo = {
 };
 
 
-function getUTCDayInYear(d: Date) {
-    const d0 = Date.UTC(d.getUTCFullYear(), 0, 1);
-    const d1 = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-    return ((d1 - d0) / (1000 * 60 * 60 * 24)) + 1;
-}
+export const fnInfo_day_in_week_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_in_week_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return new Date(arg.value).getDay() + 1;
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return new Date(arg).getDay() + 1;
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "day_in_week_lc" should be field.`);
+    },
+};
 
 
 export const fnInfo_day_in_year: QueryFuncInfo = {
@@ -319,7 +464,6 @@ export const fnInfo_day_in_year: QueryFuncInfo = {
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
                     return getUTCDayInYear(new Date(arg));
@@ -329,6 +473,37 @@ export const fnInfo_day_in_year: QueryFuncInfo = {
             }
         }
         throw new Error(`Argument of function "day_in_year" should be field.`);
+    },
+};
+
+
+export const fnInfo_day_in_year_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_in_year_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return getDayInYear(new Date(arg.value));
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return getDayInYear(new Date(arg));
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "day_in_year_lc" should be field.`);
     },
 };
 
@@ -351,7 +526,6 @@ export const fnInfo_day_only: QueryFuncInfo = {
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
                     return new Date(arg).toISOString().split('T')[0];
@@ -361,6 +535,43 @@ export const fnInfo_day_only: QueryFuncInfo = {
             }
         }
         throw new Error(`Argument of function "day_only" should be field.`);
+    },
+};
+
+
+export const fnInfo_day_only_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'day_only_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        {
+                            const d = new Date(arg.value);
+                            return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().split('T')[0];
+                        }
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    {
+                        const d = new Date(arg);
+                        return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().split('T')[0];
+                    }
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "day_only_lc" should be field.`);
     },
 };
 
@@ -383,7 +594,6 @@ export const fnInfo_hour_in_day: QueryFuncInfo = {
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
                     return new Date(arg).getUTCHours();
@@ -397,83 +607,10 @@ export const fnInfo_hour_in_day: QueryFuncInfo = {
 };
 
 
-export const fnInfo_week_in_month: QueryFuncInfo = {
+export const fnInfo_hour_in_day_lc: QueryFuncInfo = {
     type: 'scalar',
-    name: 'week_in_month',
+    name: 'hour_in_day_lc',
     fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            return 0;
-        }
-        throw new Error(`Argument of function "week_in_month" should be field.`);
-    },
-};
-
-
-function getUTCWeekInYearISO(d: Date) {
-    // ISO 8601 week number
-    // Weeks starting on Monday.
-    // The first week of year (W1) contains first Thursday.
-    const dcMon = d.getUTCMonth();
-    const dcDate = d.getUTCDate();
-
-    if (dcMon === 11 && dcDate >= 29) {
-        const d2 = new Date(Date.UTC(d.getUTCFullYear() + 1, 0, 1));
-        const day2 = (d2.getUTCDay() + 6) % 7; // Monday is 0
-        if (day2 <= 3) {
-            // Mon, Tue, Wed, Thu
-            //  29   30   31   01  (day2 === 3)
-            //  30   31   01       (day2 === 2)
-            //  31   01            (day2 === 1)
-            //  01                 (day2 === 0)
-            // Next year's first week is W01.
-            if (day2 + dcDate >= 32) {
-                return 1;
-            }
-        }
-    }
-
-    const d0 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const day0 = (d0.getUTCDay() + 6) % 7; // Monday is 0
-
-    const ds = d0.getTime() - ((1000 * 60 * 60 * 24) * day0);
-
-    const dc = Date.UTC(d.getUTCFullYear(), dcMon, dcDate);
-    const diff = Math.floor((dc - ds) / (1000 * 60 * 60 * 24 * 7));
-
-    if (day0 > 3) {
-        // First day of year is: Fri, Sat, Sun
-        // First day of year is last year's final week.
-        if (diff === 0) {
-            // Last year's final week.
-            const d1 = new Date(Date.UTC(d.getUTCFullYear() - 1, 0, 1));
-            const day1 = (d1.getUTCDay() + 6) % 7; // Monday is 0
-
-            const dp = d1.getTime() - ((1000 * 60 * 60 * 24) * day1);
-            const diff1 = Math.floor((dc - dp) / (1000 * 60 * 60 * 24 * 7));
-            if (day1 > 3) {
-                // Fri, Sat, Sun
-                return diff1;
-            } else {
-                // Mon, Tue, Wed, Thu
-                return diff1 + 1;
-            }
-        } else {
-            return diff;
-        }
-    } else {
-        // First day of year is: Mon, Tue, Wed, Thu
-        // First day of year is this year's first week.
-        return diff + 1;
-    }
-}
-
-
-export const fnInfo_week_in_year: QueryFuncInfo = {
-    type: 'scalar',
-    name: 'week_in_year',
-    fn: (ctx, args, record) => {
-        // NOTE: It is different from the definition in salesforce.
-        // ISO 8601 week number
         if (args.length > 0) {
             const arg = args[0];
             switch (typeof arg) {
@@ -483,20 +620,143 @@ export const fnInfo_week_in_year: QueryFuncInfo = {
                 } else {
                     switch (arg.type) {
                     case 'date': case 'datetime':
-                        return getUTCWeekInYearISO(new Date(arg.value));
+                        return new Date(arg.value).getHours();
                     default:
                         return null;
                     }
                 }
-                break;
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return getUTCWeekInYearISO(new Date(arg));
+                    return new Date(arg).getHours();
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "hour_in_day_lc" should be field.`);
+    },
+};
+
+
+export const fnInfo_week_in_month: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'week_in_month',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return Math.floor(new Date(arg.value).getUTCDate() / 7) + 1;
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return Math.floor(new Date(arg).getUTCDate() / 7) + 1;
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "week_in_month" should be field.`);
+    },
+};
+
+
+export const fnInfo_week_in_month_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'week_in_month_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return Math.floor(new Date(arg.value).getDate() / 7) + 1;
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return Math.floor(new Date(arg).getDate() / 7) + 1;
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "week_in_month_lc" should be field.`);
+    },
+};
+
+
+export const fnInfo_week_in_year: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'week_in_year',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return Math.floor(getUTCDayInYear(new Date(arg.value)) / 7) + 1;
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return Math.floor(getUTCDayInYear(new Date(arg)) / 7) + 1;
                 } else {
                     return null;
                 }
             }
         }
         throw new Error(`Argument of function "week_in_year" should be field.`);
+    },
+};
+
+
+export const fnInfo_week_in_year_lc: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'week_in_year_lc',
+    fn: (ctx, args, record) => {
+        if (args.length > 0) {
+            const arg = args[0];
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    return null;
+                } else {
+                    switch (arg.type) {
+                    case 'date': case 'datetime':
+                        return Math.floor(getDayInYear(new Date(arg.value)) / 7) + 1;
+                    default:
+                        return null;
+                    }
+                }
+            case 'string':
+                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
+                    return Math.floor(getDayInYear(new Date(arg)) / 7) + 1;
+                } else {
+                    return null;
+                }
+            }
+        }
+        throw new Error(`Argument of function "week_in_year_lc" should be field.`);
     },
 };
