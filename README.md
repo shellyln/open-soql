@@ -397,7 +397,7 @@ const removed = await remove('Contact', updated);
 
 ## Usage
 
-### Module 'open-soql/modules/exec'
+### Module 'open-soql/modules/builder'
 
 #### build(builder)
 
