@@ -83,6 +83,16 @@ export function prepareBuilderInfo(builder: QueryBuilderInfo): QueryBuilderInfoI
         }
     }
 
+    if (! ret.resolvers.insert) {
+        ret.resolvers.insert = {};
+    }
+    if (! ret.resolvers.update) {
+        ret.resolvers.update = {};
+    }
+    if (! ret.resolvers.remove) {
+        ret.resolvers.remove = {};
+    }
+
     if (! ret.functions) {
         ret.functions = [];
     }
