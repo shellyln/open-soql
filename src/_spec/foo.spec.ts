@@ -183,11 +183,12 @@ describe("foo", function() {
                     Opportunities: ['Opportunity'],
                 },
                 Contact: {
-                    Account: { resolver: 'Account', id: 'AccountId' },
+                    Account: 'Account', // BUG: masterIdField is not set correctly
+                    // Account: { resolver: 'Account', id: 'AccountId' },
                 },
                 Opportunity: {
+                    Account: 'Account', // BUG: masterIdField is not set correctly
                     // Account: { resolver: 'Account', id: 'AccountId' },
-                    Account: 'Account', // TODO: BUG: masterIdField is not set!
                 },
                 Event: {
                     Account: { resolver: 'Account', id: 'WhatId' },
@@ -202,7 +203,7 @@ describe("foo", function() {
               , aCc.Region     rEg
               , acC.Category   cAt
               , (
-                  Select id, Name
+                  Select id, Name, account.category
                   from aCc.OpportunitiEs
                   -- where Amount > ${10001}
                   where Amount > ${10000}
