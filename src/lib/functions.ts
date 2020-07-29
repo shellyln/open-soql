@@ -3,7 +3,8 @@
 // https://github.com/shellyln
 
 
-import { QueryFuncInfo }   from '../types';
+import { ScalarQueryFuncInfo,
+         QueryFuncInfo }   from '../types';
 import { DatePattern,
          DateTimePattern } from './util';
 import { getUTCDayInYear,
@@ -136,10 +137,8 @@ export const fnInfo_min: QueryFuncInfo = {
 };
 
 
-export const fnInfo_calendar_month: QueryFuncInfo = {
-    type: 'scalar',
-    name: 'calendar_month',
-    fn: (ctx, args, record) => {
+function dateScalarFunctionGen(fnName: string, fn: (dateStr: string) => any): ScalarQueryFuncInfo['fn'] {
+    return (ctx, args, record) => {
         if (args.length > 0) {
             const arg = args[0];
             switch (typeof arg) {
@@ -149,614 +148,164 @@ export const fnInfo_calendar_month: QueryFuncInfo = {
                 } else {
                     switch (arg.type) {
                     case 'date': case 'datetime':
-                        return new Date(arg.value).getUTCMonth() + 1;
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return fn(arg.value);
                     default:
                         return null;
                     }
                 }
             case 'string':
                 if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getUTCMonth() + 1;
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    return fn(arg);
                 } else {
                     return null;
                 }
             }
         }
-        throw new Error(`Argument of function "calendar_month" should be field.`);
-    },
+        throw new Error(`Argument of function "${fnName}" should be field.`);
+    };
+}
+
+
+export const fnInfo_calendar_month: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'calendar_month',
+    fn: dateScalarFunctionGen('calendar_month', (dateStr) => new Date(dateStr).getUTCMonth() + 1),
 };
 
 
 export const fnInfo_calendar_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_month_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getMonth() + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getMonth() + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "calendar_month_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('calendar_month_lc', (dateStr) => new Date(dateStr).getMonth() + 1),
 };
 
 
 export const fnInfo_calendar_quarter: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_quarter',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return (new Date(arg.value).getUTCMonth() / 4) + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return (new Date(arg).getUTCMonth() / 4) + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "calendar_quarter" should be field.`);
-    },
+    fn: dateScalarFunctionGen('calendar_quarter', (dateStr) => (new Date(dateStr).getUTCMonth() / 4) + 1),
 };
 
 
 export const fnInfo_calendar_quarter_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_quarter_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return (new Date(arg.value).getMonth() / 4) + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return (new Date(arg).getMonth() / 4) + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "calendar_quarter_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('calendar_quarter_lc', (dateStr) => (new Date(dateStr).getMonth() / 4) + 1),
 };
 
 
 export const fnInfo_calendar_year: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_year',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getUTCFullYear();
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getUTCFullYear();
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "calendar_year" should be field.`);
-    },
+    fn: dateScalarFunctionGen('calendar_year', (dateStr) => new Date(dateStr).getUTCFullYear()),
 };
 
 
 export const fnInfo_calendar_year_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_year_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getFullYear();
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getFullYear();
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "calendar_year_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('calendar_year_lc', (dateStr) => new Date(dateStr).getFullYear()),
 };
 
 
 export const fnInfo_day_in_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_month',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getUTCDate();
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getUTCDate();
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_in_month" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_in_month', (dateStr) => new Date(dateStr).getUTCDate()),
 };
 
 
 export const fnInfo_day_in_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_month_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getDate();
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getDate();
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_in_month_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_in_month_lc', (dateStr) => new Date(dateStr).getDate()),
 };
 
 
 export const fnInfo_day_in_week: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_week',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getUTCDay() + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getUTCDay() + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_in_week" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_in_week', (dateStr) => new Date(dateStr).getUTCDay() + 1),
 };
 
 
 export const fnInfo_day_in_week_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_week_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getDay() + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getDay() + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_in_week_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_in_week_lc', (dateStr) => new Date(dateStr).getDay() + 1),
 };
 
 
 export const fnInfo_day_in_year: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_year',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return getUTCDayInYear(new Date(arg.value));
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return getUTCDayInYear(new Date(arg));
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_in_year" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_in_year', (dateStr) => getUTCDayInYear(new Date(dateStr))),
 };
 
 
 export const fnInfo_day_in_year_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_year_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return getDayInYear(new Date(arg.value));
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return getDayInYear(new Date(arg));
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_in_year_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_in_year_lc', (dateStr) => getDayInYear(new Date(dateStr))),
 };
 
 
 export const fnInfo_day_only: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_only',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).toISOString().split('T')[0];
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).toISOString().split('T')[0];
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_only" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_only', (dateStr) => new Date(dateStr).toISOString().split('T')[0]),
 };
 
 
 export const fnInfo_day_only_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_only_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        {
-                            const d = new Date(arg.value);
-                            return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().split('T')[0];
-                        }
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    {
-                        const d = new Date(arg);
-                        return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().split('T')[0];
-                    }
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "day_only_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('day_only_lc', (dateStr) => {
+        const d = new Date(dateStr);
+        return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().split('T')[0];
+    }),
 };
 
 
 export const fnInfo_hour_in_day: QueryFuncInfo = {
     type: 'scalar',
     name: 'hour_in_day',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getUTCHours();
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getUTCHours();
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "hour_in_day" should be field.`);
-    },
+    fn: dateScalarFunctionGen('hour_in_day', (dateStr) => new Date(dateStr).getUTCHours()),
 };
 
 
 export const fnInfo_hour_in_day_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'hour_in_day_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return new Date(arg.value).getHours();
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return new Date(arg).getHours();
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "hour_in_day_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('hour_in_day_lc', (dateStr) => new Date(dateStr).getHours()),
 };
 
 
 export const fnInfo_week_in_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_month',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return Math.floor(new Date(arg.value).getUTCDate() / 7) + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return Math.floor(new Date(arg).getUTCDate() / 7) + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "week_in_month" should be field.`);
-    },
+    fn: dateScalarFunctionGen('week_in_month', (dateStr) => Math.floor(new Date(dateStr).getUTCDate() / 7) + 1),
 };
 
 
 export const fnInfo_week_in_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_month_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return Math.floor(new Date(arg.value).getDate() / 7) + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return Math.floor(new Date(arg).getDate() / 7) + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "week_in_month_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('week_in_month_lc', (dateStr) => Math.floor(new Date(dateStr).getDate() / 7) + 1),
 };
 
 
 export const fnInfo_week_in_year: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_year',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return Math.floor(getUTCDayInYear(new Date(arg.value)) / 7) + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return Math.floor(getUTCDayInYear(new Date(arg)) / 7) + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "week_in_year" should be field.`);
-    },
+    fn: dateScalarFunctionGen('week_in_year', (dateStr) => Math.floor(getUTCDayInYear(new Date(dateStr)) / 7) + 1),
 };
 
 
 export const fnInfo_week_in_year_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_year_lc',
-    fn: (ctx, args, record) => {
-        if (args.length > 0) {
-            const arg = args[0];
-            switch (typeof arg) {
-            case 'object':
-                if (arg === null) {
-                    return null;
-                } else {
-                    switch (arg.type) {
-                    case 'date': case 'datetime':
-                        return Math.floor(getDayInYear(new Date(arg.value)) / 7) + 1;
-                    default:
-                        return null;
-                    }
-                }
-            case 'string':
-                if (DatePattern.test(arg) || DateTimePattern.test(arg)) {
-                    return Math.floor(getDayInYear(new Date(arg)) / 7) + 1;
-                } else {
-                    return null;
-                }
-            }
-        }
-        throw new Error(`Argument of function "week_in_year_lc" should be field.`);
-    },
+    fn: dateScalarFunctionGen('week_in_year_lc', (dateStr) => Math.floor(getDayInYear(new Date(dateStr)) / 7) + 1),
 };
