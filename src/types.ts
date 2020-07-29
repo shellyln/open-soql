@@ -179,7 +179,7 @@ export type QueryResolverFn = (
     ctx: ResolverContext,
     ) => Promise<any[]>;
 
-export type CreateResolverFn = (
+export type InsertResolverFn = (
     records: any[],
     ctx: ResolverContext,
     ) => Promise<any[]>;
@@ -252,8 +252,8 @@ export interface QueryBuilderInfo {
             [resolverNames: string]: QueryResolverFn;
         };
         // eslint-disable-next-line @typescript-eslint/ban-types
-        create?: {
-            [resolverNames: string]: CreateResolverFn;
+        insert?: {
+            [resolverNames: string]: InsertResolverFn;
         };
         // eslint-disable-next-line @typescript-eslint/ban-types
         update?: {

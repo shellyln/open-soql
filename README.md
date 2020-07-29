@@ -373,7 +373,7 @@ const aggregationResult = await soql`
   * [ ] JSON
   * [ ] CSV
 * DML
-  * [ ] `create`
+  * [ ] `insert`
   * [ ] `update`
   * [ ] `remove`
 * [x] Template string
@@ -420,9 +420,9 @@ export interface QueryBuilderInfo {
 
 export function build(builder: QueryBuilderInfo): {
     soql: (strings: TemplateStringsArray | string, ...values: any[]) => Promise<any[]>;
-    insert: (resolver: string, obj: object | object[]) => undefined;
-    update: (resolver: string, obj: object | object[]) => undefined;
-    remove: (resolver: string, obj: object | object[]) => undefined;
+    insert: (resolver: string, obj: object | object[]) => Promise<any[]>;
+    update: (resolver: string, obj: object | object[]) => Promise<any[]>;
+    remove: (resolver: string, obj: object | object[]) => Promise<void>;
 };
 ```
 

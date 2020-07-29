@@ -44,7 +44,7 @@ describe("foo", function() {
         expect(1).toEqual(1);
     });
     it("foo-2", async function() {
-        const {soql} = build({
+        const { soql, insert, update, remove } = build({
             functions: [{
                 type: 'scalar',
                 name: 'string',
@@ -77,12 +77,24 @@ describe("foo", function() {
                 },
             }],
             events: {
-                beginExecute: () => Promise.resolve(),
-                endExecute: () => Promise.resolve(),
-                beforeMasterSubQueries: () => Promise.resolve(),
-                afterMasterSubQueries: () => Promise.resolve(),
-                beforeDetailSubQueries: () => Promise.resolve(),
-                afterDetailSubQueries: () => Promise.resolve(),
+                beginExecute: (evt) => {
+                    return Promise.resolve();
+                },
+                endExecute: (evt) => {
+                    return Promise.resolve();
+                },
+                beforeMasterSubQueries: (evt) => {
+                    return Promise.resolve();
+                },
+                afterMasterSubQueries: (evt) => {
+                    return Promise.resolve();
+                },
+                beforeDetailSubQueries: (evt) => {
+                    return Promise.resolve();
+                },
+                afterDetailSubQueries: (evt) => {
+                    return Promise.resolve();
+                },
             },
             resolvers: {
                 query: {
@@ -174,6 +186,21 @@ describe("foo", function() {
                             id: 'Event/2',
                         }]);
                     },
+                },
+                insert: {
+                    Contact: (records, ctx) => {
+                        return Promise.resolve(records);
+                    }
+                },
+                update: {
+                    Contact: (records, ctx) => {
+                        return Promise.resolve(records);
+                    }
+                },
+                remove: {
+                    Contact: (records, ctx) => {
+                        return Promise.resolve();
+                    }
                 },
             },
             relationships: {
@@ -276,6 +303,16 @@ describe("foo", function() {
             having count(id) > 0
         `;
         console.log(JSON.stringify(zz, null, 2));
+
+        const retI = await insert('contact', [{
+            id: '1'
+        }]);
+        const retU = await update('contact', [{
+            id: '1'
+        }]);
+        const retR = await remove('contact', [{
+            id: '1'
+        }]);
         expect(1).toEqual(1);
     });
 });

@@ -7,6 +7,9 @@ import { QueryBuilderInfo }   from './types';
 import { prepareQuery,
          prepareBuilderInfo } from './lib/prepare';
 import { executeQuery }       from './lib/run-query';
+import { executeInsertDML,
+         executeUpdateDML,
+         executeRemoveDML }   from './lib/run-dml';
 
 
 
@@ -21,10 +24,19 @@ export function build(builder: QueryBuilderInfo) {
             return await executeQuery(preparedBI, query, null, null, null, null);
         },
         // eslint-disable-next-line @typescript-eslint/ban-types
-        insert: (resolver: string, obj: object | object[]) => void 0,
+        insert: async (resolver: string, obj: object | object[]) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return await executeInsertDML(preparedBI, resolver, Array.isArray(obj) ? obj : [obj]);
+        },
         // eslint-disable-next-line @typescript-eslint/ban-types
-        update: (resolver: string, obj: object | object[]) => void 0,
+        update: async (resolver: string, obj: object | object[]) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return await executeUpdateDML(preparedBI, resolver, Array.isArray(obj) ? obj : [obj]);
+        },
         // eslint-disable-next-line @typescript-eslint/ban-types
-        remove: (resolver: string, obj: object | object[]) => void 0,
+        remove: async (resolver: string, obj: object | object[]) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return await executeRemoveDML(preparedBI, resolver, Array.isArray(obj) ? obj : [obj]);
+        },
     });
 }
