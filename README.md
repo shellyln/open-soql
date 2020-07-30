@@ -133,6 +133,21 @@ const { soql, insert, update, remove } = build({
                 }]);
             },
         },
+        insert: {
+            Contact: (records, ctx) => {
+                return Promise.resolve(records.map((x, i) => ({...x, id: `Contact/${i}`})));
+            },
+        },
+        update: {
+            Contact: (records, ctx) => {
+                return Promise.resolve(records);
+            },
+        },
+        remove: {
+            Contact: (records, ctx) => {
+                return Promise.resolve();
+            },
+        },
     },
     relationships: {
         /**
@@ -239,12 +254,15 @@ DML
 const inserted = await insert('Contact', [{
     Name: 'foo',
 }]);
-// inserted is [{ Id: '12345', Name: 'foo' }]
+// inserted is [{ Id: 'Contact/1', Name: 'foo' }]
 
 const updated = await update('Contact', inserted);
-// updated is [{ Id: '12345', Name: 'foo' }]
+// updated is [{ Id: 'Contact/1', Name: 'foo' }]
 
 await remove('Contact', updated);
+
+const selected = await soql`Select Id, Name from Contact`;
+const updated2 = await update('Contact', selected);
 ```
 
 

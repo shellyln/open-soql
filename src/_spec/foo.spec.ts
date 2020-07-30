@@ -189,7 +189,8 @@ describe("foo", function() {
                 },
                 insert: {
                     Contact: (records, ctx) => {
-                        return Promise.resolve(records);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return Promise.resolve(records.map((x, i) => ({...x, id: `Contact/${i}`})));
                     }
                 },
                 update: {
