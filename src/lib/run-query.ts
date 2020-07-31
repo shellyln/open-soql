@@ -449,14 +449,14 @@ export async function executeQuery(
                 ) ?? {});
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const masterIdField = (typeof masterRelationshipInfo === 'object' && masterRelationshipInfo.id)
+            const foreignIdField = (typeof masterRelationshipInfo === 'object' && masterRelationshipInfo.id)
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 ? masterRelationshipInfo.id as string
                 : i === 0
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    ? builder.rules.masterIdFieldName!(parentResolverName!)
+                    ? builder.rules.foreignIdFieldName!(parentResolverName!)
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    : builder.rules.masterIdFieldName!(resolverName!) ;
+                    : builder.rules.foreignIdFieldName!(resolverName!) ;
 
             if (! x.resolver) {
                 throw new Error(`Resolver name ${x.name.join('.')} is not resolved.`);
@@ -486,7 +486,7 @@ export async function executeQuery(
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         ? childRelationshipInfo.id as string
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        : builder.rules.masterIdFieldName!(childResolverName);
+                        : builder.rules.foreignIdFieldName!(childResolverName);
                     if (childIdField) {
                         relationshipIdFields.push(childIdField);
                     }
@@ -518,7 +518,7 @@ export async function executeQuery(
                 resolverName,
                 parentResolverName,
                 parentType,
-                masterIdField,
+                foreignIdField,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
             };

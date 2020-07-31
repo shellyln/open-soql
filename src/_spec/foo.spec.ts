@@ -211,11 +211,11 @@ describe("foo", function() {
                     Opportunities: ['Opportunity'],
                 },
                 Contact: {
-                    Account: 'Account', // BUG: masterIdField is not set correctly
+                    Account: 'Account', // BUG: foreignIdField is not set correctly
                     // Account: { resolver: 'Account', id: 'AccountId' },
                 },
                 Opportunity: {
-                    Account: 'Account', // BUG: masterIdField is not set correctly
+                    Account: 'Account', // BUG: foreignIdField is not set correctly
                     // Account: { resolver: 'Account', id: 'AccountId' },
                 },
                 Event: {

@@ -427,7 +427,7 @@ export interface QueryBuilderInfo {
     functions?: QueryFuncInfo[];
     rules?: {
         idFieldName?: (resolverName: string) => string;
-        masterIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
+        foreignIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
     };
     events?: {
         beginExecute?: (evt: ResolverEvent) => Promise<void>;
