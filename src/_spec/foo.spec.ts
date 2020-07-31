@@ -206,16 +206,17 @@ describe("foo", function() {
             },
             relationships: {
                 Account: {
-                    Contacts: ['Contact', 'Account'],
-                    // Opportunities: ['Opportunity', 'Account'],
+                    Contacts: ['Contact'],
+                    // Contacts: ['Contact', 'Account'],
                     Opportunities: ['Opportunity'],
+                    // Opportunities: ['Opportunity', 'Account'],
                 },
                 Contact: {
-                    Account: 'Account', // BUG: foreignIdField is not set correctly
+                    Account: 'Account',
                     // Account: { resolver: 'Account', id: 'AccountId' },
                 },
                 Opportunity: {
-                    Account: 'Account', // BUG: foreignIdField is not set correctly
+                    Account: 'Account',
                     // Account: { resolver: 'Account', id: 'AccountId' },
                 },
                 Event: {

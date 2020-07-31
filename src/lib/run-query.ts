@@ -477,16 +477,19 @@ export async function executeQuery(
             const relationshipIdFields: string[] = [];
             for (let j = i + 1; j < query.from.length; j++) {
                 const c = query.from[j];
+
                 if (x.name.length + 1 === c.name.length && isEqualComplexName(x.name, c.name.slice(0, x.name.length))) {
                     const childResolverName = c.resolverName ?? '';
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
                     const childRelationshipInfo = ((builder.relationships[resolverName] ?? {})[childResolverName] as any) ?? {};
+
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     const childIdField = childRelationshipInfo.id
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         ? childRelationshipInfo.id as string
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         : builder.rules.foreignIdFieldName!(childResolverName);
+
                     if (childIdField) {
                         relationshipIdFields.push(childIdField);
                     }
@@ -512,6 +515,11 @@ export async function executeQuery(
                 .map(cond => pruneCondition(x.name, cond))
                 .filter(filterZeroLengthCondFn);
 
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const parentIdFieldName = parentResolverName ? builder.rules.idFieldName!(parentResolverName) : void 0;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const currentIdFieldName = builder.rules.idFieldName!(resolverName);
+
             const ctxGen: ResolverContext = {
                 functions: builder.functions,
                 graphPath: x.name,
@@ -519,6 +527,8 @@ export async function executeQuery(
                 parentResolverName,
                 parentType,
                 foreignIdField,
+                masterIdField: i === 0 ? parentIdFieldName : currentIdFieldName,
+                detailIdField: i === 0 ? currentIdFieldName : parentIdFieldName,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
             };
@@ -555,6 +565,8 @@ export async function executeQuery(
 
                 primaryRecords = records;
             } else if (parentRecords && parentRecords.length) {
+                // Get master relationships.
+
                 // For N+1 Query problem
                 if (builder.events.beforeMasterSubQueries) {
                     await builder.events.beforeMasterSubQueries(ctxGen);
@@ -646,6 +658,7 @@ export async function executeQuery(
                     parentRemovingFields.delete(subQueryName[subQueryName.length - 1]);
                 }
             }
+
             const results = await Promise.all(promises);
             results.forEach(r => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

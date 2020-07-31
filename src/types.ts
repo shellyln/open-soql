@@ -153,8 +153,8 @@ export interface ResolverContext {
     parent?: any;
     foreignIdField?: string; // [parentType='master'] Select from currentResolver where currentResolver.foreignIdField = parent.idField
                              // [parentType='detail'] Select from currentResolver where currentResolver.idField = parent.foreignIdField
-    // masterIdField?: string;  // Record id field of master.
-    // detailIdField?: string;  // Record id field of detail.
+    masterIdField?: string;  // Record id field of master.
+    detailIdField?: string;  // Record id field of detail.
     resolverData: any;       // Resolver's user defined data.
 }
 
