@@ -5,6 +5,7 @@
 
 import { QueryResolverFn,
          ResolverEvent }        from './types';
+import { getObjectValue }       from './lib/util';
 import { applyWhereConditions } from './filters';
 
 
@@ -33,7 +34,7 @@ export const StaticJsonResolverBuilder:
             const recordFields = new Map<string, string>(Object.keys(records[0]).map(x => [x.toLowerCase(), x]));
             for (const field of fields) {
                 const w = field.toLowerCase();
-                if (recordFields.has(w)) {
+                if (! recordFields.has(w)) {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     removingFields.add(recordFields.get(w)!);
                 }
@@ -51,18 +52,18 @@ export const StaticJsonResolverBuilder:
             switch (ctx.parentType) {
             case 'master':
                 if (ctx.foreignIdField) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    const parentId = ctx.parent['id'];
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
+                    const parentId = getObjectValue(ctx.parent, ctx.masterIdField!);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
-                    records = records.filter(x => x[ctx.foreignIdField!] === parentId);
+                    records = records.filter(x => getObjectValue(x, ctx.foreignIdField!) === parentId);
                 }
                 break;
             case 'detail':
                 if (ctx.foreignIdField) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
-                    const parentId = ctx.parent[ctx.foreignIdField!];
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    records = records.filter(x => x['id'] === parentId);
+                    const parentId = getObjectValue(ctx.parent, ctx.foreignIdField!);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
+                    records = records.filter(x => getObjectValue(x, ctx.masterIdField!) === parentId);
                 }
                 break;
             }

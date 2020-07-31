@@ -5,6 +5,7 @@ import { prepareQuery,
 import { getObjectValue }           from '../lib/util';
 import { QueryBuilderInfoInternal } from '../types';
 import { build }                    from '../builder';
+import { StaticJsonResolverBuilder } from '../resolvers';
 
 
 
@@ -315,6 +316,46 @@ describe("foo", function() {
         const retR = await remove('contact', [{
             id: '1'
         }]);
+        expect(1).toEqual(1);
+    });
+    it("foo-3", async function() {
+        const { soql } = build({
+            resolvers: {
+                query: {
+                    Account: StaticJsonResolverBuilder(
+                        'Account', () => Promise.resolve(JSON.stringify([
+                            { Id: 'Account/1', Name: 'Acme Inc.' },
+                            { Id: 'Account/2', Name: 'Foobar Inc.' },
+                        ]))
+                    ),
+                    Contact: StaticJsonResolverBuilder(
+                        'Contact', () => Promise.resolve(JSON.stringify([
+                            { Id: 'Contact/1', Foo: 'aaa/1', Bar: 'bbb/1', Baz: 'ccc/1', Qux: 'ddd/1', Quux: 'eee/1', AccountId: 'Account/1' },
+                            { Id: 'Contact/2', Foo: 'aaa/2', Bar: 'bbb/2', Baz: 'ccc/2', Qux: 'ddd/2', Quux: 'eee/2', AccountId: 'Account/1' },
+                            { Id: 'Contact/3', Foo: 'aaa/3', Bar: 'bbb/3', Baz: 'ccc/3', Qux: 'ddd/3', Quux: 'eee/3', AccountId: 'Account/2' },
+                        ]))
+                    ),
+                }
+            },
+            relationships: {
+                Account: {
+                    Contacts: ['Contact'],
+                    // Contacts: ['Contact', 'Account'],
+                },
+                Contact: {
+                    Account: 'Account',
+                    // Account: { resolver: 'Account', id: 'AccountId' },
+                },
+            },
+        });
+        const z = await soql`
+            Select
+                id, foo, bar, baz, acc.id, acc.name,
+                (Select Id from acc.contacts)
+            from contact, account acc
+            where foo like 'a%'
+        `;
+        console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
 });
