@@ -22,7 +22,8 @@ npm install open-soql
 Set up the resolvers
 ```ts
 import { build } from 'open-soql/modules/builder';
-
+import { staticJsonResolverBuilder,
+         staticCsvResolverBuilder } from 'open-soql/modules/resolvers';
 
 const { soql, insert, update, remove } = build({
     // See `src/types.ts` > `QueryBuilderInfo`
@@ -121,17 +122,13 @@ const { soql, insert, update, remove } = build({
                     DueDate: '2020-01-01',
                 }]);
             },
-            Event: (fields, conditions, limit, offset, ctx) => {
-                // fetch the `Event` object data
-                const o = {};
-                for (const field of fields) {
-                    o[field] = `field:${field}/1`;
-                }
-                return Promise.resolve([{
-                    ...o,
-                    id: 'Event/1',
-                }]);
-            },
+            Event: staticCsvResolverBuilder( // "staticJsonResolverBuilder" is also available
+                'Event', () => Promise.resolve(`
+                    Id,Subject
+                    Account/z1,Email
+                    Account/z2,Phone
+                `)
+            ),
         },
         insert: {
             Contact: (records, ctx) => {
@@ -404,8 +401,8 @@ const updated2 = await update('Contact', selected);
 ### Other features
 * [ ] prepared query (pre-compiled query)
 * standard query resolvers
-  * [ ] JSON
-  * [ ] CSV
+  * [x] JSON
+  * [x] CSV
 * DML
   * [x] `insert`
   * [x] `update`
