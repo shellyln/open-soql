@@ -49,15 +49,32 @@ export const StaticResolverBuilderGen:
         return (resolverName, fetcher) => {
 
         return async (fields, conditions, limit, offset, ctx) => {
+            let cache: Map<string, string> | null;
+            let src: string | null = null;
+
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (ctx.resolverData && ctx.resolverData.cache && ctx.resolverData.cache[resolverName]) {
+            if (ctx.resolverData.cache) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                const cache: Map<string, any[]> = ctx.resolverData.cache[resolverName];
+                cache = ctx.resolverData.cache;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (cache!.has(resolverName)) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    src = cache!.get(resolverName)!;
+                }
+            } else {
+                cache = new Map<string, string>();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                ctx.resolverData.cache = cache;
             }
 
-            const src = await fetcher();
-
-            let records: any[] = parser(src);
+            let records: any[] | null = null;
+            if (src === null) {
+                records = parser(await fetcher());
+            } else {
+                records = parser(src);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                cache!.set(resolverName, src);
+            }
 
             if (records.length) {
                 const removingFields = new Set<string>();
