@@ -151,8 +151,10 @@ export interface ResolverContext {
                              //   `details` is called 'child relationship name'.
         'detail';            // Accessed by `Select master__r.childField From Detail`
     parent?: any;
-    masterIdField?: string;  // [parentType='master'] Select from currentResolver where currentResolver.masterIdField = parent.idField
-                             // [parentType='detail'] Select from currentResolver where currentResolver.idField = parent.masterIdField
+    foreignIdField?: string; // [parentType='master'] Select from currentResolver where currentResolver.foreignIdField = parent.idField
+                             // [parentType='detail'] Select from currentResolver where currentResolver.idField = parent.foreignIdField
+    masterIdField?: string;  // Record id field of master.
+    detailIdField?: string;  // Record id field of detail.
     resolverData: any;       // Resolver's user defined data.
 }
 
@@ -231,7 +233,7 @@ export interface QueryBuilderInfo {
         // resolverCase?: (s: string) => string;
         // fieldCase?: (s: string) => string;
         idFieldName?: (resolverName: string) => string;
-        masterIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
+        foreignIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
     };
     /** */
     events?: {
