@@ -5,7 +5,8 @@ import { prepareQuery,
 import { getObjectValue }           from '../lib/util';
 import { QueryBuilderInfoInternal } from '../types';
 import { build }                    from '../builder';
-import { StaticJsonResolverBuilder } from '../resolvers';
+import { staticJsonResolverBuilder,
+         staticCsvResolverBuilder } from '../resolvers';
 
 
 
@@ -322,18 +323,64 @@ describe("foo", function() {
         const { soql } = build({
             resolvers: {
                 query: {
-                    Account: StaticJsonResolverBuilder(
+                    Account: staticJsonResolverBuilder(
                         'Account', () => Promise.resolve(JSON.stringify([
                             { Id: 'Account/1', Name: 'Acme Inc.' },
                             { Id: 'Account/2', Name: 'Foobar Inc.' },
                         ]))
                     ),
-                    Contact: StaticJsonResolverBuilder(
+                    Contact: staticJsonResolverBuilder(
                         'Contact', () => Promise.resolve(JSON.stringify([
                             { Id: 'Contact/1', Foo: 'aaa/1', Bar: 'bbb/1', Baz: 'ccc/1', Qux: 'ddd/1', Quux: 'eee/1', AccountId: 'Account/1' },
                             { Id: 'Contact/2', Foo: 'aaa/2', Bar: 'bbb/2', Baz: 'ccc/2', Qux: 'ddd/2', Quux: 'eee/2', AccountId: 'Account/1' },
                             { Id: 'Contact/3', Foo: 'aaa/3', Bar: 'bbb/3', Baz: 'ccc/3', Qux: 'ddd/3', Quux: 'eee/3', AccountId: 'Account/2' },
                         ]))
+                    ),
+                }
+            },
+            relationships: {
+                Account: {
+                    Contacts: ['Contact'],
+                    // Contacts: ['Contact', 'Account'],
+                },
+                Contact: {
+                    Account: 'Account',
+                    // Account: { resolver: 'Account', id: 'AccountId' },
+                },
+            },
+        });
+        const z = await soql`
+            Select
+                id, foo, bar, baz, acc.id, acc.name,
+                (Select Id from acc.contacts)
+            from contact, account acc
+            where foo like 'a%'
+        `;
+        console.log(JSON.stringify(z, null, 2));
+        expect(1).toEqual(1);
+    });
+    it("foo-4", async function() {
+        const { soql } = build({
+            resolvers: {
+                query: {
+                    Account: staticCsvResolverBuilder(
+                        'Account', () => Promise.resolve(
+                            `
+                            Id,Name
+                            Account/z1,Acme Co.
+                            Account/z2,Foobar Co.
+                            `
+                        )
+                    ),
+                    Contact: staticCsvResolverBuilder(
+                        'Account', () => Promise.resolve(
+                            `
+                            Id,Foo,Bar,Baz,Qux,Quux,AccountId
+                            Contact/z1,aaa/z1,bbb/z1,ccc/z1,ddd/z1,eee/z1,Account/z1
+                            Contact/z2,aaa/z2,bbb/z2,ccc/z2,ddd/z2,eee/z2,Account/z1
+                            Contact/z3,aaa/z3,bbb/z3,ccc/z3,ddd/z3,eee/z3,Account/z2
+                            `
+                        )
                     ),
                 }
             },

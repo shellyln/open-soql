@@ -7,3 +7,4 @@
 export * from './types';
 export * from './filters';
 export * from './builder';
+export * from './resolvers';
