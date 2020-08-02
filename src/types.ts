@@ -238,7 +238,7 @@ export interface QueryBuilderInfo {
     /** */
     events?: {
         beginExecute?: (evt: ResolverEvent) => Promise<void>;
-        endExecute?: (evt: ResolverEvent) => Promise<void>;
+        endExecute?: (evt: ResolverEvent, err: Error | null) => Promise<void>;
         beforeMasterSubQueries?: (evt: ResolverEvent) => Promise<void>;
         afterMasterSubQueries?: (evt: ResolverEvent) => Promise<void>;
         beforeDetailSubQueries?: (evt: ResolverEvent) => Promise<void>;

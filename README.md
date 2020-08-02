@@ -61,7 +61,7 @@ const { soql, insert, update, remove } = build({
     }],
     events: { // optional: For resolving transaction and N+1 query problem.
         beginExecute: (evt) => Promise.resolve(),
-        endExecute: (evt) => Promise.resolve(),
+        endExecute: (evt, err) => Promise.resolve(),
         beforeMasterSubQueries: (evt) => Promise.resolve(),
         afterMasterSubQueries: (evt) => Promise.resolve(),
         beforeDetailSubQueries: (evt) => Promise.resolve(),
@@ -71,57 +71,17 @@ const { soql, insert, update, remove } = build({
         query: {
             Account: (fields, conditions, limit, offset, ctx) => {
                 // Fetch the `Account` object data.
-                const o = {};
-                for (const field of fields) {
-                    o[field] = `field:${field}/1`;
-                }
-                return Promise.resolve([{
-                    ...o,
-                    id: 'Account/1',
-                    numOfEmployees: 5,
-                    created: '2020-01-02',
-                    updated: '2020-01-02',
-                }, {
-                    ...o,
-                    id: 'Account/2',
-                    numOfEmployees: 5,
-                    created: '2020-01-02',
-                    updated: '2020-01-02',
-                }]);
+                return Promise.resolve([{ ... }, ... ]);
             },
             Contact: (fields, conditions, limit, offset, ctx) => {
                 // Fetch the `Contact` object data.
                 // `ctx.parent` is a parent record.
-                const o = {};
-                for (const field of fields) {
-                    o[field] = `field:${field}/1`;
-                }
-                return Promise.resolve([{
-                    ...o,
-                    id: 'Contact/1',
-                }, {
-                    ...o,
-                    id: 'Contact/2',
-                }]);
+                return Promise.resolve([{ ... }, ... ]);
             },
             Opportunity: (fields, conditions, limit, offset, ctx) => {
                 // Fetch the `Opportunity` object data.
                 // `ctx.parent` is a parent record.
-                const o = {};
-                for (const field of fields) {
-                    o[field] = `field:${field}/1`;
-                }
-                return Promise.resolve([{
-                    ...o,
-                    id: 'Opportunity/1',
-                    Amount: 10001,
-                    DueDate: '2020-01-01',
-                }, {
-                    ...o,
-                    id: 'Opportunity/2',
-                    Amount: 10001,
-                    DueDate: '2020-01-01',
-                }]);
+                return Promise.resolve([{ ... }, ... ]);
             },
             Event: staticCsvResolverBuilder(  // (CSV string)
                                               // "staticJsonResolverBuilder"(JSON string) and

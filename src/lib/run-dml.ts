@@ -3,13 +3,7 @@
 // https://github.com/shellyln
 
 
-import { PreparedQuery,
-         PreparedResolver,
-         PreparedSubQuery,
-         PreparedCondition,
-         PreparedOrderByField,
-         ResolverContext,
-         ResolverEvent,
+import { ResolverEvent,
          InsertResolverFn,
          UpdateResolverFn,
          RemoveResolverFn,
@@ -58,11 +52,11 @@ export async function executeInsertDML(
         ret = await resolverInfo(records, ctx);
 
         if (builder.events.endExecute) {
-            await builder.events.endExecute(evt);
+            await builder.events.endExecute(evt, null);
         }
     } catch(e) {
         if (builder.events.endExecute) {
-            await builder.events.endExecute(evt);
+            await builder.events.endExecute(evt, e);
         }
 
         throw e;
@@ -114,11 +108,11 @@ export async function executeUpdateDML(
         ret = await resolverInfo(records, ctx);
 
         if (builder.events.endExecute) {
-            await builder.events.endExecute(evt);
+            await builder.events.endExecute(evt, null);
         }
     } catch(e) {
         if (builder.events.endExecute) {
-            await builder.events.endExecute(evt);
+            await builder.events.endExecute(evt, e);
         }
 
         throw e;
@@ -167,11 +161,11 @@ export async function executeRemoveDML(
         await resolverInfo(records, ctx);
 
         if (builder.events.endExecute) {
-            await builder.events.endExecute(evt);
+            await builder.events.endExecute(evt, null);
         }
     } catch(e) {
         if (builder.events.endExecute) {
-            await builder.events.endExecute(evt);
+            await builder.events.endExecute(evt, e);
         }
 
         throw e;

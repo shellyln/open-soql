@@ -685,7 +685,7 @@ export async function executeQuery(
                 // TODO:
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
-            });
+            }, null);
         }
     } catch (e) {
         if (!parent && builder.events.endExecute) {
@@ -693,7 +693,7 @@ export async function executeQuery(
                 // TODO:
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
-            });
+            }, e);
         }
         throw e;
     }
