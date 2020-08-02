@@ -47,23 +47,27 @@ function filterAndSliceRecords(
         records: any[], fields: string[], conditions: PreparedCondition[],
         limit: number | null, offset: number | null, ctx: ResolverContext) {
 
-    if (records.length) {
-        const removingFields = new Set<string>();
-        const recordFields = new Map<string, string>(Object.keys(records[0]).map(x => [x.toLowerCase(), x]));
-        for (const field of fields) {
-            const w = field.toLowerCase();
-            if (! recordFields.has(w)) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                removingFields.add(recordFields.get(w)!);
-            }
-        }
-        for (const record of records) {
-            for (const field of removingFields) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                delete record[field];
-            }
+    if (! records.length) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return records;
+    }
+
+    const removingFields = new Set<string>();
+    const recordFields = new Map<string, string>(Object.keys(records[0]).map(x => [x.toLowerCase(), x]));
+    for (const field of fields) {
+        const w = field.toLowerCase();
+        if (! recordFields.has(w)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            removingFields.add(recordFields.get(w)!);
         }
     }
+    for (const record of records) {
+        for (const field of removingFields) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            delete record[field];
+        }
+    }
+
     records = applyWhereConditions(ctx, conditions, records);
 
     if (ctx.parent) {

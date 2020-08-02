@@ -146,6 +146,19 @@ export function getObjectValue(record: any, name: string) {
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getObjectValueWithFieldNameMap(map: Map<string, string>, record: any, name: string) {
+    const ni = name.toLowerCase();
+
+    if (! map.has(ni)) {
+        return null;  // TODO: null or undefined?
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
+    return record[map.get(ni)!];
+}
+
+
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getObjectPathValue(record: any, name: string[]) {
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

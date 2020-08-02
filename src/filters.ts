@@ -6,15 +6,16 @@
 import { FieldResultType,
          PreparedConditionOperand,
          PreparedCondition,
-         ResolverContext }             from './types';
-import { getObjectValue }              from './lib/util';
+         ResolverContext }                from './types';
+import { getObjectValue,
+         getObjectValueWithFieldNameMap } from './lib/util';
 import { callAggregateFunction,
          callScalarFunction,
-         callImmediateScalarFunction } from './lib/call';
+         callImmediateScalarFunction }    from './lib/call';
 
 
 
-function getOp1Value(isAggregation: boolean, ctx: ResolverContext, cond: PreparedCondition, record: any) {
+function getOp1Value(fieldNameMap: Map<string, string>, isAggregation: boolean, ctx: ResolverContext, cond: PreparedCondition, record: any) {
     let v = null;
     const op = cond.operands[0];
 
@@ -47,7 +48,7 @@ function getOp1Value(isAggregation: boolean, ctx: ResolverContext, cond: Prepare
             switch (op.type) {
             case 'field':
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                v = getObjectValue(record, op.name[op.name.length - 1]);
+                v = getObjectValueWithFieldNameMap(fieldNameMap, record, op.name[op.name.length - 1]);
                 if (op2IsDateOrDatetime) {
                     v = new Date(v).getTime();
                 }
@@ -140,7 +141,7 @@ function getOp2Value(ctx: ResolverContext, cond: PreparedCondition, record: any)
 }
 
 
-function evalRecursiveCondition(isAggregation: boolean, ctx: ResolverContext, w: PreparedConditionOperand, record: any): boolean {
+function evalRecursiveCondition(fieldNameMap: Map<string, string>, isAggregation: boolean, ctx: ResolverContext, w: PreparedConditionOperand, record: any): boolean {
     let ret = true;
 
     switch (typeof w) {
@@ -153,7 +154,7 @@ function evalRecursiveCondition(isAggregation: boolean, ctx: ResolverContext, w:
             }
             switch (w.type) {
             case 'condition':
-                ret = evalCondition(isAggregation, ctx, w, record);
+                ret = evalCondition(fieldNameMap, isAggregation, ctx, w, record);
                 break;
             default:
                 throw new Error(`Unexpected type appears in the condition.`);
@@ -207,7 +208,7 @@ function convertPattern(v: string) {
 }
 
 
-function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: PreparedCondition, record: any): boolean {
+function evalCondition(fieldNameMap: Map<string, string>, isAggregation: boolean, ctx: ResolverContext, cond: PreparedCondition, record: any): boolean {
     let ret = true;
 
     EVAL: switch (cond.op) {
@@ -215,7 +216,7 @@ function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: Prepa
         break;
     case 'and':
         for (const w of cond.operands) {
-            if (! evalRecursiveCondition(isAggregation, ctx, w, record)) {
+            if (! evalRecursiveCondition(fieldNameMap, isAggregation, ctx, w, record)) {
                 ret = false;
                 break EVAL;
             }
@@ -223,19 +224,19 @@ function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: Prepa
         break;
     case 'or':
         for (const w of cond.operands) {
-            if (evalRecursiveCondition(isAggregation, ctx, w, record)) {
+            if (evalRecursiveCondition(fieldNameMap, isAggregation, ctx, w, record)) {
                 break EVAL;
             }
         }
         ret = false;
         break;
     case 'not':
-        ret = evalRecursiveCondition(isAggregation, ctx, cond.operands[0], record);
+        ret = evalRecursiveCondition(fieldNameMap, isAggregation, ctx, cond.operands[0], record);
         break;
     default:
         {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const v1 = getOp1Value(isAggregation, ctx, cond, record);
+            const v1 = getOp1Value(fieldNameMap, isAggregation, ctx, cond, record);
             const v2 = getOp2Value(ctx, cond, record);
             switch (cond.op) {
             case '=':
@@ -368,9 +369,15 @@ function evalCondition(isAggregation: boolean, ctx: ResolverContext, cond: Prepa
 export function applyWhereConditions(ctx: ResolverContext, conds: PreparedCondition[], records: any[]) {
     const ret: any[] = [];
 
+    if (! records.length) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return ret;
+    }
+    const fieldNameMap = new Map<string, string>(Object.keys(records[0]).map(x => [x.toLowerCase(), x]));
+
     NEXTREC: for (const record of records) {
         for (const cond of conds) {
-            if (! evalCondition(false, ctx, cond, record)) {
+            if (! evalCondition(fieldNameMap, false, ctx, cond, record)) {
                 continue NEXTREC;
             }
         }
@@ -386,9 +393,15 @@ export function applyWhereConditions(ctx: ResolverContext, conds: PreparedCondit
 export function applyHavingConditions(ctx: ResolverContext, conds: PreparedCondition[], groupedRecsArray: any[][]) {
     const ret: any[][] = [];
 
+    if (! groupedRecsArray.length) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return ret;
+    }
+    const fieldNameMap = new Map<string, string>(Object.keys(groupedRecsArray[0][0]).map(x => [x.toLowerCase(), x]));
+
     NEXTREC: for (const groupedRecs of groupedRecsArray) {
         for (const cond of conds) {
-            if (! evalCondition(true, ctx, cond, groupedRecs)) {
+            if (! evalCondition(fieldNameMap, true, ctx, cond, groupedRecs)) {
                 continue NEXTREC;
             }
         }
