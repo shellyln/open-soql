@@ -406,17 +406,17 @@ describe("foo", function() {
                 query: {
                     Account: staticCsvResolverBuilder(
                         'Account', () => Promise.resolve(`
-                            Id,Name
+                            Id,        Name
                             Account/z1,Acme Co.
                             Account/z2,Foobar Co.
                         `)
                     ),
                     Contact: staticCsvResolverBuilder(
                         'Contact', () => Promise.resolve(`
-                            Id,Foo,Bar,Baz,Qux,Quux,AccountId
-                            Contact/z1,aaa/z1,bbb/z1,ccc/z1,ddd/z1,eee/z1,Account/z1
-                            Contact/z2,aaa/z2,bbb/z2,ccc/z2,ddd/z2,eee/z2,Account/z1
-                            Contact/z3,aaa/z3,bbb/z3,ccc/z3,ddd/z3,eee/z3,Account/z2
+                            Id,         Foo,    Bar,    Baz,    Qux,    Quux,   AccountId
+                            Contact/z1, aaa/z1, bbb/z1, ccc/z1, ddd/z1, eee/z1, Account/z1
+                            Contact/z2, aaa/z2, bbb/z2, ccc/z2, ddd/z2, eee/z2, Account/z1
+                            Contact/z3, aaa/z2, bbb/z3, ccc/z3, ddd/z3, eee/z3, Account/z2
                         `)
                     ),
                 }

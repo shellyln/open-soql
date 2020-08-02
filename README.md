@@ -91,9 +91,9 @@ const { soql, insert, update, remove } = build({
                                               // "passThroughResolverBuilder"(array of object)
                                               // are also available.
                 'Event', () => Promise.resolve(`
-                    Id,Subject
-                    Account/z1,Email
-                    Account/z2,Phone
+                    Id,      Subject, WhatId
+                    Event/1, Email,   Account/1
+                    Event/2, Phone,   Contact/1
                 `)
             ),
         },
@@ -489,6 +489,68 @@ export function applyHavingConditions(
 ##### returns:
 
 * Groups that the filter applied.
+
+
+
+### Module 'open-soql/modules/resolvers'
+
+#### staticJsonResolverBuilder
+
+```ts
+export const staticJsonResolverBuilder:
+    (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn;
+```
+
+* Generate the query resolver for static JSON data.
+
+##### parameters:
+
+* resolverName: Resolver name.
+* fetcher: The function that returns promise of data.
+
+##### returns:
+
+* Query resolver.
+
+
+
+#### staticCsvResolverBuilder
+
+```ts
+export const staticCsvResolverBuilder:
+    (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn;
+```
+
+* Generate the query resolver for static CSV data.
+
+##### parameters:
+
+* resolverName: Resolver name.
+* fetcher: The function that returns promise of data.
+
+##### returns:
+
+* Query resolver.
+
+
+
+#### passThroughResolverBuilder
+
+```ts
+export const passThroughResolverBuilder:
+    (resolverName: string, fetcher: () => Promise<any[]>) => QueryResolverFn;
+```
+
+* Generate the query resolver for static object array data.
+
+##### parameters:
+
+* resolverName: Resolver name.
+* fetcher: The function that returns promise of data.
+
+##### returns:
+
+* Query resolver.
 
 
 

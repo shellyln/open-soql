@@ -110,7 +110,7 @@ function filterAndSliceRecords(
 }
 
 
-export const StaticResolverBuilderGen:
+const StaticResolverBuilderGen:
         (parser: (s: string) => any[]) =>
             (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn =
     (parser) => {
