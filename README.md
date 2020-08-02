@@ -71,16 +71,19 @@ const { soql, insert, update, remove } = build({
         query: {
             Account: (fields, conditions, limit, offset, ctx) => {
                 // Fetch the `Account` object data.
+                ctx.resolverCapabilities.filtering = true; // True if the resolver can filter records.
                 return Promise.resolve([{ ... }, ... ]);
             },
             Contact: (fields, conditions, limit, offset, ctx) => {
                 // Fetch the `Contact` object data.
                 // `ctx.parent` is a parent record.
+                ctx.resolverCapabilities.filtering = true; // True if the resolver can filter records.
                 return Promise.resolve([{ ... }, ... ]);
             },
             Opportunity: (fields, conditions, limit, offset, ctx) => {
                 // Fetch the `Opportunity` object data.
                 // `ctx.parent` is a parent record.
+                ctx.resolverCapabilities.filtering = true; // True if the resolver can filter records.
                 return Promise.resolve([{ ... }, ... ]);
             },
             Event: staticCsvResolverBuilder(  // (CSV string)
