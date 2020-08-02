@@ -18,6 +18,7 @@ function jsonRecordsParser(src: string) {
     if (! Array.isArray(records)) {
         throw new Error(`jsonRecordsParser: Records should be array.`);
     }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return records;
 }
@@ -28,8 +29,10 @@ function csvRecordsParser(src: string) {
     if (! rawRecords.length) {
         throw new Error(`csvRecordsParser: Header row is needed.`);
     }
+
     const header = rawRecords[0];
     const records: any[] = [];
+
     for (let i = 1; i < rawRecords.length; i++) {
         const cur = rawRecords[i];
         const rec = {};
@@ -38,6 +41,7 @@ function csvRecordsParser(src: string) {
         }
         records.push(rec);
     }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return records;
 }
@@ -47,6 +51,8 @@ function filterAndSliceRecords(
         records: any[], fields: string[], conditions: PreparedCondition[],
         limit: number | null, offset: number | null, ctx: ResolverContext) {
 
+    ctx.resolverCapabilities.filtering = true;
+
     if (! records.length) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return records;
@@ -54,6 +60,7 @@ function filterAndSliceRecords(
 
     const removingFields = new Set<string>();
     const recordFields = new Map<string, string>(Object.keys(records[0]).map(x => [x.toLowerCase(), x]));
+
     for (const field of fields) {
         const w = field.toLowerCase();
         if (! recordFields.has(w)) {

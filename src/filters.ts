@@ -7,15 +7,18 @@ import { FieldResultType,
          PreparedConditionOperand,
          PreparedCondition,
          ResolverContext }                from './types';
-import { getObjectValue,
-         getObjectValueWithFieldNameMap } from './lib/util';
+import { getObjectValueWithFieldNameMap } from './lib/util';
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction }    from './lib/call';
 
 
 
-function getOp1Value(fieldNameMap: Map<string, string>, isAggregation: boolean, ctx: ResolverContext, cond: PreparedCondition, record: any) {
+function getOp1Value(
+        fieldNameMap: Map<string, string>, isAggregation: boolean,
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cond: PreparedCondition, record: any) {
+
     let v = null;
     const op = cond.operands[0];
 
@@ -95,7 +98,10 @@ function getOp1Value(fieldNameMap: Map<string, string>, isAggregation: boolean, 
 }
 
 
-function getOp2Value(ctx: ResolverContext, cond: PreparedCondition, record: any) {
+function getOp2Value(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cond: PreparedCondition, record: any) {
+
     let v = null;
     const op = cond.operands[1];
 
@@ -141,7 +147,11 @@ function getOp2Value(ctx: ResolverContext, cond: PreparedCondition, record: any)
 }
 
 
-function evalRecursiveCondition(fieldNameMap: Map<string, string>, isAggregation: boolean, ctx: ResolverContext, w: PreparedConditionOperand, record: any): boolean {
+function evalRecursiveCondition(
+        fieldNameMap: Map<string, string>, isAggregation: boolean,
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        w: PreparedConditionOperand, record: any): boolean {
+
     let ret = true;
 
     switch (typeof w) {
@@ -172,9 +182,11 @@ function evalRecursiveCondition(fieldNameMap: Map<string, string>, isAggregation
 function convertPattern(v: string) {
     // NOTE: wildcards are '%' (= /.*/) and '_' (= /./)
     //       wildcard escape sequences are '\%' and '\_'
+
     const pat0 = v.replace(/[.*+?^=!:${}()|[\]\/]/g, '\\$&');
     let pattern = '';
     let prev: string | undefined = void 0;
+
     for (const c of pat0) {
         switch (c) {
         case '%':
@@ -208,7 +220,11 @@ function convertPattern(v: string) {
 }
 
 
-function evalCondition(fieldNameMap: Map<string, string>, isAggregation: boolean, ctx: ResolverContext, cond: PreparedCondition, record: any): boolean {
+function evalCondition(
+        fieldNameMap: Map<string, string>, isAggregation: boolean,
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cond: PreparedCondition, record: any): boolean {
+
     let ret = true;
 
     EVAL: switch (cond.op) {
@@ -366,7 +382,10 @@ function evalCondition(fieldNameMap: Map<string, string>, isAggregation: boolean
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function applyWhereConditions(ctx: ResolverContext, conds: PreparedCondition[], records: any[]) {
+export function applyWhereConditions(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        conds: PreparedCondition[], records: any[]) {
+
     const ret: any[] = [];
 
     if (! records.length) {
@@ -390,7 +409,10 @@ export function applyWhereConditions(ctx: ResolverContext, conds: PreparedCondit
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function applyHavingConditions(ctx: ResolverContext, conds: PreparedCondition[], groupedRecsArray: any[][]) {
+export function applyHavingConditions(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        conds: PreparedCondition[], groupedRecsArray: any[][]) {
+
     const ret: any[][] = [];
 
     if (! groupedRecsArray.length) {

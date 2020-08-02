@@ -169,7 +169,10 @@ function collectSubQueriesFromCondition(
 }
 
 
-async function execCondSubQueries(builder: QueryBuilderInfoInternal, condTemplate: PreparedCondition[], resolverData: any | null) {
+async function execCondSubQueries(
+        builder: QueryBuilderInfoInternal, condTemplate: PreparedCondition[],
+        resolverData: any | null) {
+
     const condSubQueries: Array<{ cond: PreparedCondition, index: number, subQuery: PreparedSubQuery }> = [];
 
     condTemplate.forEach(x => collectSubQueriesFromCondition(condSubQueries, x));
@@ -199,7 +202,10 @@ async function execCondSubQueries(builder: QueryBuilderInfoInternal, condTemplat
 }
 
 
-function mapSelectFields(ctx: ResolverContext, x: PreparedResolver, records: any[]) {
+function mapSelectFields(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        x: PreparedResolver, records: any[]) {
+
     for (const record of records) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const ent of x.queryFieldsMap!.entries()) {
@@ -240,7 +246,10 @@ function mapSelectFields(ctx: ResolverContext, x: PreparedResolver, records: any
 }
 
 
-function groupRecords(ctx: ResolverContext, groupBy: string[], x: PreparedResolver, records: any[]) {
+function groupRecords(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>, groupBy: string[],
+        x: PreparedResolver, records: any[]) {
+
     if (records.length === 0) {
         return [];
     }
@@ -277,7 +286,10 @@ function groupRecords(ctx: ResolverContext, groupBy: string[], x: PreparedResolv
 }
 
 
-function aggregateFields(ctx: ResolverContext, x: PreparedResolver, records: any[][]) {
+function aggregateFields(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        x: PreparedResolver, records: any[][]) {
+
     const result: any[] = [];
 
     for (const g of records) {
@@ -520,7 +532,7 @@ export async function executeQuery(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const currentIdFieldName = builder.rules.idFieldName!(resolverName);
 
-            const ctxGen: ResolverContext = {
+            const ctxGen: Omit<ResolverContext, 'resolverCapabilities'> = {
                 functions: builder.functions,
                 graphPath: x.name,
                 resolverName,
@@ -534,19 +546,22 @@ export async function executeQuery(
             };
 
             if (i === 0) {
+                const ctx: ResolverContext = {
+                    ...ctxGen,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    parent,
+                    resolverCapabilities: {
+                        filtering: false,
+                    },
+                };
                 records = await x.resolver(
                     resolvingFields, condWhere,
                     query.limit ?? null,
                     query.offset ?? null,
-                    {
-                        ...ctxGen,
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        parent,
-                    },
+                    ctx,
                 );
 
-                /* if (true) */ {
-                    // TODO: filter result records by where conditions if the resolver have no filter capability.
+                if (! ctx.resolverCapabilities.filtering) {
                     records = applyWhereConditions(ctxGen, condWhere, records);
                 }
 
@@ -573,17 +588,17 @@ export async function executeQuery(
                 }
 
                 for (const p of parentRecords) {
-                    let recs = (await x.resolver(
-                        resolvingFields, condWhere, 1, 0,
-                        {
-                            ...ctxGen,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            parent: p,
+                    const ctx: ResolverContext = {
+                        ...ctxGen,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        parent: p,
+                        resolverCapabilities: {
+                            filtering: false,
                         },
-                    )).slice(0, 1);
+                    };
+                    let recs = (await x.resolver(resolvingFields, condWhere, 1, 0, ctx)).slice(0, 1);
 
-                    /* if (true) */ {
-                        // TODO: filter result records by where conditions if the resolver have no filter capability.
+                    if (! ctx.resolverCapabilities.filtering) {
                         recs = applyWhereConditions(ctxGen, condWhere, recs);
                     }
 

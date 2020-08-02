@@ -53,7 +53,8 @@ export interface PreparedField extends PreparedFieldBase {
 export interface PreparedFnCall extends PreparedFieldBase {
     type: 'fncall';
     fn: string;
-    args: Array<Omit<PreparedField, 'aliasName'> | PreparedAtomValue /* | PreparedFnCall */>; // TODO: nested function call
+    args: Array<Omit<PreparedField, 'aliasName'> |
+            PreparedAtomValue /* | PreparedFnCall */>; // TODO: nested function call
 }
 
 
@@ -63,7 +64,8 @@ export interface PreparedSubQuery extends PreparedFieldBase {
 }
 
 
-export type PreparedFieldListItem = PreparedField | PreparedFnCall | PreparedSubQuery;
+export type PreparedFieldListItem =
+    PreparedField | PreparedFnCall | PreparedSubQuery;
 
 
 export interface PreparedResolver {
@@ -79,7 +81,8 @@ export interface PreparedResolver {
 }
 
 
-export type PreparedConditionOperand = PreparedCondition | PreparedValue | PreparedFieldListItem;
+export type PreparedConditionOperand =
+    PreparedCondition | PreparedValue | PreparedFieldListItem;
 
 
 export interface PreparedCondition {
@@ -141,6 +144,11 @@ export interface ResolverTreeNode {
 }
 
 
+export interface ResolverCapabilities {
+    filtering: boolean; // for `query` resolvers.
+}
+
+
 export interface ResolverContext {
     functions: QueryFuncInfo[];
     graphPath: string[];
@@ -155,6 +163,7 @@ export interface ResolverContext {
                              // [parentType='detail'] Select from currentResolver where currentResolver.idField = parent.foreignIdField
     masterIdField?: string;  // Record id field of master.
     detailIdField?: string;  // Record id field of detail.
+    resolverCapabilities: ResolverCapabilities;
     resolverData: any;       // Resolver's user defined data.
 }
 
@@ -174,7 +183,8 @@ export interface ResolverEvent extends Partial<ResolverContext> {
 
 
 export type QueryResolverFn = (
-    fields: string[],                 // relationship fields are not included. // function names are not included; functions are called by framework.
+    fields: string[], // NOTE: Relationship fields are not included.
+                      //       Function names are not included; functions are called by framework.
     conditions: PreparedCondition[],
     limit: number | null,
     offset: number | null,
@@ -197,11 +207,17 @@ export type RemoveResolverFn = (
     ) => Promise<void>;
 
 
-export type AggregateFunction = (ctx: ResolverContext, args: Array<PreparedAtomValue | PreparedAtomValue[]>, records: any[]) => any;
+export type AggregateFunction =
+    (ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        args: Array<PreparedAtomValue | PreparedAtomValue[]>, records: any[]) => any;
 
-export type ScalarFunction = (ctx: ResolverContext, args: PreparedAtomValue[], record: any) => any;
+export type ScalarFunction =
+    (ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        args: PreparedAtomValue[], record: any) => any;
 
-export type ImmediateScalarFunction = (ctx: ResolverContext, args: PreparedAtomValue[]) => any;
+export type ImmediateScalarFunction =
+    (ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        args: PreparedAtomValue[]) => any;
 
 
 export interface AggregateQueryFuncInfo {
@@ -222,7 +238,8 @@ export interface ImmediateScalarQueryFuncInfo {
     fn: ImmediateScalarFunction;
 }
 
-export type QueryFuncInfo = AggregateQueryFuncInfo | ScalarQueryFuncInfo | ImmediateScalarQueryFuncInfo;
+export type QueryFuncInfo =
+    AggregateQueryFuncInfo | ScalarQueryFuncInfo | ImmediateScalarQueryFuncInfo;
 
 
 export interface QueryBuilderInfo {

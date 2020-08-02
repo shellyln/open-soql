@@ -47,6 +47,9 @@ export async function executeInsertDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            resolverCapabilities: {
+                filtering: false,
+            },
         };
 
         ret = await resolverInfo(records, ctx);
@@ -103,6 +106,9 @@ export async function executeUpdateDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            resolverCapabilities: {
+                filtering: false,
+            },
         };
 
         ret = await resolverInfo(records, ctx);
@@ -156,6 +162,9 @@ export async function executeRemoveDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            resolverCapabilities: {
+                filtering: false,
+            },
         };
 
         await resolverInfo(records, ctx);

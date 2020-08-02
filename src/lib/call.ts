@@ -13,8 +13,11 @@ import { getObjectValue }         from './util';
 
 
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function callScalarFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: ScalarQueryFuncInfo, fieldResultType: FieldResultType, record: any): any {
+export function callScalarFunction(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        field: PreparedFnCall, fnInfo: ScalarQueryFuncInfo, fieldResultType: FieldResultType, record: any): any {
+
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
@@ -54,8 +57,10 @@ export function callScalarFunction(ctx: ResolverContext, field: PreparedFnCall, 
 }
 
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function callImmediateScalarFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType): any {
+export function callImmediateScalarFunction(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType): any {
+
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
@@ -85,7 +90,10 @@ export function callImmediateScalarFunction(ctx: ResolverContext, field: Prepare
 }
 
 
-export function callAggregateFunction(ctx: ResolverContext, field: PreparedFnCall, fnInfo: AggregateQueryFuncInfo, fieldResultType: FieldResultType, records: any[]): any {
+export function callAggregateFunction(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        field: PreparedFnCall, fnInfo: AggregateQueryFuncInfo, fieldResultType: FieldResultType, records: any[]): any {
+
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
