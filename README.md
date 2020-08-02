@@ -28,7 +28,7 @@ import { staticJsonResolverBuilder,
 
 const { soql, insert, update, remove } = build({
     // See `src/types.ts` > `QueryBuilderInfo`
-    functions: [{ // optional: for defining custom functions
+    functions: [{ // optional: For defining custom functions.
         type: 'scalar',
         name: 'string',
         fn: (ctx, args, records) => {
@@ -59,7 +59,7 @@ const { soql, insert, update, remove } = build({
             return records.length * 2;
         },
     }],
-    events: { // optional: for resolving transaction and N+1 query problem
+    events: { // optional: For resolving transaction and N+1 query problem.
         beginExecute: (evt) => Promise.resolve(),
         endExecute: (evt) => Promise.resolve(),
         beforeMasterSubQueries: (evt) => Promise.resolve(),
@@ -70,7 +70,7 @@ const { soql, insert, update, remove } = build({
     resolvers: {
         query: {
             Account: (fields, conditions, limit, offset, ctx) => {
-                // fetch the `Account` object data
+                // Fetch the `Account` object data.
                 const o = {};
                 for (const field of fields) {
                     o[field] = `field:${field}/1`;
@@ -90,7 +90,7 @@ const { soql, insert, update, remove } = build({
                 }]);
             },
             Contact: (fields, conditions, limit, offset, ctx) => {
-                // fetch the `Contact` object data
+                // Fetch the `Contact` object data.
                 // `ctx.parent` is a parent record.
                 const o = {};
                 for (const field of fields) {
@@ -105,7 +105,7 @@ const { soql, insert, update, remove } = build({
                 }]);
             },
             Opportunity: (fields, conditions, limit, offset, ctx) => {
-                // fetch the `Opportunity` object data.
+                // Fetch the `Opportunity` object data.
                 // `ctx.parent` is a parent record.
                 const o = {};
                 for (const field of fields) {
@@ -125,7 +125,8 @@ const { soql, insert, update, remove } = build({
             },
             Event: staticCsvResolverBuilder(  // (CSV string)
                                               // "staticJsonResolverBuilder"(JSON string) and
-                                              // "passThroughResolverBuilder"(array of object) are also available.
+                                              // "passThroughResolverBuilder"(array of object)
+                                              // are also available.
                 'Event', () => Promise.resolve(`
                     Id,Subject
                     Account/z1,Email
