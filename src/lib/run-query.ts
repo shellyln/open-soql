@@ -14,6 +14,7 @@ import { deepCloneObject,
          isEqualComplexName,
          getTrueCaseFieldName,
          getObjectValue,
+         getObjectValueWithFieldNameMap,
          getObjectPathValue }          from './util';
 import { callAggregateFunction,
          callScalarFunction,
@@ -196,8 +197,14 @@ async function execCondSubQueries(
             break;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        x.cond.operands[x.index] = x.result.map(w => getObjectValue(w, fieldName));
+        if (x.result.length) {
+            const fieldNameMap = new Map<string, string>(Object.keys(x.result[0]).map(x => [x.toLowerCase(), x]));
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            x.cond.operands[x.index] = x.result.map(w => getObjectValueWithFieldNameMap(fieldNameMap, w, fieldName));
+        } else {
+            x.cond.operands[x.index] = [];
+        }
     });
 }
 

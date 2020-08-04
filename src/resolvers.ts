@@ -6,7 +6,8 @@
 import { QueryResolverFn,
          PreparedCondition,
          ResolverContext }      from './types';
-import { getObjectValue }       from './lib/util';
+import { getObjectValue,
+         getTrueCaseFieldName } from './lib/util';
 import { parse as parseCsv }    from './lib/csv-parser';
 import { applyWhereConditions } from './filters';
 
@@ -77,22 +78,26 @@ function filterAndSliceRecords(
 
     records = applyWhereConditions(ctx, conditions, records);
 
-    if (ctx.parent) {
+    if (records.length && ctx.parent) {
         switch (ctx.parentType) {
         case 'master':
             if (ctx.foreignIdField) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
                 const parentId = getObjectValue(ctx.parent, ctx.masterIdField!);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const fName = getTrueCaseFieldName(records[0], ctx.foreignIdField!);
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
-                records = records.filter(x => getObjectValue(x, ctx.foreignIdField!) === parentId);
+                records = records.filter(x => x[fName!] === parentId);
             }
             break;
         case 'detail':
             if (ctx.foreignIdField) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
                 const parentId = getObjectValue(ctx.parent, ctx.foreignIdField!);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const fName = getTrueCaseFieldName(records[0], ctx.masterIdField!);
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
-                records = records.filter(x => getObjectValue(x, ctx.masterIdField!) === parentId);
+                records = records.filter(x => x[fName!] === parentId);
             }
             break;
         }
