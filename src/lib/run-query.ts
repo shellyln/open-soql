@@ -15,7 +15,8 @@ import { deepCloneObject,
          getTrueCaseFieldName,
          getObjectValueWithFieldNameMap,
          getTrueCasePathName,
-         getObjectTrueCasePathValue }          from './util';
+         getObjectTrueCasePathValue,
+         getObjectPathValue }          from './util';
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction } from './call';
@@ -356,15 +357,26 @@ function sortRecords(query: PreparedQuery, records: any[]) {
                 fName: getTrueCasePathName(records[0], f.name.slice(primaryPathLen)),
             }));
 
-            LOOP: for (const {f, fName} of fieldAndFNames) {
-                if (fName === null) {
-                    continue; // equals
-                }
+            // eslint-disable-next-line prefer-const
+            LOOP: for (let {f, fName} of fieldAndFNames) {
+                let va = null;
+                let vb = null;
 
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const va = getObjectTrueCasePathValue(a, fName);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const vb = getObjectTrueCasePathValue(b, fName);
+                if (fName !== null) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    va = getObjectTrueCasePathValue(a, fName);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    vb = getObjectTrueCasePathValue(b, fName);
+                } else {
+                    // Fallback (when the child relationship of records[0] is null)
+
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    va = getObjectPathValue(a, f.name.slice(primaryPathLen));
+
+                    fName = getTrueCasePathName(b, f.name.slice(primaryPathLen));
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    vb = fName !== null ? getObjectTrueCasePathValue(b, fName) : null;
+                }
 
                 if (va === vb) {
                     continue;
@@ -383,6 +395,7 @@ function sortRecords(query: PreparedQuery, records: any[]) {
                     // TODO: date and datetime
                     return direction(f, va > vb ? 1 : -1);
                 default:
+                    // Ignore this field
                     continue LOOP;
                 }
             }
