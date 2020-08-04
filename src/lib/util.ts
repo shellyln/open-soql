@@ -122,7 +122,7 @@ export function getTrueCaseFieldName(record: any, name: string) {
     const index = keys.findIndex(x => x.toLowerCase() === ni);
 
     if (0 > index) {
-        return null;  // TODO: null or undefined?
+        return null;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
@@ -137,7 +137,7 @@ export function getObjectValue(record: any, name: string) {
     const index = keys.findIndex(x => x.toLowerCase() === ni);
 
     if (0 > index) {
-        return null;  // TODO: null or undefined?
+        return null;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
@@ -150,11 +150,62 @@ export function getObjectValueWithFieldNameMap(map: Map<string, string>, record:
     const ni = name.toLowerCase();
 
     if (! map.has(ni)) {
-        return null;  // TODO: null or undefined?
+        return null;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
     return record[map.get(ni)!];
+}
+
+
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getTrueCasePathName(record: any, name: string[]): string[] | null {
+    const ret: string[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    let r = record;
+
+    for (const n of name) {
+        if (r === null || r === void 0) {
+            return null;
+        }
+
+        const keys = Object.keys(r);
+        const ni = n.toLowerCase();
+        const index = keys.findIndex(x => x.toLowerCase() === ni);
+
+        if (0 > index) {
+            return null;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        r = r[keys[index]];
+
+        ret.push(keys[index]);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return ret;
+}
+
+
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getObjectTrueCasePathValue(record: any, name: string[]) {
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    let r = record;
+
+    for (const n of name) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        r = r[n];
+
+        if (r === null || r === void 0) {
+            return null;
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return r;
 }
 
 
@@ -170,7 +221,7 @@ export function getObjectPathValue(record: any, name: string[]) {
         const index = keys.findIndex(x => x.toLowerCase() === ni);
 
         if (0 > index) {
-            return null;  // TODO: null or undefined?
+            return null;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access

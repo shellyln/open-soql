@@ -13,9 +13,9 @@ import { PreparedQuery,
 import { deepCloneObject,
          isEqualComplexName,
          getTrueCaseFieldName,
-         getObjectValue,
          getObjectValueWithFieldNameMap,
-         getObjectPathValue }          from './util';
+         getTrueCasePathName,
+         getObjectTrueCasePathValue }          from './util';
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction } from './call';
@@ -265,27 +265,31 @@ function groupRecords(
     }
 
     const result = new Map<string, any[]>();
-    let i = 0;
 
-    for (const record of records) {
-        const key: any[] = [];
-        for (const k of groupBy) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            let v = getObjectValue(record, k);
-            if (v === null || v === void 0) {
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-                v = '__$$GENSYM_VT4iHbNbZW3C7taC7J6bx8pruw40cX5X$$_' + i++;
+    if (records.length) {
+        let i = 0;
+        const fieldNameMap = new Map<string, string>(Object.keys(records[0]).map(x => [x.toLowerCase(), x]));
+
+        for (const record of records) {
+            const key: any[] = [];
+            for (const k of groupBy) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                let v = getObjectValueWithFieldNameMap(fieldNameMap, record, k);
+                if (v === null || v === void 0) {
+                    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+                    v = '__$$GENSYM_VT4iHbNbZW3C7taC7J6bx8pruw40cX5X$$_' + i++;
+                }
+                key.push(v);
             }
-            key.push(v);
-        }
 
-        const keystr = JSON.stringify(key);
-        if (result.has(keystr)) {
-            const a = result.get(keystr);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            a!.push(record);
-        } else {
-            result.set(keystr, [record]);
+            const keystr = JSON.stringify(key);
+            if (result.has(keystr)) {
+                const a = result.get(keystr);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                a!.push(record);
+            } else {
+                result.set(keystr, [record]);
+            }
         }
     }
 
@@ -347,11 +351,20 @@ function sortRecords(query: PreparedQuery, records: any[]) {
                 (f: PreparedOrderByField, r: number) =>
                     f.direction === 'desc' ? -r : r;
 
-            LOOP: for (const f of orderFields) {
+            const fieldAndFNames = orderFields.map(f => ({
+                f,
+                fName: getTrueCasePathName(records[0], f.name.slice(primaryPathLen)),
+            }));
+
+            LOOP: for (const {f, fName} of fieldAndFNames) {
+                if (fName === null) {
+                    continue; // equals
+                }
+
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const va = getObjectPathValue(a, f.name.slice(primaryPathLen)); // TODO:
+                const va = getObjectTrueCasePathValue(a, fName);
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const vb = getObjectPathValue(b, f.name.slice(primaryPathLen)); // TODO:
+                const vb = getObjectTrueCasePathValue(b, fName);
 
                 if (va === vb) {
                     continue;
