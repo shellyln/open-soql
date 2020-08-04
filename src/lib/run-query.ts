@@ -415,7 +415,6 @@ export async function executeQuery(
 
     if (!parent && builder.events.beginExecute) {
         await builder.events.beginExecute({
-            // TODO:
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData,
         });
@@ -587,6 +586,7 @@ export async function executeQuery(
                     await builder.events.beforeMasterSubQueries(ctxGen);
                 }
 
+                const parentFieldName = x.name[x.name.length - 1];
                 for (const p of parentRecords) {
                     const ctx: ResolverContext = {
                         ...ctxGen,
@@ -605,7 +605,7 @@ export async function executeQuery(
                     recs = mapSelectFields(ctxGen, x, recs);
 
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    p[x.name[x.name.length - 1]] = recs.length > 0 ? recs[0] : null; // TODO: Keep relationship name's case.
+                    p[parentFieldName] = recs.length > 0 ? recs[0] : null;
 
                     records = records.concat(recs);
                 }
@@ -616,7 +616,7 @@ export async function executeQuery(
 
                 const parentRemovingFields = removingFieldsMap.get(parentKey); // TODO: Is it always no effects?
                 if (parentRemovingFields) {
-                    parentRemovingFields.delete(x.name[x.name.length - 1]);
+                    parentRemovingFields.delete(parentFieldName);
                 }
             }
 
@@ -640,7 +640,6 @@ export async function executeQuery(
                     if (builder.events.beforeDetailSubQueries) {
                         await builder.events.beforeDetailSubQueries({
                             graphPath: subQueryName,
-                            // TODO:
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
                         });
@@ -661,7 +660,6 @@ export async function executeQuery(
                     if (builder.events.afterDetailSubQueries) {
                         await builder.events.afterDetailSubQueries({
                             graphPath: subQueryName,
-                            // TODO:
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
                         });
@@ -677,7 +675,7 @@ export async function executeQuery(
             const results = await Promise.all(promises);
             results.forEach(r => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                r.parent[r.name[r.name.length - 1]] = r.result; // TODO: Keep relationship name's case.
+                r.parent[r.name[r.name.length - 1]] = r.result;
             });
         }
 
@@ -697,7 +695,6 @@ export async function executeQuery(
 
         if (!parent && builder.events.endExecute) {
             await builder.events.endExecute({
-                // TODO:
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
             }, null);
@@ -705,7 +702,6 @@ export async function executeQuery(
     } catch (e) {
         if (!parent && builder.events.endExecute) {
             await builder.events.endExecute({
-                // TODO:
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
             }, e);

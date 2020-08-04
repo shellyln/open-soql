@@ -312,9 +312,18 @@ describe("foo", function() {
         const retI = await insert('contact', [{
             id: '1'
         }]);
+        const retI2 = await insert('contact', {
+            id: '1'
+        });
+
         const retU = await update('contact', [{
             id: '1'
         }]);
+
+        const retU2 = await update('contact', {
+            id: '1'
+        });
+
         const retR = await remove('contact', [{
             id: '1'
         }]);
