@@ -425,7 +425,7 @@ export interface QueryBuilderInfo {
 }
 
 export function build(builder: QueryBuilderInfo): {
-    soql: (strings: TemplateStringsArray | string, ...values: any[]) => Promise<any[]>;
+    soql: (strings: TemplateStringsArray | string, ...values: any[]) => Promise<R[]>;
     insert: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     update: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     remove: (resolver: string, obj: T) => Promise<void>;

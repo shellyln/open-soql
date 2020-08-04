@@ -359,7 +359,7 @@ describe("foo", function() {
                 },
             },
         });
-        const z = await soql`
+        const z = await soql<{id: string}>`
             Select
                 id, foo, bar, baz, acc.id, acc.name,
                 (Select Id, quux from acc.contacts)

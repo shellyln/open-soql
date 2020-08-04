@@ -17,7 +17,7 @@ import { executeInsertDML,
 export function build(builder: QueryBuilderInfo) {
     const preparedBI = prepareBuilderInfo(builder);
 
-    async function runQuery(strings: TemplateStringsArray | string, ...values: any[]) {
+    async function runQuery<R>(strings: TemplateStringsArray | string, ...values: any[]): Promise<R[]> {
         const query = prepareQuery(preparedBI, strings, ...values);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return await executeQuery(preparedBI, query, null, null, null, null);
