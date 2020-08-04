@@ -380,9 +380,9 @@ function sortRecords(query: PreparedQuery, records: any[]) {
                 case 'number': case 'bigint':
                     return direction(f, (va as any) - (vb as any));
                 case 'string':
+                    // TODO: date and datetime
                     return direction(f, va > vb ? 1 : -1);
                 default:
-                    // TODO: date and datetime
                     continue LOOP;
                 }
             }
@@ -422,13 +422,13 @@ export async function executeQuery(
         builder: QueryBuilderInfoInternal,
         query: PreparedQuery,
         parent: any | null,
-        parentFromRecords: Map<string, any[]> | null, // TODO: rename
+        parentQueriedRecords: Map<string, any[]> | null,
         parentResolverNames: Map<string, string> | null,
         parentResolverData: any | null
         ): Promise<any[]> {
 
     let primaryRecords: any[] | undefined;
-    const fromRecords = parentFromRecords ?? new Map<string, any[]>(); // TODO: rename
+    const queriedRecords = parentQueriedRecords ?? new Map<string, any[]>();
     const resolverNames = parentResolverNames ?? new Map<string, string>();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const resolverData = parentResolverData ?? {};
@@ -494,7 +494,7 @@ export async function executeQuery(
             }
 
             let records: any[] = [];
-            const parentRecords = fromRecords.get(parentKey);
+            const parentRecords = queriedRecords.get(parentKey);
 
             const queryFields =
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -504,6 +504,14 @@ export async function executeQuery(
                 Array.from(x.condFields!.values());
             const groupFields: string[] =
                 (i === 0 && query.groupBy) ? query.groupBy : [];
+            const sortFields =
+                query.orderBy
+                    ? query.orderBy
+                        .filter(c =>
+                            x.name.length + 1 === c.name.length &&
+                                isEqualComplexName(x.name, c.name.slice(0, x.name.length)))
+                        .map(c => c.name[c.name.length - 1])
+                    : [];
 
             const relationshipIdFields: string[] = [];
             for (let j = i + 1; j < query.from.length; j++) {
@@ -533,6 +541,7 @@ export async function executeQuery(
                         .concat(condFields)
                         .concat(builder.rules.idFieldName ? [builder.rules.idFieldName(resolverName)] : [])
                         .concat(groupFields)
+                        .concat(sortFields)
                         .concat(relationshipIdFields)
                     ).values());
 
@@ -644,7 +653,7 @@ export async function executeQuery(
             removingFieldsAndRecords.push([removingFields, records]);
             removingFieldsMap.set(currentKey, removingFields);
 
-            fromRecords.set(currentKey, records);
+            queriedRecords.set(currentKey, records);
             resolverNames.set(currentKey, resolverName);
         }
 
@@ -653,7 +662,7 @@ export async function executeQuery(
             for (const x of query.selectSubQueries) {
                 const subQueryName = x.query.from[0].name;
                 const parentKey = JSON.stringify(subQueryName.slice(0, subQueryName.length - 1));
-                const parentRecords = fromRecords.get(parentKey);
+                const parentRecords = queriedRecords.get(parentKey);
 
                 if (parentRecords) {
                     // For N+1 Query problem // TODO: reduce descendants (grandchildren and ...) queries
@@ -667,7 +676,7 @@ export async function executeQuery(
 
                     for (const p of parentRecords) {
                         promises.push(
-                            executeQuery(builder, x.query, p, fromRecords, resolverNames, resolverData)
+                            executeQuery(builder, x.query, p, queriedRecords, resolverNames, resolverData)
                             .then(q => ({
                                 name: subQueryName,
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
