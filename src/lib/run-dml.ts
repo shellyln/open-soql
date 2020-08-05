@@ -13,6 +13,8 @@ import { ResolverEvent,
 
 export async function executeInsertDML(
         builder: QueryBuilderInfoInternal,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        tr: any,
         resolverName: string,
         records: any[]
         ): Promise<any[]> {
@@ -31,6 +33,8 @@ export async function executeInsertDML(
 
     const evt: ResolverEvent = {
         resolverData: {},
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionData: tr,
     };
 
     if (builder.events.beginExecute) {
@@ -47,6 +51,8 @@ export async function executeInsertDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
             },
@@ -72,6 +78,8 @@ export async function executeInsertDML(
 
 export async function executeUpdateDML(
         builder: QueryBuilderInfoInternal,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        tr: any,
         resolverName: string,
         records: any[]
         ): Promise<any[]> {
@@ -90,6 +98,8 @@ export async function executeUpdateDML(
 
     const evt: ResolverEvent = {
         resolverData: {},
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionData: tr,
     };
 
     if (builder.events.beginExecute) {
@@ -106,6 +116,8 @@ export async function executeUpdateDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
             },
@@ -131,6 +143,8 @@ export async function executeUpdateDML(
 
 export async function executeRemoveDML(
         builder: QueryBuilderInfoInternal,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        tr: any,
         resolverName: string,
         records: any[]
         ): Promise<void> {
@@ -149,6 +163,8 @@ export async function executeRemoveDML(
 
     const evt: ResolverEvent = {
         resolverData: {},
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionData: tr,
     };
 
     if (builder.events.beginExecute) {
@@ -162,6 +178,8 @@ export async function executeRemoveDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
             },

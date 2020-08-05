@@ -375,7 +375,7 @@ const updated2 = await update('Contact', selected);
   * [x] `insert`
   * [x] `update`
   * [x] `remove`
-* [ ] transaction scope
+* [x] transaction scope
 * [x] template string
 
 
@@ -383,9 +383,9 @@ const updated2 = await update('Contact', selected);
 
 ## Usage
 
-### Module 'open-soql/modules/builder'
+### Module `open-soql/modules/builder`
 
-#### build(builder)
+#### `build()`
 
 ```ts
 export interface QueryBuilderInfo {
@@ -395,6 +395,8 @@ export interface QueryBuilderInfo {
         foreignIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
     };
     events?: {
+        beginTransaction?: (evt: ResolverEvent) => Promise<void>;
+        endTransaction?: (evt: ResolverEvent, err: Error | null) => Promise<void>;
         beginExecute?: (evt: ResolverEvent) => Promise<void>;
         endExecute?: (evt: ResolverEvent, err: Error | null) => Promise<void>;
         beforeMasterSubQueries?: (evt: ResolverEvent) => Promise<void>;
@@ -429,28 +431,34 @@ export function build(builder: QueryBuilderInfo): {
     insert: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     update: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     remove: (resolver: string, obj: T) => Promise<void>;
+    transaction: (
+            callback: (commands: {
+                soql, insert, update, remove
+            }, tr: any) => Primise<void>
+        ) => Primise<void>;
 };
 ```
 
-* Set up the resolvers.
+* Setup the resolvers.
 
 ##### parameters:
 
-* builder: Resolvers and configurations.
+* `builder`: Resolvers and configurations.
 
 ##### returns:
 
 * Functions that execute select queries and DML
-  * soql: Select records.
-  * insert: Insert record(s).
-  * update: Update record(s).
-  * remove: Remove record(s).
+  * `soql`: Select records.
+  * `insert`: Insert record(s).
+  * `update`: Update record(s).
+  * `remove`: Remove record(s).
+  * `transaction`: Execute commands within a transaction.
 
 
 
-### Module 'open-soql/modules/filters'
+### Module `open-soql/modules/filters`
 
-#### applyWhereConditions
+#### `applyWhereConditions()`
 
 ```ts
 export function applyWhereConditions(
@@ -461,9 +469,9 @@ export function applyWhereConditions(
 
 ##### parameters:
 
-* ctx: Context object.
-* conds: `where` conditions.
-* records: Records to apply the filter.
+* `ctx`: Context object.
+* `conds`: `where` conditions.
+* `records`: Records to apply the filter.
 
 ##### returns:
 
@@ -471,7 +479,7 @@ export function applyWhereConditions(
 
 
 
-#### applyHavingConditions
+#### `applyHavingConditions()`
 
 ```ts
 export function applyHavingConditions(
@@ -482,9 +490,9 @@ export function applyHavingConditions(
 
 ##### parameters:
 
-* ctx: Context object.
-* conds: `having` conditions.
-* records: Groups to apply the filter.
+* `ctx`: Context object.
+* `conds`: `having` conditions.
+* `records`: Groups to apply the filter.
 
 ##### returns:
 
@@ -492,9 +500,9 @@ export function applyHavingConditions(
 
 
 
-### Module 'open-soql/modules/resolvers'
+### Module `open-soql/modules/resolvers`
 
-#### staticJsonResolverBuilder
+#### `staticJsonResolverBuilder()`
 
 ```ts
 export const staticJsonResolverBuilder:
@@ -505,8 +513,8 @@ export const staticJsonResolverBuilder:
 
 ##### parameters:
 
-* resolverName: Resolver name.
-* fetcher: The function that returns promise of data.
+* `resolverName`: Resolver name.
+* `fetcher`: The function that returns promise of data.
 
 ##### returns:
 
@@ -514,7 +522,7 @@ export const staticJsonResolverBuilder:
 
 
 
-#### staticCsvResolverBuilder
+#### `staticCsvResolverBuilder()`
 
 ```ts
 export const staticCsvResolverBuilder:
@@ -525,8 +533,8 @@ export const staticCsvResolverBuilder:
 
 ##### parameters:
 
-* resolverName: Resolver name.
-* fetcher: The function that returns promise of data.
+* `resolverName`: Resolver name.
+* `fetcher`: The function that returns promise of data.
 
 ##### returns:
 
@@ -534,7 +542,7 @@ export const staticCsvResolverBuilder:
 
 
 
-#### passThroughResolverBuilder
+#### `passThroughResolverBuilder()`
 
 ```ts
 export const passThroughResolverBuilder:
@@ -545,8 +553,8 @@ export const passThroughResolverBuilder:
 
 ##### parameters:
 
-* resolverName: Resolver name.
-* fetcher: The function that returns promise of data.
+* `resolverName`: Resolver name.
+* `fetcher`: The function that returns promise of data.
 
 ##### returns:
 

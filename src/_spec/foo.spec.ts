@@ -47,7 +47,7 @@ describe("foo", function() {
         expect(1).toEqual(1);
     });
     it("foo-2", async function() {
-        const { soql, insert, update, remove } = build({
+        const { soql, insert, update, remove, transaction } = build({
             functions: [{
                 type: 'scalar',
                 name: 'string',
@@ -80,10 +80,16 @@ describe("foo", function() {
                 },
             }],
             events: {
+                beginTransaction: (evt) => {
+                    return Promise.resolve();
+                },
+                endTransaction: (evt, err) => {
+                    return Promise.resolve();
+                },
                 beginExecute: (evt) => {
                     return Promise.resolve();
                 },
-                endExecute: (evt) => {
+                endExecute: (evt, err) => {
                     return Promise.resolve();
                 },
                 beforeMasterSubQueries: (evt) => {
@@ -327,6 +333,12 @@ describe("foo", function() {
         const retR = await remove('contact', [{
             id: '1'
         }]);
+
+        await transaction(async (commands, tr) => {
+            const { soql } = commands;
+            const retTrS = await soql`Select Id from event`;
+            console.log(JSON.stringify(retTrS, null, 2));
+        });
         expect(1).toEqual(1);
     });
     it("foo-3", async function() {
