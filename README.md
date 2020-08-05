@@ -26,7 +26,7 @@ import { staticJsonResolverBuilder,
          staticCsvResolverBuilder,
          passThroughResolverBuilder } from 'open-soql/modules/resolvers';
 
-const { soql, insert, update, remove } = build({
+const { soql, insert, update, remove, transaction } = build({
     // See `src/types.ts` > `QueryBuilderInfo`
     functions: [{ // optional: For defining custom functions.
         type: 'scalar',
@@ -227,6 +227,20 @@ await remove('Contact', updated);
 
 const selected = await soql`Select Id, Name from Contact`;
 const updated2 = await update('Contact', selected);
+```
+
+Execute commands within a transaction
+```ts
+await transaction(async (commands, tr) => {
+    const { soql, insert, update, remove } = commands;
+
+    const inserted = await insert('Contact', [{
+        Name: 'foo',
+    }]);
+    const selected = await soql`Select Id, Name from Contact`;
+    const updated = await update('Contact', selected);
+    await remove('Contact', updated);
+});
 ```
 
 
