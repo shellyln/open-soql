@@ -21,17 +21,35 @@ export function build(builder: QueryBuilderInfo) {
 
         async function withTransactionEvents<R>(tr: any, run: (tx: any) => Promise<R>) {
             try {
-                // TODO: fire event
+                if (preparedBI.events.beginTransaction) {
+                    await preparedBI.events.beginTransaction({
+                        resolverData: {},
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionData: tr,
+                    });
+                }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const ret =  await run(tr);
 
-                // TODO: fire event
+                if (preparedBI.events.endTransaction) {
+                    await preparedBI.events.endTransaction({
+                        resolverData: {},
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionData: tr,
+                    }, null);
+                }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return ret;
             } catch (e) {
-                // TODO: fire event
+                if (preparedBI.events.endTransaction) {
+                    await preparedBI.events.endTransaction({
+                        resolverData: {},
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionData: tr,
+                    }, e);
+                }
                 throw e;
             }
         }
@@ -114,18 +132,20 @@ export function build(builder: QueryBuilderInfo) {
         }
 
         async function transaction(
-                callback: (params: {
+                callback: (commands: {
+                    tr: any,
                     soql: typeof runQuery,
                     insert: typeof runInsert,
                     update: typeof runUpdate,
                     remove: typeof runRemove,
                 }) => Promise<void>) {
 
-            const tx = {};
-            const commands = createTransactionScope(tx, false);
+            const tr = {};
+            const commands = createTransactionScope(tr, false);
 
-            const run = async (tr: any) => {
+            const run = async (_tr: any) => {
                 await callback({
+                    tr,
                     soql: commands.soql,
                     insert: commands.insert,
                     update: commands.update,
@@ -133,7 +153,7 @@ export function build(builder: QueryBuilderInfo) {
                 });
             };
 
-            return await withTransactionEvents(tx, run);
+            return await withTransactionEvents(tr, run);
         }
 
         return ({

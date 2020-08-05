@@ -165,11 +165,13 @@ export interface ResolverContext {
     detailIdField?: string;  // Record id field of detail.
     resolverCapabilities: ResolverCapabilities;
     resolverData: any;       // Resolver's user defined data.
+    transactionData: any;    // Transaction user defined data.
 }
 
 
 export interface ResolverEvent extends Partial<ResolverContext> {
     resolverData: any;
+    transactionData: any;
 }
 
 
@@ -254,6 +256,8 @@ export interface QueryBuilderInfo {
     };
     /** */
     events?: {
+        beginTransaction?: (evt: ResolverEvent) => Promise<void>;
+        endTransaction?: (evt: ResolverEvent, err: Error | null) => Promise<void>;
         beginExecute?: (evt: ResolverEvent) => Promise<void>;
         endExecute?: (evt: ResolverEvent, err: Error | null) => Promise<void>;
         beforeMasterSubQueries?: (evt: ResolverEvent) => Promise<void>;

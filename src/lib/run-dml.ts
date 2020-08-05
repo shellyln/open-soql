@@ -33,6 +33,8 @@ export async function executeInsertDML(
 
     const evt: ResolverEvent = {
         resolverData: {},
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionData: tr,
     };
 
     if (builder.events.beginExecute) {
@@ -49,6 +51,8 @@ export async function executeInsertDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
             },
@@ -94,6 +98,8 @@ export async function executeUpdateDML(
 
     const evt: ResolverEvent = {
         resolverData: {},
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionData: tr,
     };
 
     if (builder.events.beginExecute) {
@@ -110,6 +116,8 @@ export async function executeUpdateDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
             },
@@ -155,6 +163,8 @@ export async function executeRemoveDML(
 
     const evt: ResolverEvent = {
         resolverData: {},
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionData: tr,
     };
 
     if (builder.events.beginExecute) {
@@ -168,6 +178,8 @@ export async function executeRemoveDML(
             resolverName: resolverName,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData: evt.resolverData,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
             },

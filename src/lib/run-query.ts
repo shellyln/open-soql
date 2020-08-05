@@ -455,6 +455,8 @@ export async function executeQuery(
         await builder.events.beginExecute({
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             resolverData,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionData: tr,
         });
     }
 
@@ -589,6 +591,8 @@ export async function executeQuery(
                 detailIdField: i === 0 ? currentIdFieldName : parentIdFieldName,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionData: tr,
             };
 
             if (i === 0) {
@@ -689,6 +693,8 @@ export async function executeQuery(
                             graphPath: subQueryName,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionData: tr,
                         });
                     }
 
@@ -709,6 +715,8 @@ export async function executeQuery(
                             graphPath: subQueryName,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionData: tr,
                         });
                     }
                 }
@@ -744,6 +752,8 @@ export async function executeQuery(
             await builder.events.endExecute({
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionData: tr,
             }, null);
         }
     } catch (e) {
@@ -751,6 +761,8 @@ export async function executeQuery(
             await builder.events.endExecute({
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionData: tr,
             }, e);
         }
         throw e;
