@@ -172,7 +172,10 @@ function collectSubQueriesFromCondition(
 
 
 async function execCondSubQueries(
-        builder: QueryBuilderInfoInternal, condTemplate: PreparedCondition[],
+        builder: QueryBuilderInfoInternal,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        tr: any,
+        condTemplate: PreparedCondition[],
         resolverData: any | null) {
 
     const condSubQueries: Array<{ cond: PreparedCondition, index: number, subQuery: PreparedSubQuery }> = [];
@@ -182,7 +185,7 @@ async function execCondSubQueries(
     const condSubQueryResults =
         condSubQueries
             .map(x =>
-                executeQuery(builder, x.subQuery.query, null, null, null, resolverData)
+                executeQuery(builder, tr, x.subQuery.query, null, null, null, resolverData)
                 .then(r => ({ cond: x.cond, index: x.index, subQuery: x.subQuery, result: r })));
 
     (await Promise.all(condSubQueryResults)).map(x => {
@@ -433,6 +436,8 @@ function getRemovingFields(x: PreparedResolver, records: any[]) {
 
 export async function executeQuery(
         builder: QueryBuilderInfoInternal,
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        tr: any,
         query: PreparedQuery,
         parent: any | null,
         parentQueriedRecords: Map<string, any[]> | null,
@@ -459,8 +464,8 @@ export async function executeQuery(
         const condHavingTemplate = query.having ?
             deepCloneObject(query.having) : [];
 
-        await execCondSubQueries(builder, condWhereTemplate, resolverData);
-        await execCondSubQueries(builder, condHavingTemplate, resolverData);
+        await execCondSubQueries(builder, tr, condWhereTemplate, resolverData);
+        await execCondSubQueries(builder, tr, condHavingTemplate, resolverData);
 
         const removingFieldsAndRecords: Array<[Set<string>, any[]]> = [];
         const removingFieldsMap = new Map<string, Set<string>>();
@@ -689,7 +694,7 @@ export async function executeQuery(
 
                     for (const p of parentRecords) {
                         promises.push(
-                            executeQuery(builder, x.query, p, queriedRecords, resolverNames, resolverData)
+                            executeQuery(builder, tr, x.query, p, queriedRecords, resolverNames, resolverData)
                             .then(q => ({
                                 name: subQueryName,
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
