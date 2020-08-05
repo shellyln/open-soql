@@ -60,6 +60,8 @@ const { soql, insert, update, remove, transaction } = build({
         },
     }],
     events: { // optional: For resolving transaction and N+1 query problem.
+        beginTransaction: (evt) => Promise.resolve(),
+        endTransaction: (evt, err) => Promise.resolve(),
         beginExecute: (evt) => Promise.resolve(),
         endExecute: (evt, err) => Promise.resolve(),
         beforeMasterSubQueries: (evt) => Promise.resolve(),
@@ -97,17 +99,17 @@ const { soql, insert, update, remove, transaction } = build({
                 `)
             ),
         },
-        insert: {
+        insert: { // optional: For DML
             Contact: (records, ctx) => {
                 return Promise.resolve(records.map((x, i) => ({...x, id: `Contact/${i}`})));
             },
         },
-        update: {
+        update: { // optional: For DML
             Contact: (records, ctx) => {
                 return Promise.resolve(records);
             },
         },
-        remove: {
+        remove: { // optional: For DML
             Contact: (records, ctx) => {
                 return Promise.resolve();
             },
