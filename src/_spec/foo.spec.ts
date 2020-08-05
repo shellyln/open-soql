@@ -334,7 +334,7 @@ describe("foo", function() {
             id: '1'
         }]);
 
-        await transaction(async (commands) => {
+        await transaction(async (commands, tr) => {
             const { soql } = commands;
             const retTrS = await soql`Select Id from event`;
             console.log(JSON.stringify(retTrS, null, 2));

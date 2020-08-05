@@ -133,24 +133,22 @@ export function build(builder: QueryBuilderInfo) {
 
         async function transaction(
                 callback: (commands: {
-                    tr: any,
                     soql: typeof runQuery,
                     insert: typeof runInsert,
                     update: typeof runUpdate,
                     remove: typeof runRemove,
-                }) => Promise<void>) {
+                }, tr: any) => Promise<void>) {
 
             const tr = {};
             const commands = createTransactionScope(tr, false);
 
             const run = async (_tr: any) => {
                 await callback({
-                    tr,
                     soql: commands.soql,
                     insert: commands.insert,
                     update: commands.update,
                     remove: commands.remove,
-                });
+                }, tr);
             };
 
             return await withTransactionEvents(tr, run);
