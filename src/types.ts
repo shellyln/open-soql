@@ -288,7 +288,7 @@ export interface QueryBuilderInfo {
         };
     };
     /** */
-    relationships: {
+    relationships?: {
         /**
          * detailResolverName
          * e.g.: Contact: { account: 'Account' }

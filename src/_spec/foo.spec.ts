@@ -287,7 +287,7 @@ describe("foo", function() {
             -- for view, reference
             /* comment */
         `;
-        console.log(JSON.stringify(z, null, 2));
+        // console.log(JSON.stringify(z, null, 2));
         // expect(z).toEqual([] as any);
         const zz = await soql`
             Select
@@ -313,7 +313,7 @@ describe("foo", function() {
             -- group by id,foo
             having count(id) > 0
         `;
-        console.log(JSON.stringify(zz, null, 2));
+        // console.log(JSON.stringify(zz, null, 2));
 
         const retI = await insert('contact', [{
             id: '1'
@@ -337,7 +337,7 @@ describe("foo", function() {
         await transaction(async (commands, tr) => {
             const { soql } = commands;
             const retTrS = await soql`Select Id from event`;
-            console.log(JSON.stringify(retTrS, null, 2));
+            // console.log(JSON.stringify(retTrS, null, 2));
         });
         expect(1).toEqual(1);
     });
@@ -378,7 +378,7 @@ describe("foo", function() {
             from contact, account acc
             where foo like ${'a%'}
         `;
-        console.log(JSON.stringify(z, null, 2));
+        // console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
     it("foo-4", async function() {
@@ -418,7 +418,7 @@ describe("foo", function() {
             from contact, account acc
             where foo like ${'a%'}
         `;
-        console.log(JSON.stringify(z, null, 2));
+        // console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
     it("foo-5", async function() {
@@ -437,7 +437,7 @@ describe("foo", function() {
                             Id,         Foo,    Bar,    Baz,    Qux,    Quux,   AccountId
                             Contact/z1, aaa/z1, bbb/z1, ccc/z1, ddd/z1, eee/z1, Account/z1
                             Contact/z2, aaa/z2, bbb/z2, ccc/z2, ddd/z2, eee/z2, Account/z1
-                            Contact/z3, aaa/z2, bbb/z3, ccc/z3, ddd/z3, eee/z3, Account/z2
+                            Contact/z3, aaa/z3, bbb/z3, ccc/z3, ddd/z3, eee/z3, Account/z2
                         `)
                     ),
                 }
@@ -460,7 +460,7 @@ describe("foo", function() {
             from contact, account acc
             where foo like ${'a%'}
         `;
-        console.log(JSON.stringify(z, null, 2));
+        // console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
 });
