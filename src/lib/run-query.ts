@@ -624,10 +624,6 @@ export async function executeQuery(
                     records = aggregateFields(ctxGen, x, grouped);
                 }
 
-                if (query.limit && records.length > query.limit) {
-                    records = records.slice(0, query.limit);
-                }
-
                 primaryRecords = records;
             } else if (parentRecords && parentRecords.length) {
                 // Get master relationships.
@@ -736,6 +732,13 @@ export async function executeQuery(
 
         if (primaryRecords) {
             primaryRecords = sortRecords(query, primaryRecords);
+
+            if (query.limit && primaryRecords.length > query.limit) {
+                primaryRecords = primaryRecords.slice(0, query.limit);
+            }
+        } else {
+            // NOTE: never reach here.
+            primaryRecords = [];
         }
 
         for (const ent of removingFieldsAndRecords) {
@@ -769,5 +772,5 @@ export async function executeQuery(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return primaryRecords as any[];
+    return primaryRecords;
 }
