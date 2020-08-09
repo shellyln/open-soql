@@ -76,13 +76,6 @@ function filterAndSliceRecords(
         }
     }
 
-    for (const record of records) {
-        for (const field of removingFields) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            delete record[field];
-        }
-    }
-
     records = applyWhereConditions(ctx, conditions, records);
 
     if (records.length && ctx.parent) {
@@ -107,6 +100,13 @@ function filterAndSliceRecords(
                 records = records.filter(x => x[fName!] === parentId);
             }
             break;
+        }
+    }
+
+    for (const record of records) {
+        for (const field of removingFields) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            delete record[field];
         }
     }
 
