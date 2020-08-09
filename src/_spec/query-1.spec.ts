@@ -71,6 +71,40 @@ describe("query-1", function() {
             },
         });
         {
+            const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1'`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1' and bar='bbb/z1'`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1' and bar=null`;
+            const expects = [
+            ] as any[];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1' and bar!=null`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1' and not bar=null`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
             const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1' or foo=null`;
             const expects = [
                 { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
