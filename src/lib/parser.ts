@@ -165,11 +165,11 @@ const isWord = (s: string) => {
 const wordBoundary =
     ahead(input => {
         let w = false;
-        if (input.start === input.end) {
+        if (input.src.length === 0) {
             w = true;
+        } else if (input.start === input.end) {
+            w = isWord(input.src[input.start - 1]);
         } else if (input.start === 0) {
-            w = isWord(input.src[input.start]);
-        } else if (input.start === input.end - 1) {
             w = isWord(input.src[input.start]);
         } else {
             w = (!isWord(input.src[input.start - 1]) && isWord(input.src[input.start])) ||

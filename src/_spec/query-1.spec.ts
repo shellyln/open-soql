@@ -53,6 +53,7 @@ describe("query-1", function() {
         }
     });
 
+
     it("Simple query with condition (1)", async function() {
         const { soql, insert, update, remove, transaction } = build({
             resolvers: {
@@ -70,6 +71,7 @@ describe("query-1", function() {
                 },
             },
         });
+
         {
             const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1'`;
             const expects = [
@@ -113,6 +115,51 @@ describe("query-1", function() {
             expect(result).toEqual(expects);
         }
         {
+            const result = await soql`select id, foo, bar, baz from contact where foo='aaa/z1' or not foo=null`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+                { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2' },
+                { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3' },
+                { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ' },
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`select id, corge, grault, garply from contact where foo='aaa/z1'`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where foo='aaa/z1' and bar='bbb/z1'`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where foo='aaa/z1' and bar=null`;
+            const expects = [
+            ] as any[];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where foo='aaa/z1' and bar!=null`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where foo='aaa/z1' and not bar=null`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
             const result = await soql`select id, corge, grault, garply from contact where foo='aaa/z1' or foo=null`;
             const expects = [
                 { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
@@ -120,7 +167,69 @@ describe("query-1", function() {
             ];
             expect(result).toEqual(expects);
         }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where foo='aaa/z1' or not foo=null`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+                { Id: 'Contact/z2', Corge:    0, Grault: '2020-01-01', Garply: '2020-01-01T00:00:00Z' },
+                { Id: 'Contact/z3', Corge:    1, Grault: '2020-01-02', Garply: '2020-01-01T00:00:01Z' },
+                { Id: 'Contact/z5', Corge: null, Grault:         null, Garply:                   null },
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`select id, corge, grault, garply from contact where (foo='aaa/z1' or not foo=null)`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+                { Id: 'Contact/z2', Corge:    0, Grault: '2020-01-01', Garply: '2020-01-01T00:00:00Z' },
+                { Id: 'Contact/z3', Corge:    1, Grault: '2020-01-02', Garply: '2020-01-01T00:00:01Z' },
+                { Id: 'Contact/z5', Corge: null, Grault:         null, Garply:                   null },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where (foo='aaa/z1') or not (foo=null)`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+                { Id: 'Contact/z2', Corge:    0, Grault: '2020-01-01', Garply: '2020-01-01T00:00:00Z' },
+                { Id: 'Contact/z3', Corge:    1, Grault: '2020-01-02', Garply: '2020-01-01T00:00:01Z' },
+                { Id: 'Contact/z5', Corge: null, Grault:         null, Garply:                   null },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where (foo='aaa/z1') or (not foo=null)`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+                { Id: 'Contact/z2', Corge:    0, Grault: '2020-01-01', Garply: '2020-01-01T00:00:00Z' },
+                { Id: 'Contact/z3', Corge:    1, Grault: '2020-01-02', Garply: '2020-01-01T00:00:01Z' },
+                { Id: 'Contact/z5', Corge: null, Grault:         null, Garply:                   null },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where (foo='aaa/z1') or (not (foo=null))`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+                { Id: 'Contact/z2', Corge:    0, Grault: '2020-01-01', Garply: '2020-01-01T00:00:00Z' },
+                { Id: 'Contact/z3', Corge:    1, Grault: '2020-01-02', Garply: '2020-01-01T00:00:01Z' },
+                { Id: 'Contact/z5', Corge: null, Grault:         null, Garply:                   null },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, corge, grault, garply from contact where (((foo='aaa/z1') or (not (foo=null))))`;
+            const expects = [
+                { Id: 'Contact/z1', Corge:   -1, Grault: '2019-12-31', Garply: '2019-12-31T23:59:59Z' },
+                { Id: 'Contact/z2', Corge:    0, Grault: '2020-01-01', Garply: '2020-01-01T00:00:00Z' },
+                { Id: 'Contact/z3', Corge:    1, Grault: '2020-01-02', Garply: '2020-01-01T00:00:01Z' },
+                { Id: 'Contact/z5', Corge: null, Grault:         null, Garply:                   null },
+            ];
+            expect(result).toEqual(expects);
+        }
     });
+
 
     it("Simple query with resolver and field alias names (1)", async function() {
         const { soql, insert, update, remove, transaction } = build({
@@ -139,6 +248,7 @@ describe("query-1", function() {
                 },
             },
         });
+
         {
             const result = await soql`select id zid, foo zfoo, bar zbar, baz zbax from contact`;
             const expects = [
@@ -172,6 +282,7 @@ describe("query-1", function() {
             ];
             expect(result).toEqual(expects);
         }
+
         {
             const result = await soql`select id zid, corge zcorge, grault zgrault, garply zgarply from contact`;
             const expects = [
