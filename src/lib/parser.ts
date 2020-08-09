@@ -166,7 +166,7 @@ const wordBoundary =
     ahead(input => {
         let w = false;
         if (input.start === input.end) {
-            w = false;
+            w = true;
         } else if (input.start === 0) {
             w = isWord(input.src[input.start]);
         } else if (input.start === input.end - 1) {
@@ -305,7 +305,8 @@ const dateValue =
         cls('-'),
         qty(2, 2)(classes.num),
         cls('-'),
-        qty(2, 2)(classes.num), ));
+        qty(2, 2)(classes.num),
+        wordBoundary, ));
 
 
 const dateTimeValue =
@@ -328,7 +329,8 @@ const dateTimeValue =
                 first(cls('+'), cls('-')),
                 qty(2, 2)(classes.num),
                 cls(':'),
-                qty(2, 2)(classes.num), ))));
+                qty(2, 2)(classes.num), )),
+        wordBoundary, ));
 
 
 const literalValue =
