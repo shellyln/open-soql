@@ -282,7 +282,7 @@ describe("foo", function() {
                 and acc.corge in (Select id from Event)
               )
             order by aid, reg, cat
-            offset 2 limit 10
+            offset 0 limit 10
             for update viewstat, tracking
             -- for view, reference
             /* comment */

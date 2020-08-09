@@ -80,10 +80,7 @@ describe("query-2", function() {
             },
         });
 
-        /*
         {
-            // BUG:
-            const qqq =1;
             const result = await soql`
                 select
                     id, foo, bar, baz,
@@ -110,7 +107,6 @@ describe("query-2", function() {
             ];
             expect(result).toEqual(expects);
         }
-        */
 
         {
             const result = await soql`
