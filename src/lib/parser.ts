@@ -121,7 +121,9 @@ const reservedKeywords =
         combine(seqI('where'), input => wordBoundary(input)),
         cat(combine(seqI('order'), erase(qty(1)(commentOrSpace)), seqI('by'))),
         cat(combine(seqI('group'), erase(qty(1)(commentOrSpace)), seqI('by'))),
-        combine(seqI('having'), input => wordBoundary(input)), );
+        combine(seqI('having'), input => wordBoundary(input)),
+        combine(seqI('offset'), input => wordBoundary(input)),
+        combine(seqI('limit'), input => wordBoundary(input)), );
 
 const notAheadReservedKeywords =
     ahead(input => {
@@ -767,20 +769,20 @@ const orderByClause =
                 orderByNulls, ))));
 
 
-const limitClause =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    trans(tokens => [{limit: tokens[0]} as any])(
-        erase(repeat(commentOrSpace), wordBoundary),
-        erase(seqI('limit'),
-              qty(1)(commentOrSpace), ),
-        decimalIntegerValue, );
-
-
 const offsetClause =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     trans(tokens => [{offset: tokens[0]} as any])(
         erase(repeat(commentOrSpace), wordBoundary),
         erase(seqI('offset'),
+              qty(1)(commentOrSpace), ),
+        decimalIntegerValue, );
+
+
+const limitClause =
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    trans(tokens => [{limit: tokens[0]} as any])(
+        erase(repeat(commentOrSpace), wordBoundary),
+        erase(seqI('limit'),
               qty(1)(commentOrSpace), ),
         decimalIntegerValue, );
 
@@ -852,8 +854,12 @@ const selectStatement =
             groupByClause,  // TODO: rollup, cube
             qty(0, 1)(havingClause), )),
         qty(0, 1)(orderByClause),
-        qty(0, 1)(limitClause),
-        qty(0, 1)(offsetClause),
+        first(combine(
+                  qty(0, 1)(offsetClause),
+                  qty(0, 1)(limitClause), ),
+              combine(
+                  qty(0, 1)(limitClause),
+                  qty(0, 1)(offsetClause), )),
         qty(0, 1)(first(forViewClause,
                         forUpdateClause, )),
         erase(repeat(commentOrSpace)), );

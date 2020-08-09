@@ -38,7 +38,7 @@ describe("foo", function() {
             group by aaa,bbb,ccc
             having count(id)=10
             order by eee.id,fff deSC,qqq asc nulls last,ggg.name
-            limit 99 offset 888
+            offset 888 limit 99
             for update viewstat, tracking
             -- for view, reference
         `);
@@ -282,7 +282,7 @@ describe("foo", function() {
                 and acc.corge in (Select id from Event)
               )
             order by aid, reg, cat
-            limit 10 offset 2
+            offset 2 limit 10
             for update viewstat, tracking
             -- for view, reference
             /* comment */

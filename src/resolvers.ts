@@ -110,12 +110,13 @@ function filterAndSliceRecords(
         }
     }
 
-    if (typeof offset === 'number') {
-        records = records.slice(offset);
-    }
-    if (typeof limit === 'number') {
-        records = records.slice(0, limit);
-    }
+    // TODO: BUG: Slicing should be done after sorting.
+    // if (typeof offset === 'number') {
+    //     records = records.slice(offset);
+    // }
+    // if (typeof limit === 'number') {
+    //     records = records.slice(0, limit);
+    // }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return records;

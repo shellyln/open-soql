@@ -55,6 +55,8 @@ export async function executeInsertDML(
             transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
+                limit: false,
+                offset: false,
             },
         };
 
@@ -120,6 +122,8 @@ export async function executeUpdateDML(
             transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
+                limit: false,
+                offset: false,
             },
         };
 
@@ -182,6 +186,8 @@ export async function executeRemoveDML(
             transactionData: tr,
             resolverCapabilities: {
                 filtering: false,
+                limit: false,
+                offset: false,
             },
         };
 

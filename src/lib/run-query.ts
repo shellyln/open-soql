@@ -8,6 +8,7 @@ import { PreparedQuery,
          PreparedSubQuery,
          PreparedCondition,
          PreparedOrderByField,
+         ResolverCapabilities,
          ResolverContext,
          QueryBuilderInfoInternal }    from '../types';
 import { deepCloneObject,
@@ -385,10 +386,10 @@ function sortRecords(query: PreparedQuery, records: any[]) {
                     continue;
                 }
                 if (va === null) {
-                    return direction(f, f.nulls === 'first' ? 1 : -1);
+                    return direction(f, f.nulls === 'last' ? 1 : -1); // default is `nulls first`
                 }
                 if (vb === null) {
-                    return direction(f, f.nulls === 'first' ? -1 : 1);
+                    return direction(f, f.nulls === 'last' ? -1 : 1); // default is `nulls first`
                 }
 
                 switch (typeof va) {
@@ -446,6 +447,8 @@ export async function executeQuery(
         ): Promise<any[]> {
 
     let primaryRecords: any[] | undefined;
+    let primaryCapabilities: ResolverCapabilities | undefined;
+
     const queriedRecords = parentQueriedRecords ?? new Map<string, any[]>();
     const resolverNames = parentResolverNames ?? new Map<string, string>();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -602,6 +605,8 @@ export async function executeQuery(
                     parent,
                     resolverCapabilities: {
                         filtering: false,
+                        limit: false,
+                        offset: false,
                     },
                 };
                 records = await x.resolver(
@@ -610,6 +615,7 @@ export async function executeQuery(
                     query.offset ?? null,
                     ctx,
                 );
+                primaryCapabilities = ctx.resolverCapabilities;
 
                 if (! ctx.resolverCapabilities.filtering) {
                     records = applyWhereConditions(ctxGen, condWhere, records);
@@ -641,6 +647,8 @@ export async function executeQuery(
                         parent: p,
                         resolverCapabilities: {
                             filtering: false,
+                            limit: false,
+                            offset: false,
                         },
                     };
                     let recs = (await x.resolver(resolvingFields, condWhere, 1, 0, ctx)).slice(0, 1);
@@ -733,8 +741,24 @@ export async function executeQuery(
         if (primaryRecords) {
             primaryRecords = sortRecords(query, primaryRecords);
 
-            if (query.limit && primaryRecords.length > query.limit) {
-                primaryRecords = primaryRecords.slice(0, query.limit);
+            if (primaryCapabilities) {
+                if (! (primaryCapabilities.offset || primaryCapabilities.limit)) {
+                    if (typeof query.offset === 'number' && typeof query.limit === 'number') {
+                        primaryRecords = primaryRecords.slice(query.offset, query.offset + query.limit);
+                    } else if (typeof query.offset === 'number') {
+                        primaryRecords = primaryRecords.slice(query.offset);
+                    } else if (typeof query.limit === 'number') {
+                        primaryRecords = primaryRecords.slice(0, query.limit);
+                    }
+                } else if (! primaryCapabilities.offset) {
+                    if (typeof query.offset === 'number') {
+                        primaryRecords = primaryRecords.slice(query.offset);
+                    }
+                } else if (! primaryCapabilities.limit) {
+                    if (typeof query.limit === 'number') {
+                        primaryRecords = primaryRecords.slice(0, query.limit);
+                    }
+                }
             }
         } else {
             // NOTE: never reach here.
