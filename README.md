@@ -115,7 +115,7 @@ const { soql, insert, update, remove, transaction } = build({
             },
         },
     },
-    relationships: {
+    relationships: { // optional: For relationship query
         /**
          * detailResolverName
          * e.g.: Contact: { account: 'Account' }
@@ -434,7 +434,7 @@ export interface QueryBuilderInfo {
             [resolverNames: string]: RemoveResolverFn;
         };
     };
-    relationships: {
+    relationships?: {
         [detailOrMasterResolverNames: string]: {
             [fieldOrRelNames: string]:
                 string | { resolver: string, id: string } | [string, string?];

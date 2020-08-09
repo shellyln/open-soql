@@ -11,7 +11,7 @@ import { getStringParsers }   from 'fruitsconfits/modules/lib/string-parser';
 
 
 type Ctx = undefined;
-type Ast = string | string[];
+type Ast = string | number | null | string[];
 
 
 const $s = getStringParsers<Ctx, Ast>({
@@ -21,9 +21,22 @@ const $s = getStringParsers<Ctx, Ast>({
         [tokens.reduce((a, b) => a as string + b as string)] : []),
 });
 
-const {seq, cls, notCls, classes, cat,
+const {seq, cls, notCls, classes, numbers, cat,
        repeat, end, first, combine, erase, trans, ahead,
        makeProgram} = $s;
+
+
+const decimalIntegerValue =
+    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 10)])
+    (numbers.int);
+
+const floatingPointNumberValue =
+    trans(tokens => [Number.parseFloat((tokens as string[])[0].replace(/_/g, ''))])
+    (numbers.float);
+
+const numberValue =
+    first(floatingPointNumberValue,
+          decimalIntegerValue, );
 
 
 const quoted = trans(input => input.length ? input : [''])(
@@ -34,14 +47,20 @@ const quoted = trans(input => input.length ? input : [''])(
     ))),
     erase(cls('"'), repeat(erase(classes.spaceWithinSingleLine))), );
 
-const nakid = trans(input => input.length ? input : [''])(
+const nakidNum = trans(input => input.length ? input : [null])(
+    erase(repeat(classes.spaceWithinSingleLine)),
+    numberValue,
+    erase(repeat(classes.spaceWithinSingleLine)),
+    ahead(first(cls(',', '\r\n', '\n', '\r'), end())), );
+
+const nakid = trans(input => input.length ? ([input[0] ? (input[0] as string).trim() : '']) : [null])(
     erase(repeat(classes.spaceWithinSingleLine)),
     cat(repeat(first(
         erase(classes.spaceWithinSingleLine, ahead(cls(',', '\r\n', '\n', '\r'))),
         notCls(',', '\r\n', '\n', '\r'),
     ))), );
 
-const cell = first(quoted, nakid);
+const cell = first(quoted, nakidNum, nakid);
 
 const row = trans(input => [input as string[]])(
     cell,

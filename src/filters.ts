@@ -247,7 +247,7 @@ function evalCondition(
         ret = false;
         break;
     case 'not':
-        ret = evalRecursiveCondition(fieldNameMap, isAggregation, ctx, cond.operands[0], record);
+        ret = !evalRecursiveCondition(fieldNameMap, isAggregation, ctx, cond.operands[0], record);
         break;
     default:
         {

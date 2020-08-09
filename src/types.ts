@@ -146,6 +146,8 @@ export interface ResolverTreeNode {
 
 export interface ResolverCapabilities {
     filtering: boolean; // for `query` resolvers.
+    limit: boolean; // for `query` resolvers.
+    offset: boolean; // for `query` resolvers.
 }
 
 
@@ -288,7 +290,7 @@ export interface QueryBuilderInfo {
         };
     };
     /** */
-    relationships: {
+    relationships?: {
         /**
          * detailResolverName
          * e.g.: Contact: { account: 'Account' }

@@ -77,6 +77,10 @@ const builtinRules: QueryBuilderInfo['rules'] = {
 export function prepareBuilderInfo(builder: QueryBuilderInfo): QueryBuilderInfoInternal {
     const ret = {...builder};
 
+    if (! ret.relationships) {
+        ret.relationships = {};
+    }
+
     for (const k of Object.keys(ret.resolvers.query)) {
         if (! ret.relationships[k]) {
             ret.relationships[k] = {};

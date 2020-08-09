@@ -121,7 +121,9 @@ const reservedKeywords =
         combine(seqI('where'), input => wordBoundary(input)),
         cat(combine(seqI('order'), erase(qty(1)(commentOrSpace)), seqI('by'))),
         cat(combine(seqI('group'), erase(qty(1)(commentOrSpace)), seqI('by'))),
-        combine(seqI('having'), input => wordBoundary(input)), );
+        combine(seqI('having'), input => wordBoundary(input)),
+        combine(seqI('offset'), input => wordBoundary(input)),
+        combine(seqI('limit'), input => wordBoundary(input)), );
 
 const notAheadReservedKeywords =
     ahead(input => {
@@ -165,11 +167,11 @@ const isWord = (s: string) => {
 const wordBoundary =
     ahead(input => {
         let w = false;
-        if (input.start === input.end) {
-            w = false;
+        if (input.src.length === 0) {
+            w = true;
+        } else if (input.start === input.end) {
+            w = isWord(input.src[input.start - 1]);
         } else if (input.start === 0) {
-            w = isWord(input.src[input.start]);
-        } else if (input.start === input.end - 1) {
             w = isWord(input.src[input.start]);
         } else {
             w = (!isWord(input.src[input.start - 1]) && isWord(input.src[input.start])) ||
@@ -305,7 +307,8 @@ const dateValue =
         cls('-'),
         qty(2, 2)(classes.num),
         cls('-'),
-        qty(2, 2)(classes.num), ));
+        qty(2, 2)(classes.num),
+        wordBoundary, ));
 
 
 const dateTimeValue =
@@ -328,7 +331,8 @@ const dateTimeValue =
                 first(cls('+'), cls('-')),
                 qty(2, 2)(classes.num),
                 cls(':'),
-                qty(2, 2)(classes.num), ))));
+                qty(2, 2)(classes.num), )),
+        wordBoundary, ));
 
 
 const literalValue =
@@ -765,20 +769,20 @@ const orderByClause =
                 orderByNulls, ))));
 
 
-const limitClause =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    trans(tokens => [{limit: tokens[0]} as any])(
-        erase(repeat(commentOrSpace), wordBoundary),
-        erase(seqI('limit'),
-              qty(1)(commentOrSpace), ),
-        decimalIntegerValue, );
-
-
 const offsetClause =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     trans(tokens => [{offset: tokens[0]} as any])(
         erase(repeat(commentOrSpace), wordBoundary),
         erase(seqI('offset'),
+              qty(1)(commentOrSpace), ),
+        decimalIntegerValue, );
+
+
+const limitClause =
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    trans(tokens => [{limit: tokens[0]} as any])(
+        erase(repeat(commentOrSpace), wordBoundary),
+        erase(seqI('limit'),
               qty(1)(commentOrSpace), ),
         decimalIntegerValue, );
 
@@ -850,8 +854,13 @@ const selectStatement =
             groupByClause,  // TODO: rollup, cube
             qty(0, 1)(havingClause), )),
         qty(0, 1)(orderByClause),
-        qty(0, 1)(limitClause),
-        qty(0, 1)(offsetClause),
+        qty(0, 1)(first(
+            combine(
+                offsetClause,
+                qty(0, 1)(limitClause), ),
+            combine(
+                limitClause,
+                qty(0, 1)(offsetClause), ))),
         qty(0, 1)(first(forViewClause,
                         forUpdateClause, )),
         erase(repeat(commentOrSpace)), );
