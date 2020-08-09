@@ -61,14 +61,21 @@ function filterAndSliceRecords(
 
     const removingFields = new Set<string>();
     const recordFields = new Map<string, string>(Object.keys(records[0]).map(x => [x.toLowerCase(), x]));
+    const requestedFields = new Set<string>(fields.map(x => x.toLowerCase()));
 
-    for (const field of fields) {
-        const w = field.toLowerCase();
-        if (! recordFields.has(w)) {
+    for (const field of requestedFields.keys()) {
+        if (! recordFields.has(field)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            removingFields.add(recordFields.get(w)!);
+            throw new Error(`Field "${field}" is not supplied from resolver "${ctx.resolverName}".`);
         }
     }
+    for (const field of recordFields.keys()) {
+        if (! requestedFields.has(field)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            removingFields.add(recordFields.get(field)!);
+        }
+    }
+
     for (const record of records) {
         for (const field of removingFields) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
