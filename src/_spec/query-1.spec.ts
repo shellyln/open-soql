@@ -435,6 +435,32 @@ describe("query-1", function() {
             ] as any[];
             expect(result).toEqual(expects);
         }
+
+        {
+            const result = await soql`select id, foo, bar, baz from contact con offset 0 limit 2`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+                { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2' },
+            ];
+            expect(result).toEqual(expects);
+        }
+        {
+            const result = await soql`select id, foo, bar, baz from contact con limit 2 offset 0`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+                { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2' },
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`select id, foo, bar, baz from contact limit 2 offset 0`;
+            const expects = [
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1' },
+                { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2' },
+            ];
+            expect(result).toEqual(expects);
+        }
     });
 
 

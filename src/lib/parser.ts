@@ -854,12 +854,13 @@ const selectStatement =
             groupByClause,  // TODO: rollup, cube
             qty(0, 1)(havingClause), )),
         qty(0, 1)(orderByClause),
-        first(combine(
-                  qty(0, 1)(offsetClause),
-                  qty(0, 1)(limitClause), ),
-              combine(
-                  qty(0, 1)(limitClause),
-                  qty(0, 1)(offsetClause), )),
+        qty(0, 1)(first(
+            combine(
+                offsetClause,
+                qty(0, 1)(limitClause), ),
+            combine(
+                limitClause,
+                qty(0, 1)(offsetClause), ))),
         qty(0, 1)(first(forViewClause,
                         forUpdateClause, )),
         erase(repeat(commentOrSpace)), );
