@@ -9,6 +9,7 @@ import { QueryResolverFn,
 import { getObjectValue,
          getTrueCaseFieldName } from './lib/util';
 import { parse as parseCsv }    from './lib/csv-parser';
+import { sortRecords }          from './sort';
 import { applyWhereConditions } from './filters';
 
 
@@ -76,13 +77,6 @@ function filterAndSliceRecords(
         }
     }
 
-    for (const record of records) {
-        for (const field of removingFields) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            delete record[field];
-        }
-    }
-
     records = applyWhereConditions(ctx, conditions, records);
 
     if (records.length && ctx.parent) {
@@ -110,13 +104,32 @@ function filterAndSliceRecords(
         }
     }
 
-    // TODO: BUG: Slicing should be done after sorting.
-    // if (typeof offset === 'number') {
-    //     records = records.slice(offset);
-    // }
-    // if (typeof limit === 'number') {
-    //     records = records.slice(0, limit);
-    // }
+    if (ctx.query && ctx.query.orderBy) {
+        const primaryPathLen = ctx.query.from[0].name.length;
+
+        if (ctx.query.orderBy.every(w => w.name.length === primaryPathLen + 1)) {
+            records = sortRecords(ctx.query, records);
+            ctx.resolverCapabilities.sorting = true;
+        }
+    }
+
+    for (const record of records) {
+        for (const field of removingFields) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            delete record[field];
+        }
+    }
+
+    if (ctx.resolverCapabilities.sorting) {
+        if (typeof offset === 'number') {
+            records = records.slice(offset);
+        }
+        if (typeof limit === 'number') {
+            records = records.slice(0, limit);
+        }
+        ctx.resolverCapabilities.limit = true;
+        ctx.resolverCapabilities.offset = true;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return records;

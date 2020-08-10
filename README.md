@@ -472,6 +472,27 @@ export function build(builder: QueryBuilderInfo): {
 
 
 
+### Module `open-soql/modules/sort`
+
+#### `sortRecords()`
+
+```ts
+export function sortRecords(query: PreparedQuery, records: any[]): any[];
+```
+
+* Sort records.
+
+##### parameters:
+
+* `query`: Prepared query object.
+* `records`: Records to sort.
+
+##### returns:
+
+* Sorted records.
+
+
+
 ### Module `open-soql/modules/filters`
 
 #### `applyWhereConditions()`

@@ -146,13 +146,15 @@ export interface ResolverTreeNode {
 
 export interface ResolverCapabilities {
     filtering: boolean; // for `query` resolvers.
-    limit: boolean; // for `query` resolvers.
-    offset: boolean; // for `query` resolvers.
+    sorting: boolean;   // for `query` resolvers.
+    limit: boolean;     // for `query` resolvers.
+    offset: boolean;    // for `query` resolvers.
 }
 
 
 export interface ResolverContext {
     functions: QueryFuncInfo[];
+    query?: PreparedQuery;   // DON'T CHANGE any properties from the resolver!
     graphPath: string[];
     resolverName: string;
     parentResolverName?: string;

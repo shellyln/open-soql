@@ -226,6 +226,15 @@ function normalize(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             x.name = resolverAliases.get(x.name[0].toLowerCase())!.concat(x.name.slice(1));
         }
+        if (parentName.length > 0) {
+            if (x.name[0].toLowerCase() !== parentName[0].toLowerCase()) {
+                // Case of the root-level first resolver is omitted.
+                x.name = parentName.slice(0, 1).concat(x.name);
+            }
+            if (! isEqualComplexName(x.name.slice(0, parentName.length), parentName)) {
+                throw new Error(`Resolver name ${x.name.join('.')} is not match to parent resolver ${parentName.join('.')}`);
+            }
+        }
     }
 
     const primaryResolverName =
@@ -251,7 +260,7 @@ function normalize(
                 x.name = resolverAliases.get(nameI)!.concat(x.name.slice(1));
                 nameI = x.name[0].toLowerCase();
             }
-            if (! isEqualComplexName(x.name.slice(0, 1), query.from[0].name)) {
+            if (! isEqualComplexName(x.name.slice(0, query.from[0].name.length), query.from[0].name)) {
                 x.name = primaryResolverName.concat(x.name);
             }
         }
