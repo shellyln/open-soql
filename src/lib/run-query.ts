@@ -21,6 +21,7 @@ import { deepCloneObject,
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction } from './call';
+import { sortRecords }                 from '../sort';
 import { applyWhereConditions,
          applyHavingConditions }       from '../filters';
 
@@ -346,71 +347,6 @@ function aggregateFields(
 }
 
 
-function sortRecords(query: PreparedQuery, records: any[]) {
-    if (query.orderBy) {
-        const primaryPathLen = query.from[0].name.length;
-        const orderFields = query.orderBy;
-
-        records = records.sort((a, b) => {
-            const direction =
-                (f: PreparedOrderByField, r: number) =>
-                    f.direction === 'desc' ? -r : r;
-
-            const fieldAndFNames = orderFields.map(f => ({
-                f,
-                fName: getTrueCasePathName(records[0], f.name.slice(primaryPathLen)),
-            }));
-
-            // eslint-disable-next-line prefer-const
-            LOOP: for (let {f, fName} of fieldAndFNames) {
-                let va = null;
-                let vb = null;
-
-                if (fName !== null) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    va = getObjectTrueCasePathValue(a, fName);
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    vb = getObjectTrueCasePathValue(b, fName);
-                } else {
-                    // Fallback (when the child relationship of records[0] is null)
-
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    va = getObjectPathValue(a, f.name.slice(primaryPathLen));
-
-                    fName = getTrueCasePathName(b, f.name.slice(primaryPathLen));
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    vb = fName !== null ? getObjectTrueCasePathValue(b, fName) : null;
-                }
-
-                if (va === vb) {
-                    continue;
-                }
-                if (va === null) {
-                    return direction(f, f.nulls === 'last' ? 1 : -1); // default is `nulls first`
-                }
-                if (vb === null) {
-                    return direction(f, f.nulls === 'last' ? -1 : 1); // default is `nulls first`
-                }
-
-                switch (typeof va) {
-                case 'number': case 'bigint':
-                    return direction(f, (va as any) - (vb as any));
-                case 'string':
-                    // TODO: date and datetime
-                    return direction(f, va > vb ? 1 : -1);
-                default:
-                    // Ignore this field
-                    continue LOOP;
-                }
-            }
-            return 0;
-        });
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return records;
-}
-
 
 function getRemovingFields(x: PreparedResolver, records: any[]) {
     const removingFields = new Set<string>();
@@ -585,6 +521,7 @@ export async function executeQuery(
 
             const ctxGen: Omit<ResolverContext, 'resolverCapabilities'> = {
                 functions: builder.functions,
+                query,
                 graphPath: x.name,
                 resolverName,
                 parentResolverName,
@@ -605,6 +542,7 @@ export async function executeQuery(
                     parent,
                     resolverCapabilities: {
                         filtering: false,
+                        sorting: false,
                         limit: false,
                         offset: false,
                     },
@@ -647,6 +585,7 @@ export async function executeQuery(
                         parent: p,
                         resolverCapabilities: {
                             filtering: false,
+                            sorting: false,
                             limit: false,
                             offset: false,
                         },
@@ -739,9 +678,11 @@ export async function executeQuery(
         }
 
         if (primaryRecords) {
-            primaryRecords = sortRecords(query, primaryRecords);
-
             if (primaryCapabilities) {
+                if (! primaryCapabilities.sorting) {
+                    primaryRecords = sortRecords(query, primaryRecords);
+                }
+
                 if (! (primaryCapabilities.offset || primaryCapabilities.limit)) {
                     if (typeof query.offset === 'number' && typeof query.limit === 'number') {
                         primaryRecords = primaryRecords.slice(query.offset, query.offset + query.limit);
