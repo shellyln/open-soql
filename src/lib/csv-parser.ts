@@ -3,7 +3,6 @@
 // https://github.com/shellyln
 
 
-
 import { parserInput }        from 'fruitsconfits/modules/lib/types';
 import { formatErrorMessage } from 'fruitsconfits/modules/lib/parser';
 import { getStringParsers }   from 'fruitsconfits/modules/lib/string-parser';
@@ -43,8 +42,7 @@ const quoted = trans(input => input.length ? input : [''])(
     erase(repeat(classes.spaceWithinSingleLine), cls('"')),
     cat(repeat(first(
         trans(input => ['"'])(seq('""')),
-        notCls('"'),
-    ))),
+        notCls('"'), ))),
     erase(cls('"'), repeat(erase(classes.spaceWithinSingleLine))), );
 
 const nakidNum = trans(input => input.length ? input : [null])(
@@ -57,8 +55,7 @@ const nakid = trans(input => input.length ? ([input[0] ? (input[0] as string).tr
     erase(repeat(classes.spaceWithinSingleLine)),
     cat(repeat(first(
         erase(classes.spaceWithinSingleLine, ahead(cls(',', '\r\n', '\n', '\r'))),
-        notCls(',', '\r\n', '\n', '\r'),
-    ))), );
+        notCls(',', '\r\n', '\n', '\r'), ))));
 
 const cell = first(quoted, nakidNum, nakid);
 
