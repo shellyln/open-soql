@@ -116,6 +116,25 @@ export function isEqualComplexName(a: string[], b: string[]): boolean {
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getFullQualifiedName(primaryResolverName: string[], name: string[]) {
+    const ns: string[] = [];
+    for (let i = 0; i < primaryResolverName.length; i++) {
+        const sliced = primaryResolverName.slice(i);
+        if (isEqualComplexName(name.slice(0, sliced.length), sliced)) {
+            break;
+        } else {
+            ns.push(primaryResolverName[i]);
+        }
+    }
+    if (ns.length) {
+        return ns.concat(name);
+    } else {
+        return name;
+    }
+}
+
+
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getTrueCaseFieldName(record: any, name: string) {
     const keys = Object.keys(record);
     const ni = name.toLowerCase();
