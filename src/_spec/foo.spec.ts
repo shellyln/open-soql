@@ -11,6 +11,9 @@ import { staticJsonResolverBuilder,
 
 
 
+const disablePrint: true | null = true;
+
+
 describe("foo", function() {
     it("foo-1", function() {
         const z = parse(`
@@ -42,10 +45,10 @@ describe("foo", function() {
             for update viewstat, tracking
             -- for view, reference
         `);
-        // console.log(JSON.stringify(z, null, 2));
-        // expect(z).toEqual(['Foo'] as any);
+        // disablePrint ?? console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
+
     it("foo-2", async function() {
         const { soql, insert, update, remove, transaction } = build({
             functions: [{
@@ -235,6 +238,7 @@ describe("foo", function() {
                 },
             },
         });
+
         const z = await soql`
             Select
                 acc.id         aid
@@ -287,8 +291,9 @@ describe("foo", function() {
             -- for view, reference
             /* comment */
         `;
-        // console.log(JSON.stringify(z, null, 2));
-        // expect(z).toEqual([] as any);
+        disablePrint ?? console.log(JSON.stringify(z, null, 2));
+        expect(1).toEqual(1);
+
         const zz = await soql`
             Select
                 count(),
@@ -313,7 +318,7 @@ describe("foo", function() {
             -- group by id,foo
             having count(id) > 0
         `;
-        // console.log(JSON.stringify(zz, null, 2));
+        disablePrint ?? console.log(JSON.stringify(zz, null, 2));
 
         const retI = await insert('contact', [{
             id: '1'
@@ -337,10 +342,11 @@ describe("foo", function() {
         await transaction(async (commands, tr) => {
             const { soql } = commands;
             const retTrS = await soql`Select Id from event`;
-            // console.log(JSON.stringify(retTrS, null, 2));
+            disablePrint ?? console.log(JSON.stringify(retTrS, null, 2));
         });
         expect(1).toEqual(1);
     });
+
     it("foo-3", async function() {
         const { soql } = build({
             resolvers: {
@@ -378,9 +384,10 @@ describe("foo", function() {
             from contact, account acc
             where foo like ${'a%'}
         `;
-        // console.log(JSON.stringify(z, null, 2));
+        disablePrint ?? console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
+
     it("foo-4", async function() {
         const { soql } = build({
             resolvers: {
@@ -418,9 +425,10 @@ describe("foo", function() {
             from contact, account acc
             where foo like ${'a%'}
         `;
-        // console.log(JSON.stringify(z, null, 2));
+        disablePrint ?? console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
+
     it("foo-5", async function() {
         const { soql } = build({
             resolvers: {
@@ -460,7 +468,7 @@ describe("foo", function() {
             from contact, account acc
             where foo like ${'a%'}
         `;
-        // console.log(JSON.stringify(z, null, 2));
+        disablePrint ?? console.log(JSON.stringify(z, null, 2));
         expect(1).toEqual(1);
     });
 });
