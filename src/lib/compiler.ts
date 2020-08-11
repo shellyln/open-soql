@@ -304,7 +304,7 @@ function normalize(
                 x.name = resolverAliases.get(nameI)!.concat(x.name.slice(1));
                 nameI = x.name[0].toLowerCase();
             }
-            if (! isEqualComplexName(x.name.slice(0, 1), query.from[0].name)) {
+            if (! isEqualComplexName(x.name.slice(0, query.from[0].name.length), query.from[0].name)) {
                 x.name = primaryResolverName.concat(x.name);
             }
             const rn = x.name.slice(0, x.name.length - 1);

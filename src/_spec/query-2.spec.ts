@@ -389,10 +389,70 @@ describe("query-2", function() {
             const result = await soql`
                 select
                     id, foo, bar, baz,
-                    account.id, account.name,
-                    (select id, name, amount from account.opportunities order by name)
+                    contact.account.id, contact.account.name,
+                    (select id, name, amount from contact.account.opportunities order by name)
                 from contact, account
-                order by account.name, id`;
+                order by contact.account.name, id`;
+            const expects = [
+                { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
+                  Account: null },
+                { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
+                  Account: null },
+                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
+                  Account: { Id: 'Account/z1', Name: 'fff/z1',
+                  Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                  { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
+                  Account: { Id: 'Account/z1', Name: 'fff/z1',
+                  Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                  { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
+                  Account: { Id: 'Account/z2', Name: 'fff/z2',
+                  Opportunities: [{ Id: 'Opportunity/z5', Name:       '', Amount:    0 },
+                                  { Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 }] }},
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        // {
+        //     // BUG: Error: Resolver 'opportunities' is not found.
+        //     //      (compiler.ts: 557)
+        //     const result = await soql`
+        //         select
+        //             id, foo, bar, baz,
+        //             account.id, account.name,
+        //             (select id, opportunities.name, /*account.*/opportunities.amount from account.opportunities order by /*account.*/opportunities.name)
+        //         from contact, account
+        //         order by account.name, id`;
+        //     const expects = [
+        //         { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
+        //           Account: null },
+        //         { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
+        //           Account: null },
+        //         { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
+        //           Account: { Id: 'Account/z1', Name: 'fff/z1',
+        //           Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+        //                           { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+        //         { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
+        //           Account: { Id: 'Account/z1', Name: 'fff/z1',
+        //           Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+        //                           { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+        //         { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
+        //           Account: { Id: 'Account/z2', Name: 'fff/z2',
+        //           Opportunities: [{ Id: 'Opportunity/z5', Name:       '', Amount:    0 },
+        //                           { Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 }] }},
+        //     ];
+        //     expect(result).toEqual(expects);
+        // }
+
+        {
+            const result = await soql`
+                select
+                    id, foo, bar, baz,
+                    acc.id, acc.name,
+                    (select id, name, opp.amount from acc.opportunities opp order by opp.name)
+                from contact con, account acc
+                order by acc.name, id`;
             const expects = [
                 { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
                   Account: null },
