@@ -7,23 +7,19 @@ import { PreparedQuery,
          PreparedResolver,
          PreparedSubQuery,
          PreparedCondition,
-         PreparedOrderByField,
          ResolverCapabilities,
          ResolverContext,
-         QueryBuilderInfoInternal }    from '../types';
+         QueryBuilderInfoInternal }       from '../types';
 import { deepCloneObject,
          isEqualComplexName,
          getTrueCaseFieldName,
-         getObjectValueWithFieldNameMap,
-         getTrueCasePathName,
-         getObjectTrueCasePathValue,
-         getObjectPathValue }          from './util';
+         getObjectValueWithFieldNameMap } from './util';
 import { callAggregateFunction,
          callScalarFunction,
-         callImmediateScalarFunction } from './call';
-import { sortRecords }                 from '../sort';
+         callImmediateScalarFunction }    from './call';
+import { sortRecords }                    from '../sort';
 import { applyWhereConditions,
-         applyHavingConditions }       from '../filters';
+         applyHavingConditions }          from '../filters';
 
 
 
@@ -345,7 +341,6 @@ function aggregateFields(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result;
 }
-
 
 
 function getRemovingFields(x: PreparedResolver, records: any[]) {

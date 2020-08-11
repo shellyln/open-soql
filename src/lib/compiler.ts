@@ -14,6 +14,7 @@ import { PreparedQuery,
          ResolverTreeNode,
          QueryBuilderInfoInternal } from '../types';
 import { isEqualComplexName,
+         getFullQualifiedName,
          getTrueCaseFieldName }     from './util';
 
 
@@ -220,27 +221,23 @@ function normalize(
         throw new Error('Relationship name is not allowed at first item of root level from clause.');
     }
 
-    if (query.from[0].name.length > 1) {
+    {
         const x = query.from[0];
-        while (resolverAliases.has(x.name[0].toLowerCase())) { // TODO: set max loop
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            x.name = resolverAliases.get(x.name[0].toLowerCase())!.concat(x.name.slice(1));
+        if (query.from[0].name.length > 1) {
+            while (resolverAliases.has(x.name[0].toLowerCase())) { // TODO: set max loop
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                x.name = resolverAliases.get(x.name[0].toLowerCase())!.concat(x.name.slice(1));
+            }
         }
         if (parentName.length > 0) {
-            if (x.name[0].toLowerCase() !== parentName[0].toLowerCase()) {
-                // Case of the root-level first resolver is omitted.
-                x.name = parentName.slice(0, 1).concat(x.name);
-            }
+            x.name = getFullQualifiedName(parentName, x.name);
             if (! isEqualComplexName(x.name.slice(0, parentName.length), parentName)) {
                 throw new Error(`Resolver name ${x.name.join('.')} is not match to parent resolver ${parentName.join('.')}`);
             }
         }
     }
 
-    const primaryResolverName =
-        query.from[0].name.length > 1 ?
-            query.from[0].name :
-            parentName.concat(query.from[0].name);
+    const primaryResolverName = query.from[0].name;
 
     if (query.from[0].aliasName) {
         resolverAliases.set(query.from[0].aliasName.toLowerCase(), primaryResolverName);
@@ -260,9 +257,8 @@ function normalize(
                 x.name = resolverAliases.get(nameI)!.concat(x.name.slice(1));
                 nameI = x.name[0].toLowerCase();
             }
-            if (! isEqualComplexName(x.name.slice(0, query.from[0].name.length), query.from[0].name)) {
-                x.name = primaryResolverName.concat(x.name);
-            }
+
+            x.name = getFullQualifiedName(primaryResolverName, x.name);
         }
         if (x.aliasName) {
             resolverAliases.set(x.aliasName.toLowerCase(), x.name);
@@ -304,9 +300,9 @@ function normalize(
                 x.name = resolverAliases.get(nameI)!.concat(x.name.slice(1));
                 nameI = x.name[0].toLowerCase();
             }
-            if (! isEqualComplexName(x.name.slice(0, 1), query.from[0].name)) {
-                x.name = primaryResolverName.concat(x.name);
-            }
+
+            x.name = getFullQualifiedName(primaryResolverName, x.name);
+
             const rn = x.name.slice(0, x.name.length - 1);
             if (! query.from.find(w => isEqualComplexName(w.name, rn))) {
                 query.from.push({

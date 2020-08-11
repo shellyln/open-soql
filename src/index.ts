@@ -6,5 +6,6 @@
 
 export * from './types';
 export * from './filters';
+export * from './sort';
 export * from './builder';
 export * from './resolvers';
