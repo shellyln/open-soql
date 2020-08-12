@@ -300,10 +300,19 @@ function groupRecords(
 
 
 function aggregateFields(
-        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>, groupBy: string[],
         x: PreparedResolver, records: any[][]) {
 
     const result: any[] = [];
+    if (! records.length) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return result;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const firstRec = records[0][0];
+    const groupFields = new Map<string, string>(
+        groupBy.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
     for (const g of records) {
         const agg = {};
@@ -313,7 +322,28 @@ function aggregateFields(
 
             switch (field.type) {
             case 'field':
-                throw new Error(`${field.name.join('.')} is not allowed. Aggregate function is needed.`);
+                {
+                    let found = false;
+                    const name = field.name[field.name.length - 1];
+
+                    if (groupFields.has(name)) {
+                        const trueCaseName = groupFields.get(name);
+                        if (trueCaseName) {
+                            found = true;
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                            agg[trueCaseName] = g[0][trueCaseName];
+
+                            if (field.aliasName) {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                                agg[field.aliasName] = g[0][trueCaseName];
+                            }
+                        }
+                    }
+                    if (! found) {
+                        throw new Error(`${field.name.join('.')} is not allowed. Aggregate function is needed.`);
+                    }
+                }
+                break;
             case 'fncall':
                 {
                     const fnNameI = field.fn.toLowerCase();
@@ -343,7 +373,7 @@ function aggregateFields(
 }
 
 
-function getRemovingFields(x: PreparedResolver, records: any[]) {
+function getRemovingFields(x: PreparedResolver, records: any[], isAggregation: boolean) {
     const removingFields = new Set<string>();
     if (records.length) {
         const requestedFields = new Set<string>();
@@ -351,9 +381,14 @@ function getRemovingFields(x: PreparedResolver, records: any[]) {
         const rec = records[0];
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const ent of x.queryFieldsMap!.entries()) {
-            const name = getTrueCaseFieldName(rec, ent[0]);
-            if (name) {
-                requestedFields.add(name);
+            const f = ent[1];
+            if (isAggregation && f.type === 'field' && f.aliasName) {
+                requestedFields.add(f.aliasName);
+            } else {
+                const name = getTrueCaseFieldName(rec, ent[0]);
+                if (name) {
+                    requestedFields.add(name);
+                }
             }
         }
         for (const k of Object.keys(rec)) {
@@ -530,6 +565,8 @@ export async function executeQuery(
                 transactionData: tr,
             };
 
+            let isAggregation = false;
+
             if (i === 0) {
                 const ctx: ResolverContext = {
                     ...ctxGen,
@@ -557,10 +594,11 @@ export async function executeQuery(
                 records = mapSelectFields(ctxGen, x, records);
 
                 if (i === 0 && query.groupBy) {
+                    isAggregation = true;
                     let grouped = groupRecords(ctxGen, query.groupBy ?? [], x, records);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     grouped = applyHavingConditions(ctxGen, condHaving, grouped);
-                    records = aggregateFields(ctxGen, x, grouped);
+                    records = aggregateFields(ctxGen, query.groupBy, x, grouped);
                 }
 
                 primaryRecords = records;
@@ -609,7 +647,7 @@ export async function executeQuery(
                 }
             }
 
-            const removingFields = getRemovingFields(x, records);
+            const removingFields = getRemovingFields(x, records, isAggregation);
             removingFieldsAndRecords.push([removingFields, records]);
             removingFieldsMap.set(currentKey, removingFields);
 

@@ -89,5 +89,45 @@ describe("aggregate-1", function() {
                 expect((e as any).message).toEqual('contact.foo is not allowed. Aggregate function is needed.');
             }
         }
+
+        {
+            const result = await soql`
+                select
+                    accountid,
+                    count() cnt, count(accountid) cntacc, count_distinct(accountid) cntdacc,
+                    count(foo) cntfoo, count_distinct(foo) cntdfoo,
+                    min(foo) minfoo, max(bar) maxbar, avg(baz) avgbaz, sum(qux) sumqux,
+                    min(corge) minc, max(corge) maxc, avg(corge) avgc
+                from contact
+                group by accountid`;
+            const expects = [
+                { AccountId: 'Account/z1', cnt: 2, cntacc: 2, cntdacc: 1, cntfoo: 2, cntdfoo: 2, minfoo: 'aaa/z1', maxbar: 'bbb/z2', avgbaz: null, sumqux: null, minc:   -1, maxc:    0, avgc: -0.5 },
+                { AccountId: 'Account/z2', cnt: 2, cntacc: 2, cntdacc: 1, cntfoo: 2, cntdfoo: 2, minfoo: 'aaa/z3', maxbar: 'bbb/z4', avgbaz: null, sumqux: null, minc:    1, maxc:    3, avgc: 2 },
+                { AccountId: 'Account/z3', cnt: 3, cntacc: 3, cntdacc: 1, cntfoo: 3, cntdfoo: 3, minfoo: 'aaa/z5', maxbar: 'bbb/z7', avgbaz: null, sumqux: null, minc:    5, maxc:   11, avgc: 7.666666666666667 },
+                { AccountId: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 0, cntdfoo: 0, minfoo: null    , maxbar: null    , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+                { AccountId: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 1, cntdfoo: 1, minfoo: ''      , maxbar: ''      , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`
+                select
+                    accountid accid,
+                    count() cnt, count(accountid) cntacc, count_distinct(accountid) cntdacc,
+                    count(foo) cntfoo, count_distinct(foo) cntdfoo,
+                    min(foo) minfoo, max(bar) maxbar, avg(baz) avgbaz, sum(qux) sumqux,
+                    min(corge) minc, max(corge) maxc, avg(corge) avgc
+                from contact
+                group by accountid`;
+            const expects = [
+                { accid: 'Account/z1', cnt: 2, cntacc: 2, cntdacc: 1, cntfoo: 2, cntdfoo: 2, minfoo: 'aaa/z1', maxbar: 'bbb/z2', avgbaz: null, sumqux: null, minc:   -1, maxc:    0, avgc: -0.5 },
+                { accid: 'Account/z2', cnt: 2, cntacc: 2, cntdacc: 1, cntfoo: 2, cntdfoo: 2, minfoo: 'aaa/z3', maxbar: 'bbb/z4', avgbaz: null, sumqux: null, minc:    1, maxc:    3, avgc: 2 },
+                { accid: 'Account/z3', cnt: 3, cntacc: 3, cntdacc: 1, cntfoo: 3, cntdfoo: 3, minfoo: 'aaa/z5', maxbar: 'bbb/z7', avgbaz: null, sumqux: null, minc:    5, maxc:   11, avgc: 7.666666666666667 },
+                { accid: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 0, cntdfoo: 0, minfoo: null    , maxbar: null    , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+                { accid: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 1, cntdfoo: 1, minfoo: ''      , maxbar: ''      , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+            ];
+            expect(result).toEqual(expects);
+        }
     });
 });
