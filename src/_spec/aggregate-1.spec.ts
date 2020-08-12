@@ -233,6 +233,26 @@ describe("aggregate-1", function() {
             ];
             expect(result).toEqual(expects);
         }
+
+        {
+            const result = await soql`
+                select
+                    accountid accid,
+                    count() cnt, count(accountid) cntacc, count_distinct(accountid) cntdacc,
+                    count(foo) cntfoo, count_distinct(foo) cntdfoo,
+                    min(foo) minfoo, max(bar) maxbar, avg(baz) avgbaz, sum(qux) sumqux,
+                    min(corge) minc, max(corge) maxc, avg(corge) avgc
+                from contact
+                where zzz=1
+                group by accountid
+                having (count()>=1 and count(accountid)=1) or (count(accountid)=0 and count_distinct(foo)=1)`;
+            const expects = [
+                { accid: 'Account/z1', cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z1', maxbar: 'bbb/z1', avgbaz: null, sumqux: null, minc:   -1, maxc:   -1, avgc:   -1 },
+                { accid: 'Account/z2', cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z3', maxbar: 'bbb/z3', avgbaz: null, sumqux: null, minc:    1, maxc:    1, avgc:    1 },
+                { accid: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 1, cntdfoo: 1, minfoo: ''      , maxbar: ''      , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+            ];
+            expect(result).toEqual(expects);
+        }
     });
 
 
@@ -276,6 +296,31 @@ describe("aggregate-1", function() {
                 { accid: 'Account/z1', cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z1', maxbar: 'bbb/z1', avgbaz: null, sumqux: null, minc:   -1, maxc:   -1, avgc:   -1 },
                 { accid: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 0, cntdfoo: 0, minfoo: null    , maxbar: null    , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
                 { accid: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 1, cntdfoo: 1, minfoo: ''      , maxbar: ''      , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`
+                select
+                    accountid accid, zzz,
+                    count() cnt, count(accountid) cntacc, count_distinct(accountid) cntdacc,
+                    count(foo) cntfoo, count_distinct(foo) cntdfoo,
+                    min(foo) minfoo, max(bar) maxbar, avg(baz) avgbaz, sum(qux) sumqux,
+                    min(corge) minc, max(corge) maxc, avg(corge) avgc
+                from contact
+                where zzz=1 or zzz=2
+                group by accountid, zzz
+                order by zzz, accid desc, minfoo asc`;
+            const expects = [
+                { accid: 'Account/z3', Zzz: 1, cnt: 2, cntacc: 2, cntdacc: 1, cntfoo: 2, cntdfoo: 2, minfoo: 'aaa/z5', maxbar: 'bbb/z6', avgbaz: null, sumqux: null, minc:    5, maxc:    7, avgc:    6 },
+                { accid: 'Account/z2', Zzz: 1, cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z3', maxbar: 'bbb/z3', avgbaz: null, sumqux: null, minc:    1, maxc:    1, avgc:    1 },
+                { accid: 'Account/z1', Zzz: 1, cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z1', maxbar: 'bbb/z1', avgbaz: null, sumqux: null, minc:   -1, maxc:   -1, avgc:   -1 },
+                { accid: null        , Zzz: 1, cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 0, cntdfoo: 0, minfoo: null    , maxbar: null    , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+                { accid: null        , Zzz: 1, cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 1, cntdfoo: 1, minfoo: ''      , maxbar: ''      , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+                { accid: 'Account/z3', Zzz: 2, cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z7', maxbar: 'bbb/z7', avgbaz: null, sumqux: null, minc:   11, maxc:   11, avgc:   11 },
+                { accid: 'Account/z2', Zzz: 2, cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z4', maxbar: 'bbb/z4', avgbaz: null, sumqux: null, minc:    3, maxc:    3, avgc:    3 },
+                { accid: 'Account/z1', Zzz: 2, cnt: 1, cntacc: 1, cntdacc: 1, cntfoo: 1, cntdfoo: 1, minfoo: 'aaa/z2', maxbar: 'bbb/z2', avgbaz: null, sumqux: null, minc:    0, maxc:    0, avgc:    0 },
             ];
             expect(result).toEqual(expects);
         }
@@ -418,6 +463,26 @@ describe("aggregate-1", function() {
                 offset 5 limit 2`;
             const expects = [
             ] as any[];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`
+                select
+                    accountid accid,
+                    count() cnt, count(accountid) cntacc, count_distinct(accountid) cntdacc,
+                    count(foo) cntfoo, count_distinct(foo) cntdfoo,
+                    min(foo) minfoo, max(bar) maxbar, avg(baz) avgbaz, sum(qux) sumqux,
+                    min(corge) minc, max(corge) maxc, avg(corge) avgc
+                from contact
+                where zzz=1
+                group by accountid
+                order by accountid desc, minfoo asc
+                offset 3 limit 2`;
+            const expects = [
+                { accid: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 0, cntdfoo: 0, minfoo: null    , maxbar: null    , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+                { accid: null        , cnt: 1, cntacc: 0, cntdacc: 0, cntfoo: 1, cntdfoo: 1, minfoo: ''      , maxbar: ''      , avgbaz: null, sumqux: null, minc: null, maxc: null, avgc: null },
+            ];
             expect(result).toEqual(expects);
         }
     });
