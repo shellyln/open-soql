@@ -558,6 +558,7 @@ export async function executeQuery(
                 foreignIdField,
                 masterIdField: i === 0 ? parentIdFieldName : currentIdFieldName,
                 detailIdField: i === 0 ? currentIdFieldName : parentIdFieldName,
+                parentRecords,
                 conditions: condWhere,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
@@ -668,6 +669,7 @@ export async function executeQuery(
                             functions: builder.functions,
                             query: x.query,
                             graphPath: subQueryName,
+                            parentRecords,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -692,6 +694,7 @@ export async function executeQuery(
                             functions: builder.functions,
                             query: x.query,
                             graphPath: subQueryName,
+                            parentRecords,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
