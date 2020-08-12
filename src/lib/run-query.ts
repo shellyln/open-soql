@@ -580,8 +580,8 @@ export async function executeQuery(
                 };
                 records = await x.resolver(
                     resolvingFields, condWhere,
-                    query.limit ?? null,
-                    query.offset ?? null,
+                    isAggregation ? null : (query.limit ?? null),
+                    isAggregation ? null : (query.offset ?? null),
                     ctx,
                 );
                 primaryCapabilities = ctx.resolverCapabilities;
@@ -593,6 +593,9 @@ export async function executeQuery(
                 records = mapSelectFields(ctxGen, x, records);
 
                 if (isAggregation) {
+                    primaryCapabilities.limit = false;
+                    primaryCapabilities.offset = false;
+
                     let grouped = groupRecords(ctxGen, query.groupBy ?? [], x, records);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     grouped = applyHavingConditions(ctxGen, condHaving, grouped);

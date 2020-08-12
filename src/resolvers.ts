@@ -21,10 +21,15 @@ export interface StaticResolverConfig {
 }
 
 const defaultStaticResolverConfig: StaticResolverConfig = {
-    noCache: false,
-    noFiltering: false,
-    noSorting: false,
+    noCache: true,
+    noFiltering: true,
+    noSorting: true,
 };
+// const defaultStaticResolverConfig: StaticResolverConfig = {
+//     noCache: false,
+//     noFiltering: false,
+//     noSorting: false,
+// };
 
 
 function jsonRecordsParser(src: string) {
