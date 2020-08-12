@@ -300,10 +300,19 @@ function groupRecords(
 
 
 function aggregateFields(
-        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>, groupBy: string[],
         x: PreparedResolver, records: any[][]) {
 
     const result: any[] = [];
+    if (! records.length) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return result;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const firstRec = records[0][0];
+    const groupFields = new Map<string, string>(
+        groupBy.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
     for (const g of records) {
         const agg = {};
@@ -313,7 +322,28 @@ function aggregateFields(
 
             switch (field.type) {
             case 'field':
-                throw new Error(`${field.name.join('.')} is not allowed. Aggregate function is needed.`);
+                {
+                    let found = false;
+                    const name = field.name[field.name.length - 1];
+
+                    if (groupFields.has(name)) {
+                        const trueCaseName = groupFields.get(name);
+                        if (trueCaseName) {
+                            found = true;
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                            agg[trueCaseName] = g[0][trueCaseName];
+
+                            if (field.aliasName) {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                                agg[field.aliasName] = g[0][trueCaseName];
+                            }
+                        }
+                    }
+                    if (! found) {
+                        throw new Error(`${field.name.join('.')} is not allowed. Aggregate function is needed.`);
+                    }
+                }
+                break;
             case 'fncall':
                 {
                     const fnNameI = field.fn.toLowerCase();
@@ -343,7 +373,7 @@ function aggregateFields(
 }
 
 
-function getRemovingFields(x: PreparedResolver, records: any[]) {
+function getRemovingFields(x: PreparedResolver, records: any[], isAggregation: boolean) {
     const removingFields = new Set<string>();
     if (records.length) {
         const requestedFields = new Set<string>();
@@ -351,9 +381,14 @@ function getRemovingFields(x: PreparedResolver, records: any[]) {
         const rec = records[0];
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const ent of x.queryFieldsMap!.entries()) {
-            const name = getTrueCaseFieldName(rec, ent[0]);
-            if (name) {
-                requestedFields.add(name);
+            const f = ent[1];
+            if (isAggregation && f.type === 'field' && f.aliasName) {
+                requestedFields.add(f.aliasName);
+            } else {
+                const name = getTrueCaseFieldName(rec, ent[0]);
+                if (name) {
+                    requestedFields.add(name);
+                }
             }
         }
         for (const k of Object.keys(rec)) {
@@ -395,6 +430,8 @@ export async function executeQuery(
     }
 
     try {
+        // TODO: Move to `compile` phase
+
         const condWhereTemplate = query.where ?
             deepCloneObject(query.where) : [];
         const condHavingTemplate = query.having ?
@@ -450,6 +487,8 @@ export async function executeQuery(
             let records: any[] = [];
             const parentRecords = queriedRecords.get(parentKey);
 
+            const isAggregation = (i === 0 && query.groupBy) ? true : false;
+
             const queryFields =
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 Array.from(x.queryFields!.values());
@@ -459,13 +498,8 @@ export async function executeQuery(
             const groupFields: string[] =
                 (i === 0 && query.groupBy) ? query.groupBy : [];
             const sortFields =
-                query.orderBy
-                    ? query.orderBy
-                        .filter(c =>
-                            x.name.length + 1 === c.name.length &&
-                                isEqualComplexName(x.name, c.name.slice(0, x.name.length)))
-                        .map(c => c.name[c.name.length - 1])
-                    : [];
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                Array.from(x.sortFieldNames!.values());
 
             const relationshipIdFields: string[] = [];
             for (let j = i + 1; j < query.from.length; j++) {
@@ -524,6 +558,8 @@ export async function executeQuery(
                 foreignIdField,
                 masterIdField: i === 0 ? parentIdFieldName : currentIdFieldName,
                 detailIdField: i === 0 ? currentIdFieldName : parentIdFieldName,
+                parentRecords,
+                conditions: condWhere,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -544,8 +580,8 @@ export async function executeQuery(
                 };
                 records = await x.resolver(
                     resolvingFields, condWhere,
-                    query.limit ?? null,
-                    query.offset ?? null,
+                    isAggregation ? null : (query.limit ?? null),
+                    isAggregation ? null : (query.offset ?? null),
                     ctx,
                 );
                 primaryCapabilities = ctx.resolverCapabilities;
@@ -556,11 +592,15 @@ export async function executeQuery(
 
                 records = mapSelectFields(ctxGen, x, records);
 
-                if (i === 0 && query.groupBy) {
+                if (isAggregation) {
+                    primaryCapabilities.limit = false;
+                    primaryCapabilities.offset = false;
+
                     let grouped = groupRecords(ctxGen, query.groupBy ?? [], x, records);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     grouped = applyHavingConditions(ctxGen, condHaving, grouped);
-                    records = aggregateFields(ctxGen, x, grouped);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    records = aggregateFields(ctxGen, query.groupBy!, x, grouped);
                 }
 
                 primaryRecords = records;
@@ -609,7 +649,7 @@ export async function executeQuery(
                 }
             }
 
-            const removingFields = getRemovingFields(x, records);
+            const removingFields = getRemovingFields(x, records, isAggregation);
             removingFieldsAndRecords.push([removingFields, records]);
             removingFieldsMap.set(currentKey, removingFields);
 
@@ -626,9 +666,13 @@ export async function executeQuery(
 
                 if (parentRecords) {
                     // For N+1 Query problem // TODO: reduce descendants (grandchildren and ...) queries
+
                     if (builder.events.beforeDetailSubQueries) {
                         await builder.events.beforeDetailSubQueries({
+                            functions: builder.functions,
+                            query: x.query,
                             graphPath: subQueryName,
+                            parentRecords,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -650,7 +694,10 @@ export async function executeQuery(
 
                     if (builder.events.afterDetailSubQueries) {
                         await builder.events.afterDetailSubQueries({
+                            functions: builder.functions,
+                            query: x.query,
                             graphPath: subQueryName,
+                            parentRecords,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

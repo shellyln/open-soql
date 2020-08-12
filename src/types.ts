@@ -75,6 +75,8 @@ export interface PreparedResolver {
     queryFieldsMap?: Map<string, PreparedFieldListItem>;
     condFields?: Set<string>;
     havingCondFields?: Set<string>;
+    fieldAliasNames?: Set<string>;
+    sortFieldNames?: Set<string>;
 
     resolver?: QueryResolverFn;
     resolverName?: string;
@@ -109,6 +111,8 @@ export interface PreparedQuery {
     limit?: number | null;
     offset?: number | null;
     for?: string[];
+
+    // Followings are for internal use.
 
     whereSubQueries?: PreparedSubQuery[];
     havingSubQueries?: PreparedSubQuery[];
@@ -162,11 +166,15 @@ export interface ResolverContext {
         'master' |           // Accessed by `Select (Select childField From details) From Master`
                              //   `details` is called 'child relationship name'.
         'detail';            // Accessed by `Select master__r.childField From Detail`
-    parent?: any;
+    parent?: any;            // Parent record. (For resolver function)
     foreignIdField?: string; // [parentType='master'] Select from currentResolver where currentResolver.foreignIdField = parent.idField
                              // [parentType='detail'] Select from currentResolver where currentResolver.idField = parent.foreignIdField
     masterIdField?: string;  // Record id field of master.
     detailIdField?: string;  // Record id field of detail.
+
+    parentRecords?: any[];            // For before/after sub-query events.
+    conditions?: PreparedCondition[], // For before/after sub-query events. Same object ref is passed to the resolver function's parameter.
+
     resolverCapabilities: ResolverCapabilities;
     resolverData: any;       // Resolver's user defined data.
     transactionData: any;    // Transaction user defined data.

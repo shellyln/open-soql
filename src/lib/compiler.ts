@@ -558,6 +558,33 @@ function normalize(
             x.resolver = builder.resolvers.query[lastFound.resolverName];
             x.resolverName = lastFound.resolverName;
         }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        x.fieldAliasNames = new Set<string>(Array.from(x.queryFieldsMap!.entries()).map(c => {
+            const f = c[1];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            if (f.aliasName && !x.queryFields!.has(f.aliasName)) {
+                return f.aliasName.toLowerCase();
+            } else {
+                return '';
+            }
+        }).filter(c => !!c));
+
+        for (const c of x.fieldAliasNames) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            x.condFields!.delete(c);
+        }
+
+        x.sortFieldNames = new Set<string>(
+            query.orderBy
+                ? query.orderBy
+                    .filter(c =>
+                        x.name.length + 1 === c.name.length &&
+                            isEqualComplexName(x.name, c.name.slice(0, x.name.length)))
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    .filter(c => !(x.fieldAliasNames!.has(c.name[c.name.length - 1].toLowerCase())))
+                    .map(c => c.name[c.name.length - 1])
+                : []);
     }
 
     if (query.where) {

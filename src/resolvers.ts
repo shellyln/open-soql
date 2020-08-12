@@ -14,6 +14,24 @@ import { applyWhereConditions } from './filters';
 
 
 
+export interface StaticResolverConfig {
+    noCache?: boolean;
+    noFiltering?: boolean;
+    noSorting?: boolean;
+}
+
+const defaultStaticResolverConfig: StaticResolverConfig = {
+    noCache: true,
+    noFiltering: true,
+    noSorting: true,
+};
+// const defaultStaticResolverConfig: StaticResolverConfig = {
+//     noCache: false,
+//     noFiltering: false,
+//     noSorting: false,
+// };
+
+
 function jsonRecordsParser(src: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const records: any[] = JSON.parse(src);
@@ -51,9 +69,8 @@ function csvRecordsParser(src: string) {
 
 function filterAndSliceRecords(
         records: any[], fields: string[], conditions: PreparedCondition[],
-        limit: number | null, offset: number | null, ctx: ResolverContext) {
-
-    ctx.resolverCapabilities.filtering = true;
+        limit: number | null, offset: number | null, ctx: ResolverContext,
+        config: StaticResolverConfig) {
 
     if (! records.length) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -70,14 +87,11 @@ function filterAndSliceRecords(
             throw new Error(`Field "${field}" is not supplied from resolver "${ctx.resolverName}".`);
         }
     }
-    for (const field of recordFields.keys()) {
-        if (! requestedFields.has(field)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            removingFields.add(recordFields.get(field)!);
-        }
-    }
 
-    records = applyWhereConditions(ctx, conditions, records);
+    if (! config.noFiltering) {
+        records = applyWhereConditions(ctx, conditions, records);
+        ctx.resolverCapabilities.filtering = true;
+    }
 
     if (records.length && ctx.parent) {
         switch (ctx.parentType) {
@@ -104,7 +118,12 @@ function filterAndSliceRecords(
         }
     }
 
-    if (ctx.query && ctx.query.orderBy) {
+    if (config.noFiltering) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return records;
+    }
+
+    if (!config.noSorting && ctx.query && ctx.query.orderBy) {
         const primaryPathLen = ctx.query.from[0].name.length;
 
         if (ctx.query.orderBy.every(w => w.name.length === primaryPathLen + 1)) {
@@ -113,6 +132,12 @@ function filterAndSliceRecords(
         }
     }
 
+    for (const field of recordFields.keys()) {
+        if (! requestedFields.has(field)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            removingFields.add(recordFields.get(field)!);
+        }
+    }
     for (const record of records) {
         for (const field of removingFields) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -138,9 +163,11 @@ function filterAndSliceRecords(
 
 const StaticResolverBuilderGen:
         (parser: (s: string) => any[]) =>
-            (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn =
+            (resolverName: string,
+                fetcher: () => Promise<string>,
+                config: StaticResolverConfig) => QueryResolverFn =
     (parser) => {
-        return (resolverName, fetcher) => {
+        return (resolverName, fetcher, config) => {
 
             return async (fields, conditions, limit, offset, ctx) => {
                 let cache: Map<string, string> | null;
@@ -157,8 +184,10 @@ const StaticResolverBuilderGen:
                     }
                 } else {
                     cache = new Map<string, string>();
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    ctx.resolverData.cache = cache;
+                    if (! config.noCache) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        ctx.resolverData.cache = cache;
+                    }
                 }
 
                 let records: any[] | null = null;
@@ -172,29 +201,31 @@ const StaticResolverBuilderGen:
                 }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx);
+                return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx, config);
             };
         }
     };
 
 
 export const staticJsonResolverBuilder:
-        (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn =
-    (resolverName, fetcher) => {
-        return StaticResolverBuilderGen(jsonRecordsParser)(resolverName, fetcher);
+        (resolverName: string, fetcher: () => Promise<string>, config?: StaticResolverConfig) => QueryResolverFn =
+    (resolverName, fetcher, config) => {
+        return StaticResolverBuilderGen(jsonRecordsParser)(resolverName, fetcher, config ?? defaultStaticResolverConfig);
     };
 
 
 export const staticCsvResolverBuilder:
-        (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn =
-    (resolverName, fetcher) => {
-        return StaticResolverBuilderGen(csvRecordsParser)(resolverName, fetcher);
+        (resolverName: string, fetcher: () => Promise<string>, config?: StaticResolverConfig) => QueryResolverFn =
+    (resolverName, fetcher, config) => {
+        return StaticResolverBuilderGen(csvRecordsParser)(resolverName, fetcher, config ?? defaultStaticResolverConfig);
     };
 
 
 export const passThroughResolverBuilder:
-        (resolverName: string, fetcher: () => Promise<any[]>) => QueryResolverFn =
-    (resolverName, fetcher) => {
+        (resolverName: string, fetcher: () => Promise<any[]>, config?: StaticResolverConfig) => QueryResolverFn =
+    (resolverName, fetcher, config) => {
+        const conf2 = config ?? defaultStaticResolverConfig;
+
         return async (fields, conditions, limit, offset, ctx) => {
             let cache: Map<string, any[]> | null;
             let cachedRecords: any[] | null = null;
@@ -210,8 +241,10 @@ export const passThroughResolverBuilder:
                 }
             } else {
                 cache = new Map<string, any[]>();
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                ctx.resolverData.cache = cache;
+                if (! conf2.noCache) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    ctx.resolverData.cache = cache;
+                }
             }
 
             let records: any[] | null = null;
@@ -225,6 +258,6 @@ export const passThroughResolverBuilder:
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx);
+            return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx, conf2);
         };
     };
