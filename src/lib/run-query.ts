@@ -430,6 +430,8 @@ export async function executeQuery(
     }
 
     try {
+        // TODO: Move to `compile` phase
+
         const condWhereTemplate = query.where ?
             deepCloneObject(query.where) : [];
         const condHavingTemplate = query.having ?
@@ -485,6 +487,8 @@ export async function executeQuery(
             let records: any[] = [];
             const parentRecords = queriedRecords.get(parentKey);
 
+            const isAggregation = (i === 0 && query.groupBy) ? true : false;
+
             const queryFields =
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 Array.from(x.queryFields!.values());
@@ -494,13 +498,8 @@ export async function executeQuery(
             const groupFields: string[] =
                 (i === 0 && query.groupBy) ? query.groupBy : [];
             const sortFields =
-                query.orderBy
-                    ? query.orderBy
-                        .filter(c =>
-                            x.name.length + 1 === c.name.length &&
-                                isEqualComplexName(x.name, c.name.slice(0, x.name.length)))
-                        .map(c => c.name[c.name.length - 1])
-                    : [];
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                Array.from(x.sortFieldNames!.values());
 
             const relationshipIdFields: string[] = [];
             for (let j = i + 1; j < query.from.length; j++) {
@@ -559,13 +558,12 @@ export async function executeQuery(
                 foreignIdField,
                 masterIdField: i === 0 ? parentIdFieldName : currentIdFieldName,
                 detailIdField: i === 0 ? currentIdFieldName : parentIdFieldName,
+                conditions: condWhere,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 transactionData: tr,
             };
-
-            let isAggregation = false;
 
             if (i === 0) {
                 const ctx: ResolverContext = {
@@ -593,12 +591,12 @@ export async function executeQuery(
 
                 records = mapSelectFields(ctxGen, x, records);
 
-                if (i === 0 && query.groupBy) {
-                    isAggregation = true;
+                if (isAggregation) {
                     let grouped = groupRecords(ctxGen, query.groupBy ?? [], x, records);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     grouped = applyHavingConditions(ctxGen, condHaving, grouped);
-                    records = aggregateFields(ctxGen, query.groupBy, x, grouped);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    records = aggregateFields(ctxGen, query.groupBy!, x, grouped);
                 }
 
                 primaryRecords = records;
@@ -664,8 +662,11 @@ export async function executeQuery(
 
                 if (parentRecords) {
                     // For N+1 Query problem // TODO: reduce descendants (grandchildren and ...) queries
+
                     if (builder.events.beforeDetailSubQueries) {
                         await builder.events.beforeDetailSubQueries({
+                            functions: builder.functions,
+                            query: x.query,
                             graphPath: subQueryName,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
@@ -688,6 +689,8 @@ export async function executeQuery(
 
                     if (builder.events.afterDetailSubQueries) {
                         await builder.events.afterDetailSubQueries({
+                            functions: builder.functions,
+                            query: x.query,
                             graphPath: subQueryName,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
