@@ -71,5 +71,23 @@ describe("aggregate-1", function() {
             ];
             expect(result).toEqual(expects);
         }
+
+        {
+            try {
+                const result = await soql`
+                    select
+                        foo,
+                        count() cnt, count(accountid) cntacc, count_distinct(accountid) cntdacc,
+                        count(foo) cntfoo, count_distinct(foo) cntdfoo,
+                        min(foo) minfoo, max(bar) maxbar, avg(baz) avgbaz, sum(qux) sumqux,
+                        min(corge) minc, max(corge) maxc, avg(corge) avgc
+                    from contact
+                    group by accountid`;
+                expect(0).toEqual(1);
+            } catch (e) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                expect((e as any).message).toEqual('contact.foo is not allowed. Aggregate function is needed.');
+            }
+        }
     });
 });

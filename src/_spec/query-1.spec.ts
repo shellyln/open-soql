@@ -366,7 +366,8 @@ describe("query-1", function() {
                 await soql`select con.id zid, con.corge zcorge, con.grault zgrault, con.garply zgarply from contact con where zfoo='aaa/z1'`;
                 expect(1).toEqual(0);
             } catch (e) {
-                expect(1).toEqual(1);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                expect((e as any).message).toEqual('Field "zfoo" is not supplied from resolver "Contact".');
             }
         }
     });
