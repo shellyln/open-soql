@@ -531,12 +531,12 @@ const fromClause =
 
 
 const conditionalOperator =
-    first(seq('='),
-          seq('!='),
-          seq('<'),
+    first(seq('!='),
           seq('<='),
-          seq('>'),
           seq('>='),
+          seq('='),
+          seq('<'),
+          seq('>'),
           // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           trans(tokens => [`${tokens[0]}_${tokens[1]}`])(
               seqI('not'),
