@@ -7,7 +7,8 @@ import { QueryResolverFn,
          PreparedCondition,
          ResolverContext }      from './types';
 import { getObjectValue,
-         getTrueCaseFieldName } from './lib/util';
+         getTrueCaseFieldName, 
+         isEqualComplexName} from './lib/util';
 import { parse as parseCsv }    from './lib/csv-parser';
 import { sortRecords }          from './sort';
 import { applyWhereConditions } from './filters';
@@ -130,10 +131,13 @@ function filterAndSliceRecords(
 
     if (!config.noSorting && ctx.query && ctx.query.orderBy) {
         const primaryPathLen = ctx.query.from[0].name.length;
+        if (ctx.graphPath.length === primaryPathLen && isEqualComplexName(ctx.graphPath, ctx.query.from[0].name)) {
+            if (ctx.query.orderBy.every(w => w.name.length === primaryPathLen + 1 &&
+                recordFields.has(w.name[w.name.length - 1].toLowerCase()))) {
 
-        if (ctx.query.orderBy.every(w => w.name.length === primaryPathLen + 1)) {
-            records = sortRecords(ctx.query, records);
-            ctx.resolverCapabilities.sorting = true;
+                records = sortRecords(ctx.query, records);
+                ctx.resolverCapabilities.sorting = true;
+            }
         }
     }
 
