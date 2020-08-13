@@ -1,3 +1,7 @@
+// Copyright (c) 2020 Shellyl_N and Authors
+// license: ISC
+// https://github.com/shellyln
+
 
 import { parse }                    from '../lib/parser';
 import { prepareQuery,
@@ -9,6 +13,7 @@ import { setDefaultStaticResolverConfig,
          staticJsonResolverBuilder,
          staticCsvResolverBuilder,
          passThroughResolverBuilder } from '../resolvers';
+import { resolverConfigs }            from './helpers/config';
 
 
 
