@@ -487,6 +487,8 @@ export async function executeQuery(
             let records: any[] = [];
             const parentRecords = queriedRecords.get(parentKey);
 
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const hasAliasNameCond = (x.condAliasFields!.size > 0) ? true : false;
             const isAggregation = (i === 0 && query.groupBy) ? true : false;
 
             const queryFields =
@@ -578,23 +580,33 @@ export async function executeQuery(
                         offset: false,
                     },
                 };
+
                 records = await x.resolver(
-                    resolvingFields, condWhere,
-                    isAggregation ? null : (query.limit ?? null),
-                    isAggregation ? null : (query.offset ?? null),
+                    resolvingFields,
+                    hasAliasNameCond ? [] : condWhere,
+                    (isAggregation || hasAliasNameCond) ? null : (query.limit ?? null),
+                    (isAggregation || hasAliasNameCond) ? null : (query.offset ?? null),
                     ctx,
                 );
                 primaryCapabilities = ctx.resolverCapabilities;
+
+                if (hasAliasNameCond) {
+                    primaryCapabilities.filtering = false;
+                    primaryCapabilities.limit = false;
+                    primaryCapabilities.offset = false;
+                    primaryCapabilities.sorting = false;
+                }
+
+                records = mapSelectFields(ctxGen, x, records);
 
                 if (! ctx.resolverCapabilities.filtering) {
                     records = applyWhereConditions(ctxGen, condWhere, records);
                 }
 
-                records = mapSelectFields(ctxGen, x, records);
-
                 if (isAggregation) {
                     primaryCapabilities.limit = false;
                     primaryCapabilities.offset = false;
+                    primaryCapabilities.sorting = false;
 
                     let grouped = groupRecords(ctxGen, query.groupBy ?? [], x, records);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -625,13 +637,24 @@ export async function executeQuery(
                             offset: false,
                         },
                     };
-                    let recs = (await x.resolver(resolvingFields, condWhere, 1, 0, ctx)).slice(0, 1);
+
+                    let recs = (await x.resolver(
+                        resolvingFields,
+                        hasAliasNameCond ? [] : condWhere,
+                        1, 0, ctx)).slice(0, 1);
+
+                    if (hasAliasNameCond) {
+                        ctx.resolverCapabilities.filtering = false;
+                        ctx.resolverCapabilities.limit = false;
+                        ctx.resolverCapabilities.offset = false;
+                        ctx.resolverCapabilities.sorting = false;
+                    }
+
+                    recs = mapSelectFields(ctxGen, x, recs);
 
                     if (! ctx.resolverCapabilities.filtering) {
                         recs = applyWhereConditions(ctxGen, condWhere, recs);
                     }
-
-                    recs = mapSelectFields(ctxGen, x, recs);
 
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     p[parentFieldName] = recs.length > 0 ? recs[0] : null;

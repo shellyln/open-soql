@@ -74,6 +74,7 @@ export interface PreparedResolver {
     queryFields?: Set<string>;
     queryFieldsMap?: Map<string, PreparedFieldListItem>;
     condFields?: Set<string>;
+    condAliasFields?: Set<string>;
     havingCondFields?: Set<string>;
     fieldAliasNames?: Set<string>;
     sortFieldNames?: Set<string>;

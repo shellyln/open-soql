@@ -430,11 +430,6 @@ function normalize(
         normalizeCondition(query.having[0]);
     }
 
-    // Check and normalize `groupBy` fields
-    // if (query.groupBy) {
-    //     // NOTE: Nothing to do.
-    // }
-
     // Check and normalize `orderBy` fields
     if (query.orderBy) {
         normalizeTarget = 'orderby';
@@ -447,6 +442,7 @@ function normalize(
         x.queryFields = new Set<string>();
         x.queryFieldsMap = new Map<string, PreparedFieldListItem>();
         x.condFields = new Set<string>();
+        x.condAliasFields = new Set<string>();
         x.havingCondFields = new Set<string>();
     }
 
@@ -517,12 +513,6 @@ function normalize(
         }
     }
 
-    if (query.orderBy) {
-        for (const x of query.orderBy) {
-            registerCondFields(x);
-        }
-    }
-
     query.from[0].name = primaryResolverName;
 
     // Check resolvers' paths
@@ -572,7 +562,12 @@ function normalize(
 
         for (const c of x.fieldAliasNames) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            x.condFields!.delete(c);
+            if (x.condFields!.has(c)) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                x.condFields!.delete(c);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                x.condAliasFields!.add(c);
+            }
         }
 
         x.sortFieldNames = new Set<string>(

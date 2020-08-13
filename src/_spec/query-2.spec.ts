@@ -14,25 +14,25 @@ import { staticJsonResolverBuilder,
 const commands1 = build({
     functions: [{
         type: 'scalar',
-        name: 'string_concat',
+        name: 'testspec_string_concat',
         fn: (ctx, args, records) => {
             return args.map(c => String(c)).join('');
         },
     }, {
         type: 'scalar',
-        name: 'number_add',
+        name: 'testspec_number_add',
         fn: (ctx, args, records) => {
             return args.map(c => Number(c)).reduce((a, b) => a + b);
         },
     }, {
         type: 'scalar',
-        name: 'twice',
+        name: 'testspec_twice',
         fn: (ctx, args, records) => {
             return Number(args[0]) * 2;
         },
     }, {
         type: 'immediate-scalar',
-        name: 'pass_thru',
+        name: 'testspec_pass_thru',
         fn: (ctx, args) => {
             return args[0];
         },
@@ -626,9 +626,9 @@ describe("query-2", function() {
         {
             const result = await soql`
                 select
-                    id cid, string_concat(foo, bar) foobar, pass_thru(2020-12-12) p1, baz,
-                    account.id, string_concat(account.name, ';', acc.address) name_addr,
-                    (select id, name, twice(amount) amount2 from account.opportunities)
+                    id cid, testspec_string_concat(foo, bar) foobar, testspec_pass_thru(2020-12-12) p1, baz,
+                    account.id, testspec_string_concat(account.name, ';', acc.address) name_addr,
+                    (select id, name, testspec_twice(amount) amount2 from account.opportunities)
                 from contact, account acc`;
             const expects = [
                 { Id: 'Contact/z1',
@@ -661,6 +661,83 @@ describe("query-2", function() {
                   foobar:       '',
                   p1: '2020-12-12',
                   Baz:      ' ',
+                  Account: null },
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`
+                select
+                    id cid, testspec_string_concat(foo, bar) foobar, testspec_pass_thru(2020-12-12) p1, baz,
+                    account.id, testspec_string_concat(account.name, ';', acc.address) name_addr,
+                    (select id, name, testspec_twice(amount) amount2 from account.opportunities)
+                from contact, account acc
+                where (foobar='aaa/z1bbb/z1' or foobar='aaa/z3bbb/z3') and acc.name_addr='fff/z2;ggg/z2'`;
+            const expects = [
+                { Id: 'Contact/z1',
+                  foobar: 'aaa/z1bbb/z1',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z1',
+                  Account: null },
+                { Id: 'Contact/z3',
+                  foobar: 'aaa/z3bbb/z3',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z3',
+                  Account: { Id: 'Account/z2', name_addr: 'fff/z2;ggg/z2',
+                  Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', amount2: 3000 * 2 },
+                                  { Id: 'Opportunity/z5', Name:       '', amount2:    0 * 2 }] }},
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`
+                select
+                    id cid, testspec_string_concat(foo, bar) foobar, testspec_pass_thru(2020-12-12) p1, baz,
+                    account.id, testspec_string_concat(account.name, ';', acc.address) name_addr,
+                    (select id, name, testspec_twice(amount) amount2 from account.opportunities)
+                from contact, account acc
+                where (foobar='aaa/z1bbb/z1' or foobar='aaa/z3bbb/z3') and acc.name_addr='fff/z2;ggg/z2'
+                order by acc.name_addr desc`;
+            const expects = [
+                { Id: 'Contact/z3',
+                  foobar: 'aaa/z3bbb/z3',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z3',
+                  Account: { Id: 'Account/z2', name_addr: 'fff/z2;ggg/z2',
+                  Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', amount2: 3000 * 2 },
+                                  { Id: 'Opportunity/z5', Name:       '', amount2:    0 * 2 }] }},
+                { Id: 'Contact/z1',
+                  foobar: 'aaa/z1bbb/z1',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z1',
+                  Account: null },
+            ];
+            expect(result).toEqual(expects);
+        }
+
+        {
+            const result = await soql`
+                select
+                    id cid, testspec_string_concat(foo, bar) foobar, testspec_pass_thru(2020-12-12) p1, baz,
+                    account.id, testspec_string_concat(account.name, ';', acc.address) name_addr,
+                    (select id, name, testspec_twice(amount) amount2 from account.opportunities)
+                from contact, account acc
+                where (foobar='aaa/z1bbb/z1' or foobar='aaa/z3bbb/z3') and acc.name_addr='fff/z2;ggg/z2'
+                order by cid desc, acc.name_addr desc`;
+            const expects = [
+                { Id: 'Contact/z3',
+                  foobar: 'aaa/z3bbb/z3',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z3',
+                  Account: { Id: 'Account/z2', name_addr: 'fff/z2;ggg/z2',
+                  Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', amount2: 3000 * 2 },
+                                  { Id: 'Opportunity/z5', Name:       '', amount2:    0 * 2 }] }},
+                { Id: 'Contact/z1',
+                  foobar: 'aaa/z1bbb/z1',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z1',
                   Account: null },
             ];
             expect(result).toEqual(expects);
