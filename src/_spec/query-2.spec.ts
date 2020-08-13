@@ -12,6 +12,31 @@ import { staticJsonResolverBuilder,
 
 
 const commands1 = build({
+    functions: [{
+        type: 'scalar',
+        name: 'string_concat',
+        fn: (ctx, args, records) => {
+            return args.map(c => String(c)).join('');
+        },
+    }, {
+        type: 'scalar',
+        name: 'number_add',
+        fn: (ctx, args, records) => {
+            return args.map(c => Number(c)).reduce((a, b) => a + b);
+        },
+    }, {
+        type: 'scalar',
+        name: 'twice',
+        fn: (ctx, args, records) => {
+            return Number(args[0]) * 2;
+        },
+    }, {
+        type: 'immediate-scalar',
+        name: 'pass_thru',
+        fn: (ctx, args) => {
+            return args[0];
+        },
+    }],
     relationships: {
         Account: {
             Contacts: ['Contact'],
@@ -588,6 +613,54 @@ describe("query-2", function() {
                 { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
                   Account: null },
                 { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
+                  Account: null },
+            ];
+            expect(result).toEqual(expects);
+        }
+    });
+
+
+    it("Relational query with function call", async function() {
+        const { soql, insert, update, remove, transaction } = commands1;
+
+        {
+            const result = await soql`
+                select
+                    id cid, string_concat(foo, bar) foobar, pass_thru(2020-12-12) p1, baz,
+                    account.id, string_concat(account.name, ';', acc.address) name_addr,
+                    (select id, name, twice(amount) amount2 from account.opportunities)
+                from contact, account acc`;
+            const expects = [
+                { Id: 'Contact/z1',
+                  foobar: 'aaa/z1bbb/z1',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z1',
+                  Account: { Id: 'Account/z1', name_addr: 'fff/z1;ggg/z1',
+                  Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', amount2: 1000 * 2 },
+                                  { Id: 'Opportunity/z2', Name: 'hhh/z2', amount2: 2000 * 2 }] }},
+                { Id: 'Contact/z2',
+                  foobar: 'aaa/z2bbb/z2',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z2',
+                  Account: { Id: 'Account/z1', name_addr: 'fff/z1;ggg/z1',
+                  Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', amount2: 1000 * 2 },
+                                  { Id: 'Opportunity/z2', Name: 'hhh/z2', amount2: 2000 * 2 }] }},
+                { Id: 'Contact/z3',
+                  foobar: 'aaa/z3bbb/z3',
+                  p1: '2020-12-12',
+                  Baz: 'ccc/z3',
+                  Account: { Id: 'Account/z2', name_addr: 'fff/z2;ggg/z2',
+                  Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', amount2: 3000 * 2 },
+                                  { Id: 'Opportunity/z5', Name:       '', amount2:    0 * 2 }] }},
+                { Id: 'Contact/z4',
+                  foobar: 'nullnull',
+                  p1: '2020-12-12',
+                  Baz:     null,
+                  Account: null },
+                { Id: 'Contact/z5',
+                  foobar:       '',
+                  p1: '2020-12-12',
+                  Baz:      ' ',
                   Account: null },
             ];
             expect(result).toEqual(expects);
