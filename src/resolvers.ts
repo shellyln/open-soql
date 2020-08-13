@@ -32,6 +32,11 @@ const defaultStaticResolverConfig: StaticResolverConfig = {
 };
 
 
+export function setDefaultStaticResolverConfig(conf: StaticResolverConfig): void {
+    Object.assign(defaultStaticResolverConfig, conf);
+}
+
+
 function jsonRecordsParser(src: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const records: any[] = JSON.parse(src);

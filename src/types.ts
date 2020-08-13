@@ -78,6 +78,7 @@ export interface PreparedResolver {
     havingCondFields?: Set<string>;
     fieldAliasNames?: Set<string>;
     sortFieldNames?: Set<string>;
+    relationshipIdFields?: Set<string>;
 
     resolver?: QueryResolverFn;
     resolverName?: string;

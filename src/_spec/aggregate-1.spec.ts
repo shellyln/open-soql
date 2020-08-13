@@ -5,7 +5,8 @@ import { prepareQuery,
 import { getObjectValue }           from '../lib/util';
 import { QueryBuilderInfoInternal } from '../types';
 import { build }                    from '../builder';
-import { staticJsonResolverBuilder,
+import { setDefaultStaticResolverConfig,
+         staticJsonResolverBuilder,
          staticCsvResolverBuilder,
          passThroughResolverBuilder } from '../resolvers';
 

@@ -502,28 +502,9 @@ export async function executeQuery(
             const sortFields =
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 Array.from(x.sortFieldNames!.values());
-
-            const relationshipIdFields: string[] = [];
-            for (let j = i + 1; j < query.from.length; j++) {
-                const c = query.from[j];
-
-                if (x.name.length + 1 === c.name.length && isEqualComplexName(x.name, c.name.slice(0, x.name.length))) {
-                    const childResolverName = c.resolverName ?? '';
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-                    const childRelationshipInfo = ((builder.relationships[resolverName] ?? {})[childResolverName] as any) ?? {};
-
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    const childIdField = childRelationshipInfo.id
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                        ? childRelationshipInfo.id as string
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        : builder.rules.foreignIdFieldName!(childResolverName);
-
-                    if (childIdField) {
-                        relationshipIdFields.push(childIdField);
-                    }
-                }
-            }
+            const relationshipIdFields =
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                Array.from(x.relationshipIdFields!.values());
 
             const resolvingFields =
                 Array.from(
