@@ -84,7 +84,7 @@ const queryResolvers1 = {
 
 
 describe("trans-and-events-1", function() {
-    it("trans-and-events (1)", async function() {
+    it("Events without transaction (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -133,7 +133,7 @@ describe("trans-and-events-1", function() {
                             return Promise.resolve();
                         },
                         endTransaction: (evt, err) => {
-                            eventsResult.push([count++, 'endTransaction', evt.graphPath]);
+                            eventsResult.push([count++, err ? `endTransaction(error:${err.message})` : 'endTransaction', evt.graphPath]);
                             return Promise.resolve();
                         },
                         beginExecute: (evt) => {
@@ -141,7 +141,7 @@ describe("trans-and-events-1", function() {
                             return Promise.resolve();
                         },
                         endExecute: (evt, err) => {
-                            eventsResult.push([count++, 'endExecute', evt.graphPath]);
+                            eventsResult.push([count++, err ? `endExecute(error:${err.message})` : 'endExecute', evt.graphPath]);
                             return Promise.resolve();
                         },
                         beforeMasterSubQueries: (evt) => {
@@ -254,6 +254,486 @@ describe("trans-and-events-1", function() {
                     [43, 'remove',                 void 0],
                     [44, 'endExecute',             void 0],
                     [45, 'endTransaction',         void 0],
+                ]);
+            }
+        }
+    });
+
+
+    it("Events without transaction + Error (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            {
+                let count = 0;
+                const eventsResult: Array<[number, string, string[] | undefined | null]> = [];
+                let removed: any = null;
+
+                const commands1 = build({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    relationships: relationships1 as any,
+                    resolvers: {
+                        query: queryResolvers1,
+                        insert: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'insert', void 0]);
+                                return Promise.resolve(records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Id: `Contact/z${index + 1}` };
+                                }));
+                            }
+                        },
+                        update: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'update', void 0]);
+                                return Promise.reject(new Error('Error messae!!!'));
+                            }
+                        },
+                        remove: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'remove', void 0]);
+                                removed = records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Count: 999 };
+                                });
+                                return Promise.resolve();
+                            }
+                        },
+                    },
+                    events: {
+                        beginTransaction: (evt) => {
+                            eventsResult.push([count++, 'beginTransaction', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        endTransaction: (evt, err) => {
+                            eventsResult.push([count++, err ? `endTransaction(error:${err.message})` : 'endTransaction', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beginExecute: (evt) => {
+                            eventsResult.push([count++, 'beginExecute', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        endExecute: (evt, err) => {
+                            eventsResult.push([count++, err ? `endExecute(error:${err.message})` : 'endExecute', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beforeMasterSubQueries: (evt) => {
+                            eventsResult.push([count++, 'beforeMasterSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        afterMasterSubQueries: (evt) => {
+                            eventsResult.push([count++, 'afterMasterSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beforeDetailSubQueries: (evt) => {
+                            eventsResult.push([count++, 'beforeDetailSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        afterDetailSubQueries: (evt) => {
+                            eventsResult.push([count++, 'afterDetailSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                    },
+                });
+
+                const { soql, insert, update, remove, transaction } = commands1;
+
+                for (let i = 0; i < 2; i++) {
+                    try {
+                        const result = await soql`
+                            select
+                                id, foo, bar, baz,
+                                account.id, account.name,
+                                (select id, name, amount from account.opportunities)
+                            from contact, account`;
+                        const expects = [
+                            { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
+                            Account: { Id: 'Account/z1', Name: 'fff/z1',
+                            Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                            { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                            { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
+                            Account: { Id: 'Account/z1', Name: 'fff/z1',
+                            Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                            { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                            { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
+                            Account: { Id: 'Account/z2', Name: 'fff/z2',
+                            Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 },
+                                            { Id: 'Opportunity/z5', Name:       '', Amount:    0 }] }},
+                            { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
+                            Account: null },
+                            { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
+                            Account: null },
+                        ];
+                        expect(result).toEqual(expects);
+
+                        const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
+                        expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
+                        const updated = await update('Contact', inserted);
+                        expect(updated).toEqual([{Id: 'Contact/z1', Count: 1}, {Id: 'Contact/z2', Count: 1}]);
+                        await remove('Contact', inserted);
+                        expect(removed).toEqual([{Id: 'Contact/z1', Count: 999}, {Id: 'Contact/z2', Count: 999}]);
+
+                        expect(0).toEqual(1);
+                    } catch (e) {
+                        expect(1).toEqual(1);
+                    }
+                }
+
+                expect(eventsResult).toEqual([
+                    [ 0, 'beginTransaction',       void 0],
+                    [ 1, 'beginExecute',           void 0],
+                    [ 2, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [ 3, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [ 4, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [ 5, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [ 6, 'endExecute',             void 0],
+                    [ 7, 'endTransaction',         void 0],
+
+                    [ 8, 'beginTransaction',       void 0],
+                    [ 9, 'beginExecute',           void 0],
+                    [10, 'insert',                 void 0],
+                    [11, 'endExecute',             void 0],
+                    [12, 'endTransaction',         void 0],
+
+                    [13, 'beginTransaction',       void 0],
+                    [14, 'beginExecute',           void 0],
+                    [15, 'update',                 void 0],
+                    [16, 'endExecute(error:Error messae!!!)', void 0],
+                    [17, 'endTransaction(error:Error messae!!!)', void 0],
+
+                    [18, 'beginTransaction',       void 0],
+                    [19, 'beginExecute',           void 0],
+                    [20, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [21, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [22, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [23, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [24, 'endExecute',             void 0],
+                    [25, 'endTransaction',         void 0],
+
+                    [26, 'beginTransaction',       void 0],
+                    [27, 'beginExecute',           void 0],
+                    [28, 'insert',                 void 0],
+                    [29, 'endExecute',             void 0],
+                    [30, 'endTransaction',         void 0],
+
+                    [31, 'beginTransaction',       void 0],
+                    [32, 'beginExecute',           void 0],
+                    [33, 'update',                 void 0],
+                    [34, 'endExecute(error:Error messae!!!)', void 0],
+                    [35, 'endTransaction(error:Error messae!!!)', void 0],
+                ]);
+            }
+        }
+    });
+
+
+    it("Events with transaction (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            {
+                let count = 0;
+                const eventsResult: Array<[number, string, string[] | undefined | null]> = [];
+                let removed: any = null;
+
+                const commands1 = build({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    relationships: relationships1 as any,
+                    resolvers: {
+                        query: queryResolvers1,
+                        insert: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'insert', void 0]);
+                                return Promise.resolve(records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Id: `Contact/z${index + 1}` };
+                                }));
+                            }
+                        },
+                        update: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'update', void 0]);
+                                return Promise.resolve(records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
+                                    return { ...x, Count: (x as any).Count + 1 };
+                                }));
+                            }
+                        },
+                        remove: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'remove', void 0]);
+                                removed = records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Count: 999 };
+                                });
+                                return Promise.resolve();
+                            }
+                        },
+                    },
+                    events: {
+                        beginTransaction: (evt) => {
+                            eventsResult.push([count++, 'beginTransaction', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        endTransaction: (evt, err) => {
+                            eventsResult.push([count++, err ? `endTransaction(error:${err.message})` : 'endTransaction', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beginExecute: (evt) => {
+                            eventsResult.push([count++, 'beginExecute', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        endExecute: (evt, err) => {
+                            eventsResult.push([count++, err ? `endExecute(error:${err.message})` : 'endExecute', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beforeMasterSubQueries: (evt) => {
+                            eventsResult.push([count++, 'beforeMasterSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        afterMasterSubQueries: (evt) => {
+                            eventsResult.push([count++, 'afterMasterSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beforeDetailSubQueries: (evt) => {
+                            eventsResult.push([count++, 'beforeDetailSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        afterDetailSubQueries: (evt) => {
+                            eventsResult.push([count++, 'afterDetailSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                    },
+                });
+
+                const { transaction } = commands1;
+
+                await transaction(async (commands) => {
+                    const { soql, insert, update, remove } = commands;
+                    for (let i = 0; i < 2; i++) {
+                        const result = await soql`
+                            select
+                                id, foo, bar, baz,
+                                account.id, account.name,
+                                (select id, name, amount from account.opportunities)
+                            from contact, account`;
+                        const expects = [
+                            { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
+                            Account: { Id: 'Account/z1', Name: 'fff/z1',
+                            Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                            { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                            { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
+                            Account: { Id: 'Account/z1', Name: 'fff/z1',
+                            Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                            { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                            { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
+                            Account: { Id: 'Account/z2', Name: 'fff/z2',
+                            Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 },
+                                            { Id: 'Opportunity/z5', Name:       '', Amount:    0 }] }},
+                            { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
+                            Account: null },
+                            { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
+                            Account: null },
+                        ];
+                        expect(result).toEqual(expects);
+
+                        const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
+                        expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
+                        const updated = await update('Contact', inserted);
+                        expect(updated).toEqual([{Id: 'Contact/z1', Count: 1}, {Id: 'Contact/z2', Count: 1}]);
+                        await remove('Contact', inserted);
+                        expect(removed).toEqual([{Id: 'Contact/z1', Count: 999}, {Id: 'Contact/z2', Count: 999}]);
+                    }
+                });
+
+                expect(eventsResult).toEqual([
+                    [ 0, 'beginTransaction',       void 0],
+
+                    [ 1, 'beginExecute',           void 0],
+                    [ 2, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [ 3, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [ 4, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [ 5, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [ 6, 'endExecute',             void 0],
+
+                    [ 7, 'beginExecute',           void 0],
+                    [ 8, 'insert',                 void 0],
+                    [ 9, 'endExecute',             void 0],
+
+                    [10, 'beginExecute',           void 0],
+                    [11, 'update',                 void 0],
+                    [12, 'endExecute',             void 0],
+
+                    [13, 'beginExecute',           void 0],
+                    [14, 'remove',                 void 0],
+                    [15, 'endExecute',             void 0],
+
+                    [16, 'beginExecute',           void 0],
+                    [17, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [18, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [19, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [20, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [21, 'endExecute',             void 0],
+
+                    [22, 'beginExecute',           void 0],
+                    [23, 'insert',                 void 0],
+                    [24, 'endExecute',             void 0],
+
+                    [25, 'beginExecute',           void 0],
+                    [26, 'update',                 void 0],
+                    [27, 'endExecute',             void 0],
+
+                    [28, 'beginExecute',           void 0],
+                    [29, 'remove',                 void 0],
+                    [30, 'endExecute',             void 0],
+
+                    [31, 'endTransaction',         void 0],
+                ]);
+            }
+        }
+    });
+
+
+    it("Events with transaction + Error (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            {
+                let count = 0;
+                const eventsResult: Array<[number, string, string[] | undefined | null]> = [];
+                let removed: any = null;
+
+                const commands1 = build({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    relationships: relationships1 as any,
+                    resolvers: {
+                        query: queryResolvers1,
+                        insert: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'insert', void 0]);
+                                return Promise.resolve(records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Id: `Contact/z${index + 1}` };
+                                }));
+                            }
+                        },
+                        update: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'update', void 0]);
+                                return Promise.reject(new Error('Error messae!!!'));
+                            }
+                        },
+                        remove: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'remove', void 0]);
+                                removed = records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Count: 999 };
+                                });
+                                return Promise.resolve();
+                            }
+                        },
+                    },
+                    events: {
+                        beginTransaction: (evt) => {
+                            eventsResult.push([count++, 'beginTransaction', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        endTransaction: (evt, err) => {
+                            eventsResult.push([count++, err ? `endTransaction(error:${err.message})` : 'endTransaction', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beginExecute: (evt) => {
+                            eventsResult.push([count++, 'beginExecute', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        endExecute: (evt, err) => {
+                            eventsResult.push([count++, err ? `endExecute(error:${err.message})` : 'endExecute', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beforeMasterSubQueries: (evt) => {
+                            eventsResult.push([count++, 'beforeMasterSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        afterMasterSubQueries: (evt) => {
+                            eventsResult.push([count++, 'afterMasterSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        beforeDetailSubQueries: (evt) => {
+                            eventsResult.push([count++, 'beforeDetailSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                        afterDetailSubQueries: (evt) => {
+                            eventsResult.push([count++, 'afterDetailSubQueries', evt.graphPath]);
+                            return Promise.resolve();
+                        },
+                    },
+                });
+
+                const { transaction } = commands1;
+
+                try {
+                    await transaction(async (commands) => {
+                        const { soql, insert, update, remove } = commands;
+                        for (let i = 0; i < 2; i++) {
+                            const result = await soql`
+                                select
+                                    id, foo, bar, baz,
+                                    account.id, account.name,
+                                    (select id, name, amount from account.opportunities)
+                                from contact, account`;
+                            const expects = [
+                                { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
+                                Account: { Id: 'Account/z1', Name: 'fff/z1',
+                                Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                                { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                                { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
+                                Account: { Id: 'Account/z1', Name: 'fff/z1',
+                                Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                                { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                                { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
+                                Account: { Id: 'Account/z2', Name: 'fff/z2',
+                                Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 },
+                                                { Id: 'Opportunity/z5', Name:       '', Amount:    0 }] }},
+                                { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
+                                Account: null },
+                                { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
+                                Account: null },
+                            ];
+                            expect(result).toEqual(expects);
+
+                            const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
+                            expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
+                            const updated = await update('Contact', inserted);
+                            expect(updated).toEqual([{Id: 'Contact/z1', Count: 1}, {Id: 'Contact/z2', Count: 1}]);
+                            await remove('Contact', inserted);
+                            expect(removed).toEqual([{Id: 'Contact/z1', Count: 999}, {Id: 'Contact/z2', Count: 999}]);
+                        }
+                    });
+                    expect(0).toEqual(1);
+                } catch (e) {
+                    expect(1).toEqual(1);
+                }
+
+                expect(eventsResult).toEqual([
+                    [ 0, 'beginTransaction',       void 0],
+
+                    [ 1, 'beginExecute',           void 0],
+                    [ 2, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [ 3, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [ 4, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [ 5, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [ 6, 'endExecute',             void 0],
+
+                    [ 7, 'beginExecute',           void 0],
+                    [ 8, 'insert',                 void 0],
+                    [ 9, 'endExecute',             void 0],
+
+                    [10, 'beginExecute',           void 0],
+                    [11, 'update',                 void 0],
+                    [12, 'endExecute(error:Error messae!!!)', void 0],
+
+                    [13, 'endTransaction(error:Error messae!!!)', void 0],
                 ]);
             }
         }
