@@ -91,11 +91,41 @@ describe("trans-and-events-1", function() {
             {
                 let count = 0;
                 const eventsResult: Array<[number, string, string[] | undefined | null]> = [];
+                let removed: any = null;
+
                 const commands1 = build({
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     relationships: relationships1 as any,
                     resolvers: {
                         query: queryResolvers1,
+                        insert: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'insert', void 0]);
+                                return Promise.resolve(records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Id: `Contact/z${index + 1}` };
+                                }));
+                            }
+                        },
+                        update: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'update', void 0]);
+                                return Promise.resolve(records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-member-access
+                                    return { ...x, Count: (x as any).Count + 1 };
+                                }));
+                            }
+                        },
+                        remove: {
+                            Contact: (records, ctx) => {
+                                eventsResult.push([count++, 'remove', void 0]);
+                                removed = records.map((x, index) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return { ...x, Count: 999 };
+                                });
+                                return Promise.resolve();
+                            }
+                        },
                     },
                     events: {
                         beginTransaction: (evt) => {
@@ -135,40 +165,95 @@ describe("trans-and-events-1", function() {
 
                 const { soql, insert, update, remove, transaction } = commands1;
 
-                const result = await soql`
-                    select
-                        id, foo, bar, baz,
-                        account.id, account.name,
-                        (select id, name, amount from account.opportunities)
-                    from contact, account`;
-                const expects = [
-                    { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
-                    Account: { Id: 'Account/z1', Name: 'fff/z1',
-                    Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
-                                    { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
-                    { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
-                    Account: { Id: 'Account/z1', Name: 'fff/z1',
-                    Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
-                                    { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
-                    { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
-                    Account: { Id: 'Account/z2', Name: 'fff/z2',
-                    Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 },
-                                    { Id: 'Opportunity/z5', Name:       '', Amount:    0 }] }},
-                    { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
-                    Account: null },
-                    { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
-                    Account: null },
-                ];
-                expect(result).toEqual(expects);
+                for (let i = 0; i < 2; i++) {
+                    const result = await soql`
+                        select
+                            id, foo, bar, baz,
+                            account.id, account.name,
+                            (select id, name, amount from account.opportunities)
+                        from contact, account`;
+                    const expects = [
+                        { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
+                        Account: { Id: 'Account/z1', Name: 'fff/z1',
+                        Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                        { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                        { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
+                        Account: { Id: 'Account/z1', Name: 'fff/z1',
+                        Opportunities: [{ Id: 'Opportunity/z1', Name: 'hhh/z1', Amount: 1000 },
+                                        { Id: 'Opportunity/z2', Name: 'hhh/z2', Amount: 2000 }] }},
+                        { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
+                        Account: { Id: 'Account/z2', Name: 'fff/z2',
+                        Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 },
+                                        { Id: 'Opportunity/z5', Name:       '', Amount:    0 }] }},
+                        { Id: 'Contact/z4', Foo:     null, Bar:     null, Baz:     null,
+                        Account: null },
+                        { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
+                        Account: null },
+                    ];
+                    expect(result).toEqual(expects);
+
+                    const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
+                    expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
+                    const updated = await update('Contact', inserted);
+                    expect(updated).toEqual([{Id: 'Contact/z1', Count: 1}, {Id: 'Contact/z2', Count: 1}]);
+                    await remove('Contact', inserted);
+                    expect(removed).toEqual([{Id: 'Contact/z1', Count: 999}, {Id: 'Contact/z2', Count: 999}]);
+                }
+
                 expect(eventsResult).toEqual([
-                    [0, 'beginTransaction',       void 0],
-                    [1, 'beginExecute',           void 0],
-                    [2, 'beforeMasterSubQueries', ['Contact', 'Account']],
-                    [3, 'afterMasterSubQueries',  ['Contact', 'Account']],
-                    [4, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
-                    [5, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
-                    [6, 'endExecute',             void 0],
-                    [7, 'endTransaction',         void 0]
+                    [ 0, 'beginTransaction',       void 0],
+                    [ 1, 'beginExecute',           void 0],
+                    [ 2, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [ 3, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [ 4, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [ 5, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [ 6, 'endExecute',             void 0],
+                    [ 7, 'endTransaction',         void 0],
+
+                    [ 8, 'beginTransaction',       void 0],
+                    [ 9, 'beginExecute',           void 0],
+                    [10, 'insert',                 void 0],
+                    [11, 'endExecute',             void 0],
+                    [12, 'endTransaction',         void 0],
+
+                    [13, 'beginTransaction',       void 0],
+                    [14, 'beginExecute',           void 0],
+                    [15, 'update',                 void 0],
+                    [16, 'endExecute',             void 0],
+                    [17, 'endTransaction',         void 0],
+
+                    [18, 'beginTransaction',       void 0],
+                    [19, 'beginExecute',           void 0],
+                    [20, 'remove',                 void 0],
+                    [21, 'endExecute',             void 0],
+                    [22, 'endTransaction',         void 0],
+
+                    [23, 'beginTransaction',       void 0],
+                    [24, 'beginExecute',           void 0],
+                    [25, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [26, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [27, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [28, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [29, 'endExecute',             void 0],
+                    [30, 'endTransaction',         void 0],
+
+                    [31, 'beginTransaction',       void 0],
+                    [32, 'beginExecute',           void 0],
+                    [33, 'insert',                 void 0],
+                    [34, 'endExecute',             void 0],
+                    [35, 'endTransaction',         void 0],
+
+                    [36, 'beginTransaction',       void 0],
+                    [37, 'beginExecute',           void 0],
+                    [38, 'update',                 void 0],
+                    [39, 'endExecute',             void 0],
+                    [40, 'endTransaction',         void 0],
+
+                    [41, 'beginTransaction',       void 0],
+                    [42, 'beginExecute',           void 0],
+                    [43, 'remove',                 void 0],
+                    [44, 'endExecute',             void 0],
+                    [45, 'endTransaction',         void 0],
                 ]);
             }
         }
