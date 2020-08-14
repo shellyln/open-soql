@@ -450,7 +450,8 @@ export function build(builder: QueryBuilderInfo): {
     transaction: (
             callback: (commands: {
                 soql, insert, update, remove
-            }, tr: any) => Primise<void>
+            }, tr: any) => Primise<void>,
+            trOptions?: any,
         ) => Primise<void>;
 };
 ```

@@ -173,6 +173,7 @@ async function execCondSubQueries(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
+        trOptions: any | undefined,
         condTemplate: PreparedCondition[],
         resolverData: any | null) {
 
@@ -183,7 +184,9 @@ async function execCondSubQueries(
     const condSubQueryResults =
         condSubQueries
             .map(x =>
-                executeQuery(builder, tr, x.subQuery.query, null, null, null, resolverData)
+                executeCompiledQuery(
+                    builder, tr, trOptions,
+                    x.subQuery.query, null, null, null, resolverData)
                 .then(r => ({ cond: x.cond, index: x.index, subQuery: x.subQuery, result: r })));
 
     (await Promise.all(condSubQueryResults)).map(x => {
@@ -401,10 +404,11 @@ function getRemovingFields(x: PreparedResolver, records: any[], isAggregation: b
 }
 
 
-export async function executeQuery(
+export async function executeCompiledQuery(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
+        trOptions: any | undefined,
         query: PreparedQuery,
         parent: any | null,
         parentQueriedRecords: Map<string, any[]> | null,
@@ -426,6 +430,8 @@ export async function executeQuery(
             resolverData,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             transactionData: tr,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionOptions: trOptions,
         });
     }
 
@@ -437,8 +443,8 @@ export async function executeQuery(
         const condHavingTemplate = query.having ?
             deepCloneObject(query.having) : [];
 
-        await execCondSubQueries(builder, tr, condWhereTemplate, resolverData);
-        await execCondSubQueries(builder, tr, condHavingTemplate, resolverData);
+        await execCondSubQueries(builder, tr, trOptions, condWhereTemplate, resolverData);
+        await execCondSubQueries(builder, tr, trOptions, condHavingTemplate, resolverData);
 
         const removingFieldsAndRecords: Array<[Set<string>, any[]]> = [];
         const removingFieldsMap = new Map<string, Set<string>>();
@@ -547,6 +553,8 @@ export async function executeQuery(
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 transactionData: tr,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionOptions: trOptions,
             };
 
             if (i === 0) {
@@ -681,12 +689,16 @@ export async function executeQuery(
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             transactionData: tr,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionOptions: trOptions,
                         });
                     }
 
                     for (const p of parentRecords) {
                         promises.push(
-                            executeQuery(builder, tr, x.query, p, queriedRecords, resolverNames, resolverData)
+                            executeCompiledQuery(
+                                builder, tr, trOptions,
+                                x.query, p, queriedRecords, resolverNames, resolverData)
                             .then(q => ({
                                 name: subQueryName,
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -706,6 +718,8 @@ export async function executeQuery(
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             transactionData: tr,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionOptions: trOptions,
                         });
                     }
                 }
@@ -768,6 +782,8 @@ export async function executeQuery(
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 transactionData: tr,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionOptions: trOptions,
             }, null);
         }
     } catch (e) {
@@ -777,6 +793,8 @@ export async function executeQuery(
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 transactionData: tr,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionOptions: trOptions,
             }, e);
         }
         throw e;

@@ -180,12 +180,14 @@ export interface ResolverContext {
     resolverCapabilities: ResolverCapabilities;
     resolverData: any;       // Resolver's user defined data.
     transactionData: any;    // Transaction user defined data.
+    transactionOptions: any | undefined;
 }
 
 
 export interface ResolverEvent extends Partial<ResolverContext> {
     resolverData: any;
     transactionData: any;
+    transactionOptions: any | undefined;
 }
 
 
