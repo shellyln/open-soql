@@ -2,10 +2,6 @@
 // license: ISC
 // https://github.com/shellyln
 
-// Copyright (c) 2020 Shellyl_N and Authors
-// license: ISC
-// https://github.com/shellyln
-
 
 import { PreparedQuery,
          PreparedOrderByField }      from './types';

@@ -71,6 +71,10 @@ export type PreparedFieldListItem =
 export interface PreparedResolver {
     name: string[];
     aliasName: string | null;
+
+    // Followings are for internal use.
+    //   Set these on `compile` phase.
+
     queryFields?: Set<string>;
     queryFieldsMap?: Map<string, PreparedFieldListItem>;
     condFields?: Set<string>;
@@ -115,6 +119,7 @@ export interface PreparedQuery {
     for?: string[];
 
     // Followings are for internal use.
+    //   Set these on `compile` phase.
 
     whereSubQueries?: PreparedSubQuery[];
     havingSubQueries?: PreparedSubQuery[];
