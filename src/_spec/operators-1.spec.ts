@@ -303,7 +303,99 @@ describe("operators-1", function() {
                 expect(result).toEqual(expects);
             }
 
-            // TODO: date, datetime
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault=2020-01-01`;
+                const expects = [
+                    { Grault: '2020-01-01' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault=${{type: 'date', value: '2020-01-01'}}`;
+                const expects = [
+                    { Grault: '2020-01-01' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault=null`;
+                const expects = [
+                    { Grault: null },
+                    { Grault: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault=${null}`;
+                const expects = [
+                    { Grault: null },
+                    { Grault: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply=2020-01-01T00:00:00Z`;
+                const expects = [
+                    { Garply: '2020-01-01T00:00:00Z' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply=${{type: 'datetime', value: '2020-01-01T00:00:00Z'}}`;
+                const expects = [
+                    { Garply: '2020-01-01T00:00:00Z' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply=null`;
+                const expects = [
+                    { Garply: null },
+                    { Garply: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply=${null}`;
+                const expects = [
+                    { Garply: null },
+                    { Garply: null },
+                ];
+                expect(result).toEqual(expects);
+            }
         }
     });
 
@@ -534,7 +626,115 @@ describe("operators-1", function() {
                 expect(result).toEqual(expects);
             }
 
-            // TODO: date, datetime
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault!=2020-01-01`;
+                const expects = [
+                    { Grault: '2019-12-31' },
+                    { Grault: '2020-01-02' },
+                    { Grault: null },
+                    { Grault: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault!=${{type: 'date', value: '2020-01-01'}}`;
+                const expects = [
+                    { Grault: '2019-12-31' },
+                    { Grault: '2020-01-02' },
+                    { Grault: null },
+                    { Grault: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault!=null`;
+                const expects = [
+                    { Grault: '2019-12-31' },
+                    { Grault: '2020-01-01' },
+                    { Grault: '2020-01-02' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault!=${null}`;
+                const expects = [
+                    { Grault: '2019-12-31' },
+                    { Grault: '2020-01-01' },
+                    { Grault: '2020-01-02' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply!=2020-01-01T00:00:00Z`;
+                const expects = [
+                    { Garply: '2019-12-31T23:59:59Z' },
+                    { Garply: '2020-01-01T00:00:01Z' },
+                    { Garply: null },
+                    { Garply: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply!=${{type: 'datetime', value: '2020-01-01T00:00:00Z'}}`;
+                const expects = [
+                    { Garply: '2019-12-31T23:59:59Z' },
+                    { Garply: '2020-01-01T00:00:01Z' },
+                    { Garply: null },
+                    { Garply: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply!=null`;
+                const expects = [
+                    { Garply: '2019-12-31T23:59:59Z' },
+                    { Garply: '2020-01-01T00:00:00Z' },
+                    { Garply: '2020-01-01T00:00:01Z' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply!=${null}`;
+                const expects = [
+                    { Garply: '2019-12-31T23:59:59Z' },
+                    { Garply: '2020-01-01T00:00:00Z' },
+                    { Garply: '2020-01-01T00:00:01Z' },
+                ];
+                expect(result).toEqual(expects);
+            }
         }
     });
 });
