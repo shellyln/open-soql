@@ -404,6 +404,61 @@ function getRemovingFields(x: PreparedResolver, records: any[], isAggregation: b
 }
 
 
+function getResolversInfo(builder: QueryBuilderInfoInternal, resolverNames: Map<string, string>, x: PreparedResolver, i: number) {
+    const parentType: ('master' | 'detail') = i === 0 ? 'master' : 'detail';
+    const parentKey = JSON.stringify(x.name.slice(0, x.name.length - 1));
+    const currentKey = JSON.stringify(x.name);
+    const resolverName = x.resolverName ?? '';
+    const parentResolverName = resolverNames.get(parentKey);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const masterRelationshipInfo = (
+        (i === 0 ?
+            (
+                // for subquery's primary resolver
+
+                (builder.relationships[resolverName] ?? {})
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                [parentResolverName!] as any
+            ) : (
+                // for detail->master relationship
+
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                (builder.relationships[parentResolverName!] ?? {})
+                [resolverName] as any
+            )
+        ) ?? {});
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const foreignIdField = (typeof masterRelationshipInfo === 'object' && masterRelationshipInfo.id)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        ? masterRelationshipInfo.id as string
+        : i === 0
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ? builder.rules.foreignIdFieldName!(parentResolverName!)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            : builder.rules.foreignIdFieldName!(resolverName!) ;
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const parentIdFieldName = parentResolverName ? builder.rules.idFieldName!(parentResolverName) : void 0;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const currentIdFieldName = builder.rules.idFieldName!(resolverName);
+
+    return ({
+        parentType,
+        parentKey,
+        currentKey,
+        resolverName,
+        parentResolverName,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        masterRelationshipInfo,
+        foreignIdField,
+        parentIdFieldName,
+        currentIdFieldName,
+    });
+}
+
+
 export async function executeCompiledQuery(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -452,39 +507,16 @@ export async function executeCompiledQuery(
         for (let i = 0; i < query.from.length; i++) {
             const x = query.from[i];
 
-            const parentType = i === 0 ? 'master' : 'detail';
-            const parentKey = JSON.stringify(x.name.slice(0, x.name.length - 1));
-            const currentKey = JSON.stringify(x.name);
-            const resolverName = x.resolverName ?? '';
-            const parentResolverName = resolverNames.get(parentKey);
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const masterRelationshipInfo = (
-                (i === 0 ?
-                    (
-                        // for subquery's primary resolver
-
-                        (builder.relationships[resolverName] ?? {})
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        [parentResolverName!] as any
-                    ) : (
-                        // for detail->master relationship
-
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        (builder.relationships[parentResolverName!] ?? {})
-                        [resolverName] as any
-                    )
-                ) ?? {});
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const foreignIdField = (typeof masterRelationshipInfo === 'object' && masterRelationshipInfo.id)
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                ? masterRelationshipInfo.id as string
-                : i === 0
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    ? builder.rules.foreignIdFieldName!(parentResolverName!)
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    : builder.rules.foreignIdFieldName!(resolverName!) ;
+            const {
+                parentType,
+                parentKey,
+                currentKey,
+                resolverName,
+                parentResolverName,
+                foreignIdField,
+                parentIdFieldName,
+                currentIdFieldName,
+            } = getResolversInfo(builder, resolverNames, x, i);
 
             if (! x.resolver) {
                 throw new Error(`Resolver name ${x.name.join('.')} is not resolved.`);
@@ -531,11 +563,6 @@ export async function executeCompiledQuery(
             condHaving = condHaving
                 .map(cond => pruneCondition(x.name, cond))
                 .filter(filterZeroLengthCondFn);
-
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const parentIdFieldName = parentResolverName ? builder.rules.idFieldName!(parentResolverName) : void 0;
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const currentIdFieldName = builder.rules.idFieldName!(resolverName);
 
             const ctxGen: Omit<ResolverContext, 'resolverCapabilities'> = {
                 functions: builder.functions,
@@ -679,11 +706,26 @@ export async function executeCompiledQuery(
                 if (parentRecords) {
                     // For N+1 Query problem // TODO: reduce descendants (grandchildren and ...) queries
 
+                    const {
+                        parentType,
+                        resolverName,
+                        parentResolverName,
+                        foreignIdField,
+                        parentIdFieldName,
+                        currentIdFieldName,
+                    } = getResolversInfo(builder, resolverNames, x.query.from[0], 0);
+
                     if (builder.events.beforeDetailSubQueries) {
                         await builder.events.beforeDetailSubQueries({
                             functions: builder.functions,
                             query: x.query,
                             graphPath: subQueryName,
+                            resolverName,
+                            parentResolverName,
+                            parentType,
+                            foreignIdField,
+                            masterIdField: parentIdFieldName,
+                            detailIdField: currentIdFieldName,
                             parentRecords,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,

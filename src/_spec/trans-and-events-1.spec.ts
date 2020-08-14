@@ -90,7 +90,7 @@ describe("trans-and-events-1", function() {
 
             {
                 let count = 0;
-                const eventsResult: Array<[string, number]> = [];
+                const eventsResult: Array<[number, string, string[] | undefined | null]> = [];
                 const commands1 = build({
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     relationships: relationships1 as any,
@@ -99,35 +99,35 @@ describe("trans-and-events-1", function() {
                     },
                     events: {
                         beginTransaction: (evt) => {
-                            eventsResult.push(['beginTransaction', count++]);
+                            eventsResult.push([count++, 'beginTransaction', evt.graphPath]);
                             return Promise.resolve();
                         },
                         endTransaction: (evt, err) => {
-                            eventsResult.push(['endTransaction', count++]);
+                            eventsResult.push([count++, 'endTransaction', evt.graphPath]);
                             return Promise.resolve();
                         },
                         beginExecute: (evt) => {
-                            eventsResult.push(['beginExecute', count++]);
+                            eventsResult.push([count++, 'beginExecute', evt.graphPath]);
                             return Promise.resolve();
                         },
                         endExecute: (evt, err) => {
-                            eventsResult.push(['endExecute', count++]);
+                            eventsResult.push([count++, 'endExecute', evt.graphPath]);
                             return Promise.resolve();
                         },
                         beforeMasterSubQueries: (evt) => {
-                            eventsResult.push(['beforeMasterSubQueries', count++]);
+                            eventsResult.push([count++, 'beforeMasterSubQueries', evt.graphPath]);
                             return Promise.resolve();
                         },
                         afterMasterSubQueries: (evt) => {
-                            eventsResult.push(['afterMasterSubQueries', count++]);
+                            eventsResult.push([count++, 'afterMasterSubQueries', evt.graphPath]);
                             return Promise.resolve();
                         },
                         beforeDetailSubQueries: (evt) => {
-                            eventsResult.push(['beforeDetailSubQueries', count++]);
+                            eventsResult.push([count++, 'beforeDetailSubQueries', evt.graphPath]);
                             return Promise.resolve();
                         },
                         afterDetailSubQueries: (evt) => {
-                            eventsResult.push(['afterDetailSubQueries', count++]);
+                            eventsResult.push([count++, 'afterDetailSubQueries', evt.graphPath]);
                             return Promise.resolve();
                         },
                     },
@@ -160,6 +160,16 @@ describe("trans-and-events-1", function() {
                     Account: null },
                 ];
                 expect(result).toEqual(expects);
+                expect(eventsResult).toEqual([
+                    [0, 'beginTransaction',       void 0],
+                    [1, 'beginExecute',           void 0],
+                    [2, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [3, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [4, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [5, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [6, 'endExecute',             void 0],
+                    [7, 'endTransaction',         void 0]
+                ]);
             }
         }
     });
