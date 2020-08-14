@@ -69,7 +69,7 @@ const builtinFunctions: QueryFuncInfo[] = [
 
 
 const builtinRules: QueryBuilderInfo['rules'] = {
-    idFieldName: () => 'id',
+    idFieldName: () => 'Id',
     foreignIdFieldName: (masterResolverName) => masterResolverName ? `${masterResolverName}Id` : void 0,
 };
 

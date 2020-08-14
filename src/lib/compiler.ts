@@ -430,11 +430,6 @@ function normalize(
         normalizeCondition(query.having[0]);
     }
 
-    // Check and normalize `groupBy` fields
-    // if (query.groupBy) {
-    //     // NOTE: Nothing to do.
-    // }
-
     // Check and normalize `orderBy` fields
     if (query.orderBy) {
         normalizeTarget = 'orderby';
@@ -447,7 +442,11 @@ function normalize(
         x.queryFields = new Set<string>();
         x.queryFieldsMap = new Map<string, PreparedFieldListItem>();
         x.condFields = new Set<string>();
+        x.condAliasFields = new Set<string>();
         x.havingCondFields = new Set<string>();
+        // fieldAliasNames
+        // sortFieldNames
+        x.relationshipIdFields = new Set<string>();
     }
 
     const registerQueryFields = (x: PreparedField) =>
@@ -517,12 +516,6 @@ function normalize(
         }
     }
 
-    if (query.orderBy) {
-        for (const x of query.orderBy) {
-            registerCondFields(x);
-        }
-    }
-
     query.from[0].name = primaryResolverName;
 
     // Check resolvers' paths
@@ -541,14 +534,14 @@ function normalize(
         let rt = [resolverTree];
         let lastFound: ResolverTreeNode | undefined;
 
-        for (let i = 0; i < x.name.length; i++) {
-            const name = x.name[i];
+        for (let j = 0; j < x.name.length; j++) {
+            const name = x.name[j];
             const nameI = name.toLowerCase();
             const found = rt.find(z => z.fieldOrRelName.toLowerCase() === nameI);
             if (found) {
                 lastFound = found;
                 rt = found.children;
-                x.name[i] = found.fieldOrRelName; // NOTE: fix case
+                x.name[j] = found.fieldOrRelName; // NOTE: fix case
             } else {
                 throw new Error(`Resolver '${name}' is not found.`);
             }
@@ -558,33 +551,6 @@ function normalize(
             x.resolver = builder.resolvers.query[lastFound.resolverName];
             x.resolverName = lastFound.resolverName;
         }
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        x.fieldAliasNames = new Set<string>(Array.from(x.queryFieldsMap!.entries()).map(c => {
-            const f = c[1];
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            if (f.aliasName && !x.queryFields!.has(f.aliasName)) {
-                return f.aliasName.toLowerCase();
-            } else {
-                return '';
-            }
-        }).filter(c => !!c));
-
-        for (const c of x.fieldAliasNames) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            x.condFields!.delete(c);
-        }
-
-        x.sortFieldNames = new Set<string>(
-            query.orderBy
-                ? query.orderBy
-                    .filter(c =>
-                        x.name.length + 1 === c.name.length &&
-                            isEqualComplexName(x.name, c.name.slice(0, x.name.length)))
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    .filter(c => !(x.fieldAliasNames!.has(c.name[c.name.length - 1].toLowerCase())))
-                    .map(c => c.name[c.name.length - 1])
-                : []);
     }
 
     if (query.where) {
@@ -602,6 +568,72 @@ function normalize(
 
     query.from = query.from.slice(0, 1).concat(
         query.from.slice(1).sort((a, b) => a.name.length - b.name.length));
+
+    for (let i = 0; i < query.from.length; i++) {
+        const x = query.from[i];
+
+        {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            x.fieldAliasNames = new Set<string>(Array.from(x.queryFieldsMap!.entries()).map(c => {
+                const f = c[1];
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (f.aliasName && !x.queryFields!.has(f.aliasName)) {
+                    return f.aliasName.toLowerCase();
+                } else {
+                    return '';
+                }
+            }).filter(c => !!c));
+
+            for (const c of x.fieldAliasNames) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (x.condFields!.has(c)) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    x.condFields!.delete(c);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    x.condAliasFields!.add(c);
+                }
+            }
+        }
+
+        {
+            x.sortFieldNames = new Set<string>(
+                query.orderBy
+                    ? query.orderBy
+                        .filter(c =>
+                            x.name.length + 1 === c.name.length &&
+                                isEqualComplexName(x.name, c.name.slice(0, x.name.length)))
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        .filter(c => !(x.fieldAliasNames!.has(c.name[c.name.length - 1].toLowerCase())))
+                        .map(c => c.name[c.name.length - 1])
+                    : []);
+        }
+
+        {
+            const resolverName = x.resolverName ?? '';
+
+            for (let j = i + 1; j < query.from.length; j++) {
+                const c = query.from[j];
+
+                if (x.name.length + 1 === c.name.length && isEqualComplexName(x.name, c.name.slice(0, x.name.length))) {
+                    const childResolverName = c.resolverName ?? '';
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+                    const childRelationshipInfo = ((builder.relationships[resolverName] ?? {})[childResolverName] as any) ?? {};
+
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    const childIdField = childRelationshipInfo.id
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        ? childRelationshipInfo.id as string
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        : builder.rules.foreignIdFieldName!(childResolverName);
+
+                    if (childIdField) {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        x.relationshipIdFields!.add(childIdField);
+                    }
+                }
+            }
+        }
+    }
 
     return query;
 }

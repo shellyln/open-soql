@@ -15,6 +15,7 @@ export async function executeInsertDML(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
+        trOptions: any | undefined,
         resolverName: string,
         records: any[]
         ): Promise<any[]> {
@@ -35,6 +36,8 @@ export async function executeInsertDML(
         resolverData: {},
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         transactionData: tr,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionOptions: trOptions,
     };
 
     if (builder.events.beginExecute) {
@@ -53,6 +56,8 @@ export async function executeInsertDML(
             resolverData: evt.resolverData,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             transactionData: tr,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionOptions: trOptions,
             resolverCapabilities: {
                 filtering: false,
                 sorting: false,
@@ -83,6 +88,7 @@ export async function executeUpdateDML(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
+        trOptions: any | undefined,
         resolverName: string,
         records: any[]
         ): Promise<any[]> {
@@ -103,6 +109,8 @@ export async function executeUpdateDML(
         resolverData: {},
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         transactionData: tr,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionOptions: trOptions,
     };
 
     if (builder.events.beginExecute) {
@@ -121,6 +129,8 @@ export async function executeUpdateDML(
             resolverData: evt.resolverData,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             transactionData: tr,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionOptions: trOptions,
             resolverCapabilities: {
                 filtering: false,
                 sorting: false,
@@ -151,6 +161,7 @@ export async function executeRemoveDML(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
+        trOptions: any | undefined,
         resolverName: string,
         records: any[]
         ): Promise<void> {
@@ -171,6 +182,8 @@ export async function executeRemoveDML(
         resolverData: {},
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         transactionData: tr,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        transactionOptions: trOptions,
     };
 
     if (builder.events.beginExecute) {
@@ -186,6 +199,8 @@ export async function executeRemoveDML(
             resolverData: evt.resolverData,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             transactionData: tr,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionOptions: trOptions,
             resolverCapabilities: {
                 filtering: false,
                 sorting: false,

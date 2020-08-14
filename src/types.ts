@@ -74,9 +74,11 @@ export interface PreparedResolver {
     queryFields?: Set<string>;
     queryFieldsMap?: Map<string, PreparedFieldListItem>;
     condFields?: Set<string>;
+    condAliasFields?: Set<string>;
     havingCondFields?: Set<string>;
     fieldAliasNames?: Set<string>;
     sortFieldNames?: Set<string>;
+    relationshipIdFields?: Set<string>;
 
     resolver?: QueryResolverFn;
     resolverName?: string;
@@ -178,12 +180,14 @@ export interface ResolverContext {
     resolverCapabilities: ResolverCapabilities;
     resolverData: any;       // Resolver's user defined data.
     transactionData: any;    // Transaction user defined data.
+    transactionOptions: any | undefined;
 }
 
 
 export interface ResolverEvent extends Partial<ResolverContext> {
     resolverData: any;
     transactionData: any;
+    transactionOptions: any | undefined;
 }
 
 

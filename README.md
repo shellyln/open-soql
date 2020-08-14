@@ -450,7 +450,8 @@ export function build(builder: QueryBuilderInfo): {
     transaction: (
             callback: (commands: {
                 soql, insert, update, remove
-            }, tr: any) => Primise<void>
+            }, tr: any) => Primise<void>,
+            trOptions?: any,
         ) => Primise<void>;
 };
 ```
@@ -542,8 +543,15 @@ export function applyHavingConditions(
 #### `staticJsonResolverBuilder()`
 
 ```ts
+export interface StaticResolverConfig {
+    noCache?: boolean;
+    noFiltering?: boolean;
+    noSorting?: boolean;
+}
+
 export const staticJsonResolverBuilder:
-    (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn;
+    (resolverName: string, fetcher: () => Promise<string>,
+     config?: StaticResolverConfig) => QueryResolverFn;
 ```
 
 * Generate the query resolver for static JSON data.
@@ -563,7 +571,8 @@ export const staticJsonResolverBuilder:
 
 ```ts
 export const staticCsvResolverBuilder:
-    (resolverName: string, fetcher: () => Promise<string>) => QueryResolverFn;
+    (resolverName: string, fetcher: () => Promise<string>,
+     config?: StaticResolverConfig) => QueryResolverFn;
 ```
 
 * Generate the query resolver for static CSV data.
@@ -583,7 +592,8 @@ export const staticCsvResolverBuilder:
 
 ```ts
 export const passThroughResolverBuilder:
-    (resolverName: string, fetcher: () => Promise<any[]>) => QueryResolverFn;
+    (resolverName: string, fetcher: () => Promise<any[]>,
+     config?: StaticResolverConfig) => QueryResolverFn;
 ```
 
 * Generate the query resolver for static object array data.

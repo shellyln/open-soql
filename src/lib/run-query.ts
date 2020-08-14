@@ -173,6 +173,7 @@ async function execCondSubQueries(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
+        trOptions: any | undefined,
         condTemplate: PreparedCondition[],
         resolverData: any | null) {
 
@@ -183,7 +184,9 @@ async function execCondSubQueries(
     const condSubQueryResults =
         condSubQueries
             .map(x =>
-                executeQuery(builder, tr, x.subQuery.query, null, null, null, resolverData)
+                executeCompiledQuery(
+                    builder, tr, trOptions,
+                    x.subQuery.query, null, null, null, resolverData)
                 .then(r => ({ cond: x.cond, index: x.index, subQuery: x.subQuery, result: r })));
 
     (await Promise.all(condSubQueryResults)).map(x => {
@@ -401,10 +404,66 @@ function getRemovingFields(x: PreparedResolver, records: any[], isAggregation: b
 }
 
 
-export async function executeQuery(
+function getResolversInfo(builder: QueryBuilderInfoInternal, resolverNames: Map<string, string>, x: PreparedResolver, i: number) {
+    const parentType: ('master' | 'detail') = i === 0 ? 'master' : 'detail';
+    const parentKey = JSON.stringify(x.name.slice(0, x.name.length - 1));
+    const currentKey = JSON.stringify(x.name);
+    const resolverName = x.resolverName ?? '';
+    const parentResolverName = resolverNames.get(parentKey);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const masterRelationshipInfo = (
+        (i === 0 ?
+            (
+                // for subquery's primary resolver
+
+                (builder.relationships[resolverName] ?? {})
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                [parentResolverName!] as any
+            ) : (
+                // for detail->master relationship
+
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                (builder.relationships[parentResolverName!] ?? {})
+                [resolverName] as any
+            )
+        ) ?? {});
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const foreignIdField = (typeof masterRelationshipInfo === 'object' && masterRelationshipInfo.id)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        ? masterRelationshipInfo.id as string
+        : i === 0
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ? builder.rules.foreignIdFieldName!(parentResolverName!)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            : builder.rules.foreignIdFieldName!(resolverName!) ;
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const parentIdFieldName = parentResolverName ? builder.rules.idFieldName!(parentResolverName) : void 0;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const currentIdFieldName = builder.rules.idFieldName!(resolverName);
+
+    return ({
+        parentType,
+        parentKey,
+        currentKey,
+        resolverName,
+        parentResolverName,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        masterRelationshipInfo,
+        foreignIdField,
+        parentIdFieldName,
+        currentIdFieldName,
+    });
+}
+
+
+export async function executeCompiledQuery(
         builder: QueryBuilderInfoInternal,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
+        trOptions: any | undefined,
         query: PreparedQuery,
         parent: any | null,
         parentQueriedRecords: Map<string, any[]> | null,
@@ -426,6 +485,8 @@ export async function executeQuery(
             resolverData,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             transactionData: tr,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            transactionOptions: trOptions,
         });
     }
 
@@ -437,8 +498,8 @@ export async function executeQuery(
         const condHavingTemplate = query.having ?
             deepCloneObject(query.having) : [];
 
-        await execCondSubQueries(builder, tr, condWhereTemplate, resolverData);
-        await execCondSubQueries(builder, tr, condHavingTemplate, resolverData);
+        await execCondSubQueries(builder, tr, trOptions, condWhereTemplate, resolverData);
+        await execCondSubQueries(builder, tr, trOptions, condHavingTemplate, resolverData);
 
         const removingFieldsAndRecords: Array<[Set<string>, any[]]> = [];
         const removingFieldsMap = new Map<string, Set<string>>();
@@ -446,39 +507,16 @@ export async function executeQuery(
         for (let i = 0; i < query.from.length; i++) {
             const x = query.from[i];
 
-            const parentType = i === 0 ? 'master' : 'detail';
-            const parentKey = JSON.stringify(x.name.slice(0, x.name.length - 1));
-            const currentKey = JSON.stringify(x.name);
-            const resolverName = x.resolverName ?? '';
-            const parentResolverName = resolverNames.get(parentKey);
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const masterRelationshipInfo = (
-                (i === 0 ?
-                    (
-                        // for subquery's primary resolver
-
-                        (builder.relationships[resolverName] ?? {})
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        [parentResolverName!] as any
-                    ) : (
-                        // for detail->master relationship
-
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        (builder.relationships[parentResolverName!] ?? {})
-                        [resolverName] as any
-                    )
-                ) ?? {});
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const foreignIdField = (typeof masterRelationshipInfo === 'object' && masterRelationshipInfo.id)
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                ? masterRelationshipInfo.id as string
-                : i === 0
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    ? builder.rules.foreignIdFieldName!(parentResolverName!)
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    : builder.rules.foreignIdFieldName!(resolverName!) ;
+            const {
+                parentType,
+                parentKey,
+                currentKey,
+                resolverName,
+                parentResolverName,
+                foreignIdField,
+                parentIdFieldName,
+                currentIdFieldName,
+            } = getResolversInfo(builder, resolverNames, x, i);
 
             if (! x.resolver) {
                 throw new Error(`Resolver name ${x.name.join('.')} is not resolved.`);
@@ -487,6 +525,8 @@ export async function executeQuery(
             let records: any[] = [];
             const parentRecords = queriedRecords.get(parentKey);
 
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const hasAliasNameCond = (x.condAliasFields!.size > 0) ? true : false;
             const isAggregation = (i === 0 && query.groupBy) ? true : false;
 
             const queryFields =
@@ -500,28 +540,9 @@ export async function executeQuery(
             const sortFields =
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 Array.from(x.sortFieldNames!.values());
-
-            const relationshipIdFields: string[] = [];
-            for (let j = i + 1; j < query.from.length; j++) {
-                const c = query.from[j];
-
-                if (x.name.length + 1 === c.name.length && isEqualComplexName(x.name, c.name.slice(0, x.name.length))) {
-                    const childResolverName = c.resolverName ?? '';
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-                    const childRelationshipInfo = ((builder.relationships[resolverName] ?? {})[childResolverName] as any) ?? {};
-
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    const childIdField = childRelationshipInfo.id
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                        ? childRelationshipInfo.id as string
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        : builder.rules.foreignIdFieldName!(childResolverName);
-
-                    if (childIdField) {
-                        relationshipIdFields.push(childIdField);
-                    }
-                }
-            }
+            const relationshipIdFields =
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                Array.from(x.relationshipIdFields!.values());
 
             const resolvingFields =
                 Array.from(
@@ -543,11 +564,6 @@ export async function executeQuery(
                 .map(cond => pruneCondition(x.name, cond))
                 .filter(filterZeroLengthCondFn);
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const parentIdFieldName = parentResolverName ? builder.rules.idFieldName!(parentResolverName) : void 0;
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const currentIdFieldName = builder.rules.idFieldName!(resolverName);
-
             const ctxGen: Omit<ResolverContext, 'resolverCapabilities'> = {
                 functions: builder.functions,
                 query,
@@ -564,6 +580,8 @@ export async function executeQuery(
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 transactionData: tr,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionOptions: trOptions,
             };
 
             if (i === 0) {
@@ -578,23 +596,33 @@ export async function executeQuery(
                         offset: false,
                     },
                 };
+
                 records = await x.resolver(
-                    resolvingFields, condWhere,
-                    isAggregation ? null : (query.limit ?? null),
-                    isAggregation ? null : (query.offset ?? null),
+                    resolvingFields,
+                    hasAliasNameCond ? [] : condWhere,
+                    (isAggregation || hasAliasNameCond) ? null : (query.limit ?? null),
+                    (isAggregation || hasAliasNameCond) ? null : (query.offset ?? null),
                     ctx,
                 );
                 primaryCapabilities = ctx.resolverCapabilities;
+
+                if (hasAliasNameCond) {
+                    primaryCapabilities.filtering = false;
+                    primaryCapabilities.limit = false;
+                    primaryCapabilities.offset = false;
+                    primaryCapabilities.sorting = false;
+                }
+
+                records = mapSelectFields(ctxGen, x, records);
 
                 if (! ctx.resolverCapabilities.filtering) {
                     records = applyWhereConditions(ctxGen, condWhere, records);
                 }
 
-                records = mapSelectFields(ctxGen, x, records);
-
                 if (isAggregation) {
                     primaryCapabilities.limit = false;
                     primaryCapabilities.offset = false;
+                    primaryCapabilities.sorting = false;
 
                     let grouped = groupRecords(ctxGen, query.groupBy ?? [], x, records);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -625,13 +653,24 @@ export async function executeQuery(
                             offset: false,
                         },
                     };
-                    let recs = (await x.resolver(resolvingFields, condWhere, 1, 0, ctx)).slice(0, 1);
+
+                    let recs = (await x.resolver(
+                        resolvingFields,
+                        hasAliasNameCond ? [] : condWhere,
+                        1, 0, ctx)).slice(0, 1);
+
+                    if (hasAliasNameCond) {
+                        ctx.resolverCapabilities.filtering = false;
+                        ctx.resolverCapabilities.limit = false;
+                        ctx.resolverCapabilities.offset = false;
+                        ctx.resolverCapabilities.sorting = false;
+                    }
+
+                    recs = mapSelectFields(ctxGen, x, recs);
 
                     if (! ctx.resolverCapabilities.filtering) {
                         recs = applyWhereConditions(ctxGen, condWhere, recs);
                     }
-
-                    recs = mapSelectFields(ctxGen, x, recs);
 
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     p[parentFieldName] = recs.length > 0 ? recs[0] : null;
@@ -667,22 +706,41 @@ export async function executeQuery(
                 if (parentRecords) {
                     // For N+1 Query problem // TODO: reduce descendants (grandchildren and ...) queries
 
+                    const {
+                        parentType,
+                        resolverName,
+                        parentResolverName,
+                        foreignIdField,
+                        parentIdFieldName,
+                        currentIdFieldName,
+                    } = getResolversInfo(builder, resolverNames, x.query.from[0], 0);
+
                     if (builder.events.beforeDetailSubQueries) {
                         await builder.events.beforeDetailSubQueries({
                             functions: builder.functions,
                             query: x.query,
                             graphPath: subQueryName,
+                            resolverName,
+                            parentResolverName,
+                            parentType,
+                            foreignIdField,
+                            masterIdField: parentIdFieldName,
+                            detailIdField: currentIdFieldName,
                             parentRecords,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             transactionData: tr,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionOptions: trOptions,
                         });
                     }
 
                     for (const p of parentRecords) {
                         promises.push(
-                            executeQuery(builder, tr, x.query, p, queriedRecords, resolverNames, resolverData)
+                            executeCompiledQuery(
+                                builder, tr, trOptions,
+                                x.query, p, queriedRecords, resolverNames, resolverData)
                             .then(q => ({
                                 name: subQueryName,
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -702,6 +760,8 @@ export async function executeQuery(
                             resolverData,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                             transactionData: tr,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionOptions: trOptions,
                         });
                     }
                 }
@@ -764,6 +824,8 @@ export async function executeQuery(
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 transactionData: tr,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionOptions: trOptions,
             }, null);
         }
     } catch (e) {
@@ -773,6 +835,8 @@ export async function executeQuery(
                 resolverData,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 transactionData: tr,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                transactionOptions: trOptions,
             }, e);
         }
         throw e;

@@ -3,13 +3,13 @@
 // https://github.com/shellyln
 
 
-import { QueryBuilderInfo }   from './types';
+import { QueryBuilderInfo }     from './types';
 import { prepareQuery,
-         prepareBuilderInfo } from './lib/prepare';
-import { executeQuery }       from './lib/run-query';
+         prepareBuilderInfo }   from './lib/prepare';
+import { executeCompiledQuery } from './lib/run-query';
 import { executeInsertDML,
          executeUpdateDML,
-         executeRemoveDML }   from './lib/run-dml';
+         executeRemoveDML }     from './lib/run-dml';
 
 
 
@@ -17,26 +17,32 @@ import { executeInsertDML,
 export function build(builder: QueryBuilderInfo) {
     const preparedBI = prepareBuilderInfo(builder);
 
-    function createTransactionScope(scopeTr: any, isIsolated: boolean) {
+    function createTransactionScope(scopeTr: any, scopeTrOptions: any | undefined, isIsolated: boolean) {
 
-        async function withTransactionEvents<R>(tr: any, run: (tx: any) => Promise<R>) {
+        async function withTransactionEvents<R>(
+                tr: any, trOptions: any | undefined, run: (tx: any, txOpts: any | undefined) => Promise<R>) {
+
             try {
                 if (preparedBI.events.beginTransaction) {
                     await preparedBI.events.beginTransaction({
                         resolverData: {},
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         transactionData: tr,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionOptions: trOptions,
                     });
                 }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const ret =  await run(tr);
+                const ret =  await run(tr, trOptions);
 
                 if (preparedBI.events.endTransaction) {
                     await preparedBI.events.endTransaction({
                         resolverData: {},
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         transactionData: tr,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionOptions: trOptions,
                     }, null);
                 }
 
@@ -48,6 +54,8 @@ export function build(builder: QueryBuilderInfo) {
                         resolverData: {},
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         transactionData: tr,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionOptions: trOptions,
                     }, e);
                 }
                 throw e;
@@ -55,27 +63,27 @@ export function build(builder: QueryBuilderInfo) {
         }
 
         async function runQuery<R>(strings: TemplateStringsArray | string, ...values: any[]): Promise<R[]> {
-            const run = async (tr: any) => {
+            const run = async (tr: any, trOptions: any | undefined) => {
                 const query = prepareQuery(preparedBI, strings, ...values);
-                const ret = await executeQuery(preparedBI, tr, query, null, null, null, null);
+                const ret = await executeCompiledQuery(preparedBI, tr, trOptions, query, null, null, null, null);
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return ret;
             };
 
             if (isIsolated) {
-                return await withTransactionEvents<R[]>({}, run);
+                return await withTransactionEvents<R[]>({}, void 0, run);
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr);
+                return await run(scopeTr, scopeTrOptions);
             }
         }
 
         async function runInsert<T>(resolver: string, obj: T): Promise<T extends (infer R)[] ? R[] : T> {
-            const run = async (tr: any) => {
+            const run = async (tr: any, trOptions: any | undefined) => {
                 const isArray = Array.isArray(obj);
     
-                const ret = await executeInsertDML(preparedBI, tr, resolver, isArray ? obj as any : [obj]);
+                const ret = await executeInsertDML(preparedBI, tr, trOptions, resolver, isArray ? obj as any : [obj]);
                 if (isArray) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return ret as any;
@@ -87,18 +95,18 @@ export function build(builder: QueryBuilderInfo) {
 
             if (isIsolated) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await withTransactionEvents({}, run);
+                return await withTransactionEvents({}, void 0, run);
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr);
+                return await run(scopeTr, scopeTrOptions);
             }
         }
 
         async function runUpdate<T>(resolver: string, obj: T): Promise<T extends (infer R)[] ? R[] : T> {
-            const run = async (tr: any) => {
+            const run = async (tr: any, trOptions: any | undefined) => {
                 const isArray = Array.isArray(obj);
     
-                const ret = await executeUpdateDML(preparedBI, tr, resolver, isArray ? obj as any : [obj]);
+                const ret = await executeUpdateDML(preparedBI, tr, trOptions, resolver, isArray ? obj as any : [obj]);
                 if (isArray) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return ret as any;
@@ -110,37 +118,39 @@ export function build(builder: QueryBuilderInfo) {
 
             if (isIsolated) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await withTransactionEvents({}, run);
+                return await withTransactionEvents({}, void 0, run);
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr);
+                return await run(scopeTr, scopeTrOptions);
             }
         }
 
         async function runRemove<T>(resolver: string, obj: T) {
-            const run = async (tr: any) => {
+            const run = async (tr: any, trOptions: any | undefined) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await executeRemoveDML(preparedBI, tr, resolver, Array.isArray(obj) ? obj : [obj]);
+                return await executeRemoveDML(preparedBI, tr, trOptions, resolver, Array.isArray(obj) ? obj : [obj]);
             };
 
             if (isIsolated) {
-                return await withTransactionEvents({}, run);
+                return await withTransactionEvents({}, void 0, run);
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr);
+                return await run(scopeTr, scopeTrOptions);
             }
         }
 
         async function transaction(
                 callback: (commands: {
-                    soql: typeof runQuery,
-                    insert: typeof runInsert,
-                    update: typeof runUpdate,
-                    remove: typeof runRemove,
-                }, tr: any) => Promise<void>) {
+                        soql: typeof runQuery,
+                        insert: typeof runInsert,
+                        update: typeof runUpdate,
+                        remove: typeof runRemove,
+                    }, tr: any) => Promise<void>,
+                trOptions?: any,
+                ) {
 
             const tr = {};
-            const commands = createTransactionScope(tr, false);
+            const commands = createTransactionScope(tr, trOptions, false);
 
             const run = async (_tr: any) => {
                 await callback({
@@ -151,7 +161,7 @@ export function build(builder: QueryBuilderInfo) {
                 }, tr);
             };
 
-            return await withTransactionEvents(tr, run);
+            return await withTransactionEvents(tr, trOptions, run);
         }
 
         return ({
@@ -163,5 +173,5 @@ export function build(builder: QueryBuilderInfo) {
         });
     }
 
-    return createTransactionScope({}, true);
+    return createTransactionScope({}, void 0, true);
 }
