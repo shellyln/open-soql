@@ -266,11 +266,11 @@ function evalCondition(
                 }
                 break;
             case '<':
-                if (v1 === null || v1 === void 0) {
+                if (v1 === null) {
                     ret = false;
                     break;
                 }
-                if (v2 === null || v2 === void 0) {
+                if (v2 === null) {
                     ret = false;
                     break;
                 }
@@ -279,11 +279,11 @@ function evalCondition(
                 }
                 break;
             case '<=':
-                if (v1 === null || v1 === void 0) {
+                if (v1 === null) {
                     ret = false;
                     break;
                 }
-                if (v2 === null || v2 === void 0) {
+                if (v2 === null) {
                     ret = false;
                     break;
                 }
@@ -292,11 +292,11 @@ function evalCondition(
                 }
                 break;
             case '>':
-                if (v1 === null || v1 === void 0) {
+                if (v1 === null) {
                     ret = false;
                     break;
                 }
-                if (v2 === null || v2 === void 0) {
+                if (v2 === null) {
                     ret = false;
                     break;
                 }
@@ -305,11 +305,11 @@ function evalCondition(
                 }
                 break;
             case '>=':
-                if (v1 === null || v1 === void 0) {
+                if (v1 === null) {
                     ret = false;
                     break;
                 }
-                if (v2 === null || v2 === void 0) {
+                if (v2 === null) {
                     ret = false;
                     break;
                 }
@@ -351,13 +351,23 @@ function evalCondition(
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "in": operand(2) should be array.`);
                 }
-                if (! v2.includes(v1)) {
+                if (! v2.filter(w => w !== null).includes(v1)) {
+                    // NOTE: `(null = ?)`, `(? = null)` and `(null = null)` always FALSE.
                     ret = false;
                 }
                 break;
             case 'not_in':
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "not_in": operand(2) should be array.`);
+                }
+                if (v1 === null) {
+                    // NOTE: Emulate SQL's 'not in'; `(null <> null)` always FALSE.
+                    ret = false;
+                    break;
+                }
+                if (v2.includes(null)) {
+                    ret = false;
+                    break;
                 }
                 if (v2.includes(v1)) {
                     ret = false;

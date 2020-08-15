@@ -298,4 +298,117 @@ describe("operators-3", function() {
             }
         }
     });
+
+
+    it("Operator 'in' (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        id
+                    from account
+                    where id in (select accountid from contact)`;
+                const expects = [
+                    { Id: 'Account/z1' },
+                    { Id: 'Account/z2' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        id
+                    from account
+                    where id in (select accountid from contact where accountid != null)`;
+                const expects = [
+                    { Id: 'Account/z1' },
+                    { Id: 'Account/z2' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid
+                    from contact
+                    where accountid in (select whatid from event)`;
+                const expects = [
+                    { AccountId: 'Account/z2' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        accountid
+                    from contact
+                    where accountid in (select whatid from event where whatid != null)`;
+                const expects = [
+                    { AccountId: 'Account/z2' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+
+    it("Operator 'not in' (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        id
+                    from account
+                    where id not in (select accountid from contact)`;
+                const expects = [
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        id
+                    from account
+                    where id not in (select accountid from contact where accountid != null)`;
+                const expects = [
+                    { Id: 'Account/z3' },
+                    { Id: 'Account/z4' },
+                    { Id: 'Account/z5' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid
+                    from contact
+                    where accountid not in (select whatid from event)`;
+                const expects = [
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        accountid
+                    from contact
+                    where accountid not in (select whatid from event where whatid != null)`;
+                const expects = [
+                    { AccountId: 'Account/z1' },
+                    { AccountId: 'Account/z1' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
 });
