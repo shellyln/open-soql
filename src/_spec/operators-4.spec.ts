@@ -345,6 +345,36 @@ describe("operators-3", function() {
                 ];
                 expect(result).toEqual(expects);
             }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where (foo <= 'aaa/z3' and foo<='aaa/z2' and foo<='aaa/z1')`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where ((foo <= 'aaa/z3') and (foo<='aaa/z2') and (foo<='aaa/z1'))`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
         }
     });
 
@@ -413,6 +443,52 @@ describe("operators-3", function() {
                         { Foo: 'aaa/z3' },
                         // { Foo: null },
                         { Foo: '' },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+
+                {
+                    const result = await soql`
+                        select
+                            foo
+                        from contact
+                        where foo='aaa/z1' or foo='aaa/z2' or foo=null`;
+                    const expects = [
+                        { Foo: 'aaa/z1' },
+                        { Foo: 'aaa/z2' },
+                        // { Foo: 'aaa/z3' },
+                        { Foo: null },
+                        // { Foo: '' },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+                {
+                    const result = await soql`
+                        select
+                            foo
+                        from contact
+                        where (foo='aaa/z1' or foo='aaa/z2' or foo=null)`;
+                    const expects = [
+                        { Foo: 'aaa/z1' },
+                        { Foo: 'aaa/z2' },
+                        // { Foo: 'aaa/z3' },
+                        { Foo: null },
+                        // { Foo: '' },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+                {
+                    const result = await soql`
+                        select
+                            foo
+                        from contact
+                        where ((foo='aaa/z1') or (foo='aaa/z2') or (foo=null))`;
+                    const expects = [
+                        { Foo: 'aaa/z1' },
+                        { Foo: 'aaa/z2' },
+                        // { Foo: 'aaa/z3' },
+                        { Foo: null },
+                        // { Foo: '' },
                     ];
                     expect(result).toEqual(expects);
                 }
