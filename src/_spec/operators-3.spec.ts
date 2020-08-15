@@ -68,22 +68,22 @@ const commands1 = build({
         query: {
             Contact: staticCsvResolverBuilder(
                 'Contact', () => Promise.resolve(`
-                    Id         , Foo      , Bar      , Baz      , Qux      , Quux     ,   Corge , Grault       , Garply                 , AccountId
-                    Contact/z1 , aaa/z1   , bbb/z1   , ccc/z1   , ddd/z1   , false    ,    -1.0 , 2019-12-31   , 2019-12-31T23:59:59Z   , Account/z1
-                    Contact/z2 , aaa/z2   , bbb/z2   , ccc/z2   , ddd/z2   , true     ,     0.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z1
-                    Contact/z3 , "aaa/z3" , "bbb/z3" , "ccc/z3" , "ddd/z3" ,          ,     1   , "2020-01-02" , "2020-01-01T00:00:01Z" , "Account/z2"
-                    Contact/z4 ,          ,          ,          ,          ,          ,         ,              ,                        ,
-                    Contact/z5 ,       "" ,       "" ,      " " ,       "" ,          ,         ,              ,                        ,
+                    Id         , Foo      , Bar      , Baz         , Qux      , Quux     ,   Corge , Grault       , Garply                 , AccountId
+                    Contact/z1 , aaa/z1   , bbb/z1   , aaa         , ddd/z1   , false    ,    -1.0 , 2019-12-31   , 2019-12-31T23:59:59Z   , Account/z1
+                    Contact/z2 , aaa/z2   , bbb/z2   , bbb         , ddd/z2   , true     ,     0.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z1
+                    Contact/z3 , "aaa/z3" , "bbb/z3" , aaa;bbb     , "ddd/z3" ,          ,     1   , "2020-01-02" , "2020-01-01T00:00:01Z" , "Account/z2"
+                    Contact/z4 ,          ,          , aaa;ccc     ,          ,          ,         ,              ,                        ,
+                    Contact/z5 ,       "" ,       "" , aaa;bbb;ccc ,       "" ,          ,         ,              ,                        ,
                 `)
             ),
             Account: staticCsvResolverBuilder(
                 'Account', () => Promise.resolve(`
-                    Id         , Name     , Address
-                    Account/z1 , fff/z1   , ggg/z1
-                    Account/z2 , fff/z2   , ggg/z2
-                    Account/z3 , "fff/z3" , "ggg/z3"
-                    Account/z4 ,          ,
-                    Account/z5 ,       "" ,       ""
+                    Id         , Name     , Address  , Baz2
+                    Account/z1 , fff/z1   , ggg/z1   , aaa;bbb;ccc
+                    Account/z2 , fff/z2   , ggg/z2   , bbb;ccc
+                    Account/z3 , "fff/z3" , "ggg/z3" , ccc
+                    Account/z4 ,          ,          , ddd
+                    Account/z5 ,       "" ,       "" ,
                 `)
             ),
             Opportunity: staticCsvResolverBuilder(
@@ -406,6 +406,41 @@ describe("operators-3", function() {
                 const expects = [
                     { AccountId: 'Account/z1' },
                     { AccountId: 'Account/z1' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+
+    it("Operator 'includes' (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact
+                    where baz includes ('bbb')`;
+                const expects = [
+                    { Baz: 'bbb' },
+                    { Baz: 'aaa;bbb' },
+                    { Baz: 'aaa;bbb;ccc' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact
+                    where baz includes ('bbb;ccc')`;
+                const expects = [
+                    { Baz: 'aaa;bbb;ccc' },
                 ];
                 expect(result).toEqual(expects);
             }

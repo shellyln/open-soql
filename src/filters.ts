@@ -399,28 +399,31 @@ function evalCondition(
                 break;
             case 'excludes':
                 if (typeof v1 !== 'string') {
+                    // NOTE: Emulate SQL's 'not in'; `(null <> null)` always FALSE.
                     ret = false;
                     break;
                 }
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "excludes": operand(2) should be array.`);
                 }
-                for (const p of v2) {
-                    if (typeof p !== 'string') {
-                        throw new Error(`Operator "excludes": operand(2) array items should be string.`);
-                    }
+                {
                     const v1Items = v1.split(';');
-                    const v2Items = p.split(';');
-                    let matched = true;
-                    for (const q of v2Items) {
-                        if (! v1Items.includes(q)) {
-                            matched = false;
+                    for (const p of v2) {
+                        if (typeof p !== 'string') {
+                            throw new Error(`Operator "excludes": operand(2) array items should be string.`);
+                        }
+                        const v2Items = p.split(';');
+                        let matched = true;
+                        for (const q of v2Items) {
+                            if (! v1Items.includes(q)) {
+                                matched = false;
+                                break;
+                            }
+                        }
+                        if (matched) {
+                            ret = false;
                             break;
                         }
-                    }
-                    if (matched) {
-                        ret = false;
-                        break;
                     }
                 }
                 break;
