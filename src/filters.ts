@@ -52,7 +52,7 @@ function getOp1Value(
             case 'field':
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 v = getObjectValueWithFieldNameMap(fieldNameMap, record, op.name[op.name.length - 1]);
-                if (op2IsDateOrDatetime) {
+                if (op2IsDateOrDatetime && v !== null) {
                     v = new Date(v).getTime();
                 }
                 break;
