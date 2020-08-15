@@ -266,26 +266,62 @@ function evalCondition(
                 }
                 break;
             case '<':
+                if (v1 === null || v1 === void 0) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null || v2 === void 0) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) < (v2 as any))) {
                     ret = false;
                 }
                 break;
             case '<=':
+                if (v1 === null || v1 === void 0) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null || v2 === void 0) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) <= (v2 as any))) {
                     ret = false;
                 }
                 break;
             case '>':
+                if (v1 === null || v1 === void 0) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null || v2 === void 0) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) > (v2 as any))) {
                     ret = false;
                 }
                 break;
             case '>=':
+                if (v1 === null || v1 === void 0) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null || v2 === void 0) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) >= (v2 as any))) {
                     ret = false;
                 }
                 break;
             case 'like':
+                if (typeof v1 !== 'string') {
+                    ret = false;
+                    break;
+                }
                 if (typeof v2 !== 'string') {
                     throw new Error(`Operator "like": operand(2) should be string.`);
                 }
@@ -297,6 +333,10 @@ function evalCondition(
                 }
                 break;
             case 'not_like':
+                if (typeof v1 !== 'string') {
+                    ret = false;
+                    break;
+                }
                 if (typeof v2 !== 'string') {
                     throw new Error(`Operator "not_like": operand(2) should be string.`);
                 }
@@ -324,11 +364,12 @@ function evalCondition(
                 }
                 break;
             case 'includes':
+                if (typeof v1 !== 'string') {
+                    ret = false;
+                    break;
+                }
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "includes": operand(2) should be array.`);
-                }
-                if (typeof v1 !== 'string') {
-                    throw new Error(`Operator "includes": operand(1) should be string.`);
                 }
                 ret = false;
                 OUTER: for (const p of v2) {
@@ -347,11 +388,12 @@ function evalCondition(
                 }
                 break;
             case 'excludes':
+                if (typeof v1 !== 'string') {
+                    ret = false;
+                    break;
+                }
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "excludes": operand(2) should be array.`);
-                }
-                if (typeof v1 !== 'string') {
-                    throw new Error(`Operator "excludes": operand(1) should be string.`);
                 }
                 for (const p of v2) {
                     if (typeof p !== 'string') {
