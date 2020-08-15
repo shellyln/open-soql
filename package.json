@@ -1,7 +1,7 @@
 {
   "name": "open-soql",
   "private": false,
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Open source implementation of the SOQL.",
   "keywords": [
     "SOQL",
@@ -29,7 +29,7 @@
     "@typescript-eslint/parser": "^3.9.0",
     "babel-loader": "^8.1.0",
     "cross-env": "^7.0.2",
-    "eslint": "^7.6.0",
+    "eslint": "^7.7.0",
     "jasmine": "^3.6.1",
     "jasmine-spec-reporter": "^5.0.2",
     "mkdirp": "^1.0.4",
