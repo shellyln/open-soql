@@ -12,6 +12,136 @@ import { getUTCDayInYear,
 
 
 
+export const fnInfo_cast_to_string: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'cast_to_string',
+    fn: (ctx, args, records) => {
+        if (args.length > 0) {
+            if (args[0] === null) {
+                return null;
+            }
+            return String(args[0]);
+        }
+        throw new Error(`Argument of function "cast_to_string" should be field.`);
+    },
+};
+
+export const fnInfo_cast_to_number: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'cast_to_number',
+    fn: (ctx, args, records) => {
+        if (args.length > 0) {
+            if (args[0] === null) {
+                return null;
+            }
+            return Number(args[0]);
+        }
+        throw new Error(`Argument of function "cast_to_number" should be field.`);
+    },
+};
+
+export const fnInfo_cast_to_boolean: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'cast_to_boolean',
+    fn: (ctx, args, records) => {
+        if (args.length > 0) {
+            if (args[0] === null) {
+                return null;
+            }
+            return Boolean(args[0]);
+        }
+        throw new Error(`Argument of function "cast_to_boolean" should be field.`);
+    },
+};
+
+export const fnInfo_concat: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'concat',
+    fn: (ctx, args, records) => {
+        if (args.length > 0) {
+            const z = args.filter(c => c !== null);
+            if (z.length === 0) {
+                return null;
+            }
+            return z.map(c => String(c)).join('');
+        }
+        throw new Error(`Argument of function "concat" should be field.`);
+    },
+};
+
+export const fnInfo_add: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'add',
+    fn: (ctx, args, records) => {
+        if (args.length > 1) {
+            const z = args.filter(c => c !== null);
+            if (z.length === 0) {
+                return null;
+            }
+            return z.map(c => Number(c)).reduce((a, b) => a + b);
+        }
+        throw new Error(`Argument of function "add" should be field.`);
+    },
+};
+
+export const fnInfo_sub: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'sub',
+    fn: (ctx, args, records) => {
+        if (args.length > 1) {
+            if (args[0] === null) {
+                return null;
+            }
+            return args.filter(c => c !== null).map(c => Number(c)).reduce((a, b) => a - b);
+        }
+        throw new Error(`Argument of function "sub" should be field.`);
+    },
+};
+
+export const fnInfo_mul: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'mul',
+    fn: (ctx, args, records) => {
+        if (args.length > 1) {
+            const z = args.filter(c => c !== null);
+            if (z.length === 0) {
+                return null;
+            }
+            return z.map(c => Number(c)).reduce((a, b) => a * b);
+        }
+        throw new Error(`Argument of function "mul" should be field.`);
+    },
+};
+
+export const fnInfo_div: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'div',
+    fn: (ctx, args, records) => {
+        if (args.length > 1) {
+            if (args[0] === null) {
+                return null;
+            }
+            return args.filter(c => c !== null).map(c => Number(c)).reduce((a, b) => a / b);
+        }
+        throw new Error(`Argument of function "div" should be field.`);
+    },
+};
+
+export const fnInfo_mod: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'mod',
+    fn: (ctx, args, records) => {
+        if (args.length > 1) {
+            if (args[0] === null) {
+                return null;
+            }
+            return args.filter(c => c !== null).map(c => Number(c)).reduce((a, b) => a % b);
+        }
+        throw new Error(`Argument of function "div" should be field.`);
+    },
+};
+
+
 export const fnInfo_count: QueryFuncInfo = {
     type: 'aggregate',
     name: 'count',

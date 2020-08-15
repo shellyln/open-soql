@@ -266,36 +266,47 @@ await transaction(async (commands, tr) => {
       * [ ] `grouping(field)`
     * Scalar functions
       * String functions
-        * [ ] `format(field | function call)`
+        * [ ] `format(field | literal | function call)`
+        * [x] `concat(field | literal | function call, ...)`
+      * Cast functions
+        * [x] `cast_to_string(field | literal | function call)`
+        * [x] `cast_to_number(field | literal | function call)`
+        * [x] `cast_to_boolean(field | literal | function call)`
+      * Calc functions
+        * [x] `add(field | literal | function call, ...)`
+        * [x] `sub(field | literal | function call, ...)`
+        * [x] `mul(field | literal | function call, ...)`
+        * [x] `div(field | literal | function call, ...)`
+        * [x] `mod(field | literal | function call, ...)`
       * Date and datetime functions (UTC)
-        * [ ] `convertTimezone(field)`
-        * [x] `calendar_month(field | convertTimezone(field))`
-        * [x] `calendar_quarter(field | convertTimezone(field))`
-        * [x] `calendar_year(field | convertTimezone(field))`
-        * [x] `day_in_month(field | convertTimezone(field))`
-        * [x] `day_in_week(field | convertTimezone(field))`
-        * [x] `day_in_year(field | convertTimezone(field))`
-        * [x] `day_only(field | convertTimezone(field))`
-        * [ ] `fiscal_month(field | convertTimezone(field))`
-        * [ ] `fiscal_quarter(field | convertTimezone(field))`
-        * [ ] `fiscal_year(field | convertTimezone(field))`
-        * [x] `hour_in_day(field | convertTimezone(field))`
-        * [x] `week_in_month(field | convertTimezone(field))`
-        * [x] `week_in_year(field | convertTimezone(field))`
+        * [ ] `convertTimezone(field | literal | function call)`
+        * [x] `calendar_month(field | literal | convertTimezone(field) | function call)`
+        * [x] `calendar_quarter(field | literal | convertTimezone(field) | function call)`
+        * [x] `calendar_year(field | literal | convertTimezone(field) | function call)`
+        * [x] `day_in_month(field | literal | convertTimezone(field) | function call)`
+        * [x] `day_in_week(field | literal | convertTimezone(field) | function call)`
+        * [x] `day_in_year(field | literal | convertTimezone(field) | function call)`
+        * [x] `day_only(field | literal | convertTimezone(field) | function call)`
+        * [ ] `fiscal_month(field | literal | convertTimezone(field) | function call)`
+        * [ ] `fiscal_quarter(field | literal | convertTimezone(field) | function call)`
+        * [ ] `fiscal_year(field | literal | convertTimezone(field) | function call)`
+        * [x] `hour_in_day(field | literal | convertTimezone(field) | function call)`
+        * [x] `week_in_month(field | literal | convertTimezone(field) | function call)`
+        * [x] `week_in_year(field | literal | convertTimezone(field) | function call)`
       * Date and datetime functions (local timezone)
-        * [x] `calendar_month_lc(field)`
-        * [x] `calendar_quarter_lc(field)`
-        * [x] `calendar_year_lc(field)`
-        * [x] `day_in_month_lc(field)`
-        * [x] `day_in_week_lc(field)`
-        * [x] `day_in_year_lc(field)`
-        * [x] `day_only_lc(field)`
-        * [ ] `fiscal_month_lc(field)`
-        * [ ] `fiscal_quarter_lc(field)`
-        * [ ] `fiscal_year_lc(field)`
-        * [x] `hour_in_day_lc(field)`
-        * [x] `week_in_month_lc(field)`
-        * [x] `week_in_year_lc(field)`
+        * [x] `calendar_month_lc(field | literal | function call)`
+        * [x] `calendar_quarter_lc(field | literal | function call)`
+        * [x] `calendar_year_lc(field | literal | function call)`
+        * [x] `day_in_month_lc(field | literal | function call)`
+        * [x] `day_in_week_lc(field | literal | function call)`
+        * [x] `day_in_year_lc(field | literal | function call)`
+        * [x] `day_only_lc(field | literal | function call)`
+        * [ ] `fiscal_month_lc(field | literal | function call)`
+        * [ ] `fiscal_quarter_lc(field | literal | function call)`
+        * [ ] `fiscal_year_lc(field | literal | function call)`
+        * [x] `hour_in_day_lc(field | literal | function call)`
+        * [x] `week_in_month_lc(field | literal | function call)`
+        * [x] `week_in_year_lc(field | literal | function call)`
   * [ ] `TYPEOF` expression
 * field expressions
   * [x] field

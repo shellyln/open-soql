@@ -9,7 +9,16 @@ import { PreparedQuery,
          QueryBuilderInfoInternal } from '../types';
 import { parse }                    from './parser';
 import { compile }                  from './compiler';
-import { fnInfo_count,
+import { fnInfo_cast_to_string,
+         fnInfo_cast_to_number,
+         fnInfo_cast_to_boolean,
+         fnInfo_concat,
+         fnInfo_add,
+         fnInfo_sub,
+         fnInfo_mul,
+         fnInfo_div,
+         fnInfo_mod,
+         fnInfo_count,
          fnInfo_count_distinct,
          fnInfo_sum,
          fnInfo_avg,
@@ -39,6 +48,15 @@ import { fnInfo_count,
 
 
 const builtinFunctions: QueryFuncInfo[] = [
+    fnInfo_cast_to_string,
+    fnInfo_cast_to_number,
+    fnInfo_cast_to_boolean,
+    fnInfo_concat,
+    fnInfo_add,
+    fnInfo_sub,
+    fnInfo_mul,
+    fnInfo_div,
+    fnInfo_mod,
     fnInfo_count,
     fnInfo_count_distinct,
     fnInfo_sum,
