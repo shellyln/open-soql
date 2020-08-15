@@ -8,6 +8,13 @@ You can query everything you want by defining the resolvers.
 SOQL is an object-oriented query language that allows you to query related data based on an object graph.
 
 
+[![npm](https://img.shields.io/npm/v/open-soql.svg)](https://www.npmjs.com/package/open-soql)
+[![GitHub release](https://img.shields.io/github/release/shellyln/open-soql.svg)](https://github.com/shellyln/open-soql/releases)
+[![.github/workflows/test.yml](https://github.com/shellyln/open-soql/workflows/.github/workflows/test.yml/badge.svg)](https://github.com/shellyln/open-soql/actions)
+[![GitHub forks](https://img.shields.io/github/forks/shellyln/open-soql.svg?style=social&label=Fork)](https://github.com/shellyln/open-soql/fork)
+[![GitHub stars](https://img.shields.io/github/stars/shellyln/open-soql.svg?style=social&label=Star)](https://github.com/shellyln/open-soql)
+
+
 > This is an unstable pre-release
 
 
