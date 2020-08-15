@@ -52,7 +52,7 @@ function getOp1Value(
             case 'field':
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 v = getObjectValueWithFieldNameMap(fieldNameMap, record, op.name[op.name.length - 1]);
-                if (op2IsDateOrDatetime) {
+                if (op2IsDateOrDatetime && v !== null) {
                     v = new Date(v).getTime();
                 }
                 break;
@@ -266,26 +266,62 @@ function evalCondition(
                 }
                 break;
             case '<':
+                if (v1 === null) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) < (v2 as any))) {
                     ret = false;
                 }
                 break;
             case '<=':
+                if (v1 === null) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) <= (v2 as any))) {
                     ret = false;
                 }
                 break;
             case '>':
+                if (v1 === null) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) > (v2 as any))) {
                     ret = false;
                 }
                 break;
             case '>=':
+                if (v1 === null) {
+                    ret = false;
+                    break;
+                }
+                if (v2 === null) {
+                    ret = false;
+                    break;
+                }
                 if (! ((v1 as any) >= (v2 as any))) {
                     ret = false;
                 }
                 break;
             case 'like':
+                if (typeof v1 !== 'string') {
+                    ret = false;
+                    break;
+                }
                 if (typeof v2 !== 'string') {
                     throw new Error(`Operator "like": operand(2) should be string.`);
                 }
@@ -297,6 +333,10 @@ function evalCondition(
                 }
                 break;
             case 'not_like':
+                if (typeof v1 !== 'string') {
+                    ret = false;
+                    break;
+                }
                 if (typeof v2 !== 'string') {
                     throw new Error(`Operator "not_like": operand(2) should be string.`);
                 }
@@ -311,7 +351,8 @@ function evalCondition(
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "in": operand(2) should be array.`);
                 }
-                if (! v2.includes(v1)) {
+                if (! v2.filter(w => w !== null).includes(v1)) {
+                    // NOTE: `(null = ?)`, `(? = null)` and `(null = null)` always FALSE.
                     ret = false;
                 }
                 break;
@@ -319,16 +360,26 @@ function evalCondition(
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "not_in": operand(2) should be array.`);
                 }
+                if (v1 === null) {
+                    // NOTE: Emulate SQL's 'not in'; `(null <> null)` always FALSE.
+                    ret = false;
+                    break;
+                }
+                if (v2.includes(null)) {
+                    ret = false;
+                    break;
+                }
                 if (v2.includes(v1)) {
                     ret = false;
                 }
                 break;
             case 'includes':
+                if (typeof v1 !== 'string') {
+                    ret = false;
+                    break;
+                }
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "includes": operand(2) should be array.`);
-                }
-                if (typeof v1 !== 'string') {
-                    throw new Error(`Operator "includes": operand(1) should be string.`);
                 }
                 ret = false;
                 OUTER: for (const p of v2) {
@@ -347,28 +398,32 @@ function evalCondition(
                 }
                 break;
             case 'excludes':
+                if (typeof v1 !== 'string') {
+                    // NOTE: Emulate SQL's 'not in'; `(null <> null)` always FALSE.
+                    ret = false;
+                    break;
+                }
                 if (! Array.isArray(v2)) {
                     throw new Error(`Operator "excludes": operand(2) should be array.`);
                 }
-                if (typeof v1 !== 'string') {
-                    throw new Error(`Operator "excludes": operand(1) should be string.`);
-                }
-                for (const p of v2) {
-                    if (typeof p !== 'string') {
-                        throw new Error(`Operator "excludes": operand(2) array items should be string.`);
-                    }
+                {
                     const v1Items = v1.split(';');
-                    const v2Items = p.split(';');
-                    let matched = true;
-                    for (const q of v2Items) {
-                        if (! v1Items.includes(q)) {
-                            matched = false;
+                    for (const p of v2) {
+                        if (typeof p !== 'string') {
+                            throw new Error(`Operator "excludes": operand(2) array items should be string.`);
+                        }
+                        const v2Items = p.split(';');
+                        let matched = true;
+                        for (const q of v2Items) {
+                            if (! v1Items.includes(q)) {
+                                matched = false;
+                                break;
+                            }
+                        }
+                        if (matched) {
+                            ret = false;
                             break;
                         }
-                    }
-                    if (matched) {
-                        ret = false;
-                        break;
                     }
                 }
                 break;

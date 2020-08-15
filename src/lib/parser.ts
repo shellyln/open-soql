@@ -83,7 +83,7 @@ const binaryOp = (op: string, op1: any, op2: any) => {
 
 const isOperator = (v: any, op: string) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (typeof v === 'object' && v.op === op) {
+    if (typeof v === 'object' && v.type === 'rawop' && v.op === op) {
         return true;
     }
     return false;
@@ -606,7 +606,7 @@ const whereFieldExpression =
 const whereConditionExpressionInnerRoot =
     trans(tokens => tokens)(
         qty(0, 1)(combine(
-            trans(tokens => [{op: tokens[0]} as Ast])(seqI('not')),
+            trans(tokens => [{type: 'rawop', op: tokens[0]} as Ast])(seqI('not')),
             erase(wordBoundary, repeat(commentOrSpace)), )),
         first(
             trans(tokens => tokens)(
@@ -619,7 +619,7 @@ const whereConditionExpressionInnerRoot =
             whereFieldExpression, ),
         repeat(combine(
             erase(repeat(commentOrSpace)),
-            trans(tokens => [{op: tokens[0]} as Ast])(first(seqI('and'), seqI('or'))),
+            trans(tokens => [{type: 'rawop', op: tokens[0]} as Ast])(first(seqI('and'), seqI('or'))),
             erase(wordBoundary, repeat(commentOrSpace)),
             input => whereConditionExpression(input), )));
 
@@ -686,7 +686,7 @@ const havingFieldExpression =
 const havingConditionExpressionInnerRoot =
     trans(tokens => tokens)(
         qty(0, 1)(combine(
-            trans(tokens => [{op: tokens[0]} as Ast])(seqI('not')),
+            trans(tokens => [{type: 'rawop', op: tokens[0]} as Ast])(seqI('not')),
             erase(wordBoundary, repeat(commentOrSpace)), )),
         first(
             trans(tokens => tokens)(
@@ -699,7 +699,7 @@ const havingConditionExpressionInnerRoot =
             havingFieldExpression, ),
         repeat(combine(
             erase(repeat(commentOrSpace)),
-            trans(tokens => [{op: tokens[0]} as Ast])(first(seqI('and'), seqI('or'))),
+            trans(tokens => [{type: 'rawop', op: tokens[0]} as Ast])(first(seqI('and'), seqI('or'))),
             erase(wordBoundary, repeat(commentOrSpace)),
             input => havingConditionExpression(input), )));
 

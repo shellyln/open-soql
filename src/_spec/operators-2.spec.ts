@@ -111,8 +111,8 @@ const commands1 = build({
 });
 
 
-describe("operators-1", function() {
-    it("Operator '=' (1)", async function() {
+describe("operators-2", function() {
+    it("Operator '>=' (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -123,9 +123,13 @@ describe("operators-1", function() {
                     select
                         foo
                     from contact
-                    where foo='aaa/z3'`;
+                    where foo>='aaa/z2'`;
                 const expects = [
+                    // { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
                     { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    // { Foo: '' },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -134,32 +138,14 @@ describe("operators-1", function() {
                     select
                         foo
                     from contact
-                    where foo=${'aaa/z3'}`;
+                    where foo>=null`;
                 const expects = [
-                    { Foo: 'aaa/z3' },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        foo
-                    from contact
-                    where foo=null`;
-                const expects = [
-                    { Foo: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        foo
-                    from contact
-                    where foo=null`;
-                const expects = [
-                    { Foo: null },
-                ];
+                    // { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    // { Foo: '' },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
@@ -168,31 +154,13 @@ describe("operators-1", function() {
                     select
                         corge
                     from contact
-                    where corge=-1`;
+                    where corge>=0`;
                 const expects = [
-                    { Corge: -1 },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge=${-1}`;
-                const expects = [
-                    { Corge: -1 },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge=0`;
-                const expects = [
+                    // { Corge: -1 },
                     { Corge: 0 },
+                    { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -201,34 +169,14 @@ describe("operators-1", function() {
                     select
                         corge
                     from contact
-                    where corge=${0}`;
+                    where corge>=null`;
                 const expects = [
-                    { Corge: 0 },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge=null`;
-                const expects = [
-                    { Corge: null },
-                    { Corge: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge=${null}`;
-                const expects = [
-                    { Corge: null },
-                    { Corge: null },
-                ];
+                    // { Corge: -1 },
+                    // { Corge: 0 },
+                    // { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
@@ -237,9 +185,13 @@ describe("operators-1", function() {
                     select
                         quux
                     from contact
-                    where quux=true`;
+                    where quux>=true`;
                 const expects = [
+                    // { Quux: false },
                     { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -248,20 +200,13 @@ describe("operators-1", function() {
                     select
                         quux
                     from contact
-                    where quux=${true}`;
-                const expects = [
-                    { Quux: true },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        quux
-                    from contact
-                    where quux=false`;
+                    where quux>=false`;
                 const expects = [
                     { Quux: false },
+                    { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -270,36 +215,14 @@ describe("operators-1", function() {
                     select
                         quux
                     from contact
-                    where quux=${false}`;
+                    where quux>=null`;
                 const expects = [
-                    { Quux: false },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        quux
-                    from contact
-                    where quux=null`;
-                const expects = [
-                    { Quux: null },
-                    { Quux: null },
-                    { Quux: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        quux
-                    from contact
-                    where quux=${null}`;
-                const expects = [
-                    { Quux: null },
-                    { Quux: null },
-                    { Quux: null },
-                ];
+                    // { Quux: false },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
@@ -308,9 +231,13 @@ describe("operators-1", function() {
                     select
                         grault
                     from contact
-                    where grault=2020-01-01`;
+                    where grault>=2020-01-01`;
                 const expects = [
+                    // { Grault: '2019-12-31' },
                     { Grault: '2020-01-01' },
+                    { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -319,34 +246,14 @@ describe("operators-1", function() {
                     select
                         grault
                     from contact
-                    where grault=${{type: 'date', value: '2020-01-01'}}`;
+                    where grault>=null`;
                 const expects = [
-                    { Grault: '2020-01-01' },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        grault
-                    from contact
-                    where grault=null`;
-                const expects = [
-                    { Grault: null },
-                    { Grault: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        grault
-                    from contact
-                    where grault=${null}`;
-                const expects = [
-                    { Grault: null },
-                    { Grault: null },
-                ];
+                    // { Grault: '2019-12-31' },
+                    // { Grault: '2020-01-01' },
+                    // { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
@@ -355,9 +262,13 @@ describe("operators-1", function() {
                     select
                         garply
                     from contact
-                    where garply=2020-01-01T00:00:00Z`;
+                    where garply>=2020-01-01T00:00:00Z`;
                 const expects = [
+                    // { Garply: '2019-12-31T23:59:59Z' },
                     { Garply: '2020-01-01T00:00:00Z' },
+                    { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -366,40 +277,21 @@ describe("operators-1", function() {
                     select
                         garply
                     from contact
-                    where garply=${{type: 'datetime', value: '2020-01-01T00:00:00Z'}}`;
+                    where garply>=null`;
                 const expects = [
-                    { Garply: '2020-01-01T00:00:00Z' },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        garply
-                    from contact
-                    where garply=null`;
-                const expects = [
-                    { Garply: null },
-                    { Garply: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        garply
-                    from contact
-                    where garply=${null}`;
-                const expects = [
-                    { Garply: null },
-                    { Garply: null },
-                ];
+                    // { Garply: '2019-12-31T23:59:59Z' },
+                    // { Garply: '2020-01-01T00:00:00Z' },
+                    // { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
         }
     });
 
-    it("Operator '!=' (1)", async function() {
+
+    it("Operator '>' (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -410,39 +302,191 @@ describe("operators-1", function() {
                     select
                         foo
                     from contact
-                    where foo!='aaa/z3'`;
+                    where foo>'aaa/z2'`;
                 const expects = [
-                    { Foo: 'aaa/z1' },
-                    { Foo: 'aaa/z2' },
-                    { Foo: null },
-                    { Foo: '' },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        foo
-                    from contact
-                    where foo!=${'aaa/z3'}`;
-                const expects = [
-                    { Foo: 'aaa/z1' },
-                    { Foo: 'aaa/z2' },
-                    { Foo: null },
-                    { Foo: '' },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        foo
-                    from contact
-                    where foo!=null`;
-                const expects = [
-                    { Foo: 'aaa/z1' },
-                    { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
                     { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    // { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where foo>null`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    // { Foo: '' },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        corge
+                    from contact
+                    where corge>0`;
+                const expects = [
+                    // { Corge: -1 },
+                    // { Corge: 0 },
+                    { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        corge
+                    from contact
+                    where corge>null`;
+                const expects = [
+                    // { Corge: -1 },
+                    // { Corge: 0 },
+                    // { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        quux
+                    from contact
+                    where quux>true`;
+                const expects = [
+                    // { Quux: false },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        quux
+                    from contact
+                    where quux>false`;
+                const expects = [
+                    // { Quux: false },
+                    { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        quux
+                    from contact
+                    where quux>null`;
+                const expects = [
+                    // { Quux: false },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault>2020-01-01`;
+                const expects = [
+                    // { Grault: '2019-12-31' },
+                    // { Grault: '2020-01-01' },
+                    { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault>null`;
+                const expects = [
+                    // { Grault: '2019-12-31' },
+                    // { Grault: '2020-01-01' },
+                    // { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply>2020-01-01T00:00:00Z`;
+                const expects = [
+                    // { Garply: '2019-12-31T23:59:59Z' },
+                    // { Garply: '2020-01-01T00:00:00Z' },
+                    { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply>null`;
+                const expects = [
+                    // { Garply: '2019-12-31T23:59:59Z' },
+                    // { Garply: '2020-01-01T00:00:00Z' },
+                    // { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+
+    it("Operator '<=' (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where foo<='aaa/z2'`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
                     { Foo: '' },
                 ];
                 expect(result).toEqual(expects);
@@ -452,13 +496,14 @@ describe("operators-1", function() {
                     select
                         foo
                     from contact
-                    where foo!=${null}`;
+                    where foo<=null`;
                 const expects = [
-                    { Foo: 'aaa/z1' },
-                    { Foo: 'aaa/z2' },
-                    { Foo: 'aaa/z3' },
-                    { Foo: '' },
-                ];
+                    // { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    // { Foo: '' },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
@@ -467,67 +512,13 @@ describe("operators-1", function() {
                     select
                         corge
                     from contact
-                    where corge!=-1`;
-                const expects = [
-                    { Corge: 0 },
-                    { Corge: 1 },
-                    { Corge: null },
-                    { Corge: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge!=${-1}`;
-                const expects = [
-                    { Corge: 0 },
-                    { Corge: 1 },
-                    { Corge: null },
-                    { Corge: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge!=0`;
-                const expects = [
-                    { Corge: -1 },
-                    { Corge: 1 },
-                    { Corge: null },
-                    { Corge: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge!=${0}`;
-                const expects = [
-                    { Corge: -1 },
-                    { Corge: 1 },
-                    { Corge: null },
-                    { Corge: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        corge
-                    from contact
-                    where corge!=null`;
+                    where corge<=0`;
                 const expects = [
                     { Corge: -1 },
                     { Corge: 0 },
-                    { Corge: 1 },
+                    // { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -536,12 +527,14 @@ describe("operators-1", function() {
                     select
                         corge
                     from contact
-                    where corge!=${null}`;
+                    where corge<=null`;
                 const expects = [
-                    { Corge: -1 },
-                    { Corge: 0 },
-                    { Corge: 1 },
-                ];
+                    // { Corge: -1 },
+                    // { Corge: 0 },
+                    // { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
@@ -550,66 +543,13 @@ describe("operators-1", function() {
                     select
                         quux
                     from contact
-                    where quux!=true`;
-                const expects = [
-                    { Quux: false },
-                    { Quux: null },
-                    { Quux: null },
-                    { Quux: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        quux
-                    from contact
-                    where quux!=${true}`;
-                const expects = [
-                    { Quux: false },
-                    { Quux: null },
-                    { Quux: null },
-                    { Quux: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        quux
-                    from contact
-                    where quux!=false`;
-                const expects = [
-                    { Quux: true },
-                    { Quux: null },
-                    { Quux: null },
-                    { Quux: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        quux
-                    from contact
-                    where quux!=${false}`;
-                const expects = [
-                    { Quux: true },
-                    { Quux: null },
-                    { Quux: null },
-                    { Quux: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        quux
-                    from contact
-                    where quux!=null`;
+                    where quux<=true`;
                 const expects = [
                     { Quux: false },
                     { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -618,52 +558,45 @@ describe("operators-1", function() {
                     select
                         quux
                     from contact
-                    where quux!=${null}`;
+                    where quux<=false`;
                 const expects = [
                     { Quux: false },
-                    { Quux: true },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
                 ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        quux
+                    from contact
+                    where quux<=null`;
+                const expects = [
+                    // { Quux: false },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
             {
+                const zzz = 1;
                 const result = await soql`
                     select
                         grault
                     from contact
-                    where grault!=2020-01-01`;
-                const expects = [
-                    { Grault: '2019-12-31' },
-                    { Grault: '2020-01-02' },
-                    { Grault: null },
-                    { Grault: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        grault
-                    from contact
-                    where grault!=${{type: 'date', value: '2020-01-01'}}`;
-                const expects = [
-                    { Grault: '2019-12-31' },
-                    { Grault: '2020-01-02' },
-                    { Grault: null },
-                    { Grault: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        grault
-                    from contact
-                    where grault!=null`;
+                    where grault<=2020-01-01`;
                 const expects = [
                     { Grault: '2019-12-31' },
                     { Grault: '2020-01-01' },
-                    { Grault: '2020-01-02' },
+                    // { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -672,12 +605,14 @@ describe("operators-1", function() {
                     select
                         grault
                     from contact
-                    where grault!=${null}`;
+                    where grault<=null`;
                 const expects = [
-                    { Grault: '2019-12-31' },
-                    { Grault: '2020-01-01' },
-                    { Grault: '2020-01-02' },
-                ];
+                    // { Grault: '2019-12-31' },
+                    // { Grault: '2020-01-01' },
+                    // { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
 
@@ -686,39 +621,13 @@ describe("operators-1", function() {
                     select
                         garply
                     from contact
-                    where garply!=2020-01-01T00:00:00Z`;
-                const expects = [
-                    { Garply: '2019-12-31T23:59:59Z' },
-                    { Garply: '2020-01-01T00:00:01Z' },
-                    { Garply: null },
-                    { Garply: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        garply
-                    from contact
-                    where garply!=${{type: 'datetime', value: '2020-01-01T00:00:00Z'}}`;
-                const expects = [
-                    { Garply: '2019-12-31T23:59:59Z' },
-                    { Garply: '2020-01-01T00:00:01Z' },
-                    { Garply: null },
-                    { Garply: null },
-                ];
-                expect(result).toEqual(expects);
-            }
-            {
-                const result = await soql`
-                    select
-                        garply
-                    from contact
-                    where garply!=null`;
+                    where garply<=2020-01-01T00:00:00Z`;
                 const expects = [
                     { Garply: '2019-12-31T23:59:59Z' },
                     { Garply: '2020-01-01T00:00:00Z' },
-                    { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
                 ];
                 expect(result).toEqual(expects);
             }
@@ -727,12 +636,194 @@ describe("operators-1", function() {
                     select
                         garply
                     from contact
-                    where garply!=${null}`;
+                    where garply<=null`;
+                const expects = [
+                    // { Garply: '2019-12-31T23:59:59Z' },
+                    // { Garply: '2020-01-01T00:00:00Z' },
+                    // { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+
+    it("Operator '<' (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where foo<'aaa/z2'`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where foo<null`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    // { Foo: '' },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        corge
+                    from contact
+                    where corge<0`;
+                const expects = [
+                    { Corge: -1 },
+                    // { Corge: 0 },
+                    // { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        corge
+                    from contact
+                    where corge<null`;
+                const expects = [
+                    // { Corge: -1 },
+                    // { Corge: 0 },
+                    // { Corge: 1 },
+                    // { Corge: null },
+                    // { Corge: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        quux
+                    from contact
+                    where quux<true`;
+                const expects = [
+                    { Quux: false },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        quux
+                    from contact
+                    where quux<false`;
+                const expects = [
+                    // { Quux: false },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        quux
+                    from contact
+                    where quux<null`;
+                const expects = [
+                    // { Quux: false },
+                    // { Quux: true },
+                    // { Quux: null },
+                    // { Quux: null },
+                    // { Quux: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const zzz = 1;
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault<2020-01-01`;
+                const expects = [
+                    { Grault: '2019-12-31' },
+                    // { Grault: '2020-01-01' },
+                    // { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        grault
+                    from contact
+                    where grault<null`;
+                const expects = [
+                    // { Grault: '2019-12-31' },
+                    // { Grault: '2020-01-01' },
+                    // { Grault: '2020-01-02' },
+                    // { Grault: null },
+                    // { Grault: null },
+                ] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply<2020-01-01T00:00:00Z`;
                 const expects = [
                     { Garply: '2019-12-31T23:59:59Z' },
-                    { Garply: '2020-01-01T00:00:00Z' },
-                    { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: '2020-01-01T00:00:00Z' },
+                    // { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
                 ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        garply
+                    from contact
+                    where garply<null`;
+                const expects = [
+                    // { Garply: '2019-12-31T23:59:59Z' },
+                    // { Garply: '2020-01-01T00:00:00Z' },
+                    // { Garply: '2020-01-01T00:00:01Z' },
+                    // { Garply: null },
+                    // { Garply: null },
+                ] as any[];
                 expect(result).toEqual(expects);
             }
         }

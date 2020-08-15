@@ -10,7 +10,7 @@ import { getStringParsers }   from 'fruitsconfits/modules/lib/string-parser';
 
 
 type Ctx = undefined;
-type Ast = string | number | null | string[];
+type Ast = string | number | boolean | null | string[];
 
 
 const $s = getStringParsers<Ctx, Ast>({
@@ -37,6 +37,12 @@ const numberValue =
     first(floatingPointNumberValue,
           decimalIntegerValue, );
 
+const trueValue =
+    trans(tokens => [true])(seq('true'));
+
+const falseValue =
+    trans(tokens => [false])(seq('false'));
+
 
 const quoted = trans(input => input.length ? input : [''])(
     erase(repeat(classes.spaceWithinSingleLine), cls('"')),
@@ -47,7 +53,7 @@ const quoted = trans(input => input.length ? input : [''])(
 
 const nakidNum = trans(input => input.length ? input : [null])(
     erase(repeat(classes.spaceWithinSingleLine)),
-    numberValue,
+    first(trueValue, falseValue, numberValue),
     erase(repeat(classes.spaceWithinSingleLine)),
     ahead(first(cls(',', '\r\n', '\n', '\r'), end())), );
 

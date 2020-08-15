@@ -123,7 +123,7 @@ function flatConditions(
                     case 'condition':
                         switch (x.op) {
                         case 'and': case 'or': case 'not':
-                            if (x.op === parentOp) {
+                            if (x.op !== 'not' && x.op === parentOp) {
                                 flatConditions(dest, x.op, x);
                             } else {
                                 recurse(x.op, x);
