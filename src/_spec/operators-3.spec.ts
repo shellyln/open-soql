@@ -432,6 +432,34 @@ describe("operators-3", function() {
                 ];
                 expect(result).toEqual(expects);
             }
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact
+                    where baz includes ('bbb', 'ddd')`;
+                const expects = [
+                    { Baz: 'bbb' },
+                    { Baz: 'aaa;bbb' },
+                    { Baz: 'aaa;bbb;ccc' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact
+                    where baz includes ('bbb', 'ddd', 'aaa')`;
+                const expects = [
+                    { Baz: 'aaa' },
+                    { Baz: 'bbb' },
+                    { Baz: 'aaa;bbb' },
+                    { Baz: 'aaa;ccc' },
+                    { Baz: 'aaa;bbb;ccc' },
+                ];
+                expect(result).toEqual(expects);
+            }
 
             {
                 const result = await soql`
@@ -441,6 +469,56 @@ describe("operators-3", function() {
                     where baz includes ('bbb;ccc')`;
                 const expects = [
                     { Baz: 'aaa;bbb;ccc' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact
+                    where baz includes ('bbb;ccc', 'aaa;ccc')`;
+                const expects = [
+                    { Baz: 'aaa;ccc' },
+                    { Baz: 'aaa;bbb;ccc' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact
+                    where baz includes ('bbb;ccc', 'aaa;ccc', 'aaa;bbb')`;
+                const expects = [
+                    { Baz: 'aaa;bbb' },
+                    { Baz: 'aaa;ccc' },
+                    { Baz: 'aaa;bbb;ccc' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        baz2
+                    from account
+                    where baz2 includes ('aaa;bbb;ccc')`;
+                const expects = [
+                    { Baz2: 'aaa;bbb;ccc' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        baz2
+                    from account
+                    where baz2 includes ('aaa;bbb;ccc', 'ccc')`;
+                const expects = [
+                    { Baz2: 'aaa;bbb;ccc' },
+                    { Baz2: 'bbb;ccc' },
+                    { Baz2: 'ccc' },
                 ];
                 expect(result).toEqual(expects);
             }
