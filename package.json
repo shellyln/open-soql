@@ -6,7 +6,8 @@
   "keywords": [
     "SOQL",
     "Object query language",
-    "Graph query language"
+    "Graph query language",
+    "SQL"
   ],
   "main": "./bin/index.js",
   "module": "./modules/index.js",

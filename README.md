@@ -15,18 +15,17 @@ SOQL is an object-oriented query language that allows you to query related data 
 [![GitHub stars](https://img.shields.io/github/stars/shellyln/open-soql.svg?style=social&label=Star)](https://github.com/shellyln/open-soql)
 
 
-> This is an unstable pre-release
+---
 
-
-## Install
+## ⚙️ Install
 
 ```bash
 npm install open-soql
 ```
 
-## Get started
+## 🚀 Get started
 
-Set up the resolvers
+### Set up the resolvers
 ```ts
 import { build }                      from 'open-soql/modules/builder';
 import { staticJsonResolverBuilder,
@@ -161,7 +160,7 @@ const { soql, insert, update, remove, transaction } = build({
 });
 ```
 
-Query
+### Query
 ```ts
 const result = await soql`
     Select
@@ -203,7 +202,7 @@ const result = await soql`
 // result is [{...}, ...]
 ```
 
-Aggregate
+### Aggregate
 ```ts
 const aggregationResult = await soql`
     Select
@@ -222,7 +221,7 @@ const aggregationResult = await soql`
 // aggregationResult is [{...}, ...]
 ```
 
-DML
+### DML (bulk)
 ```ts
 const inserted = await insert('Contact', [{
     Name: 'foo',
@@ -238,7 +237,20 @@ const selected = await soql`Select Id, Name from Contact`;
 const updated2 = await update('Contact', selected);
 ```
 
-Execute commands within a transaction
+### DML (single record)
+```ts
+const inserted = await insert('Contact', {
+    Name: 'foo',
+});
+// inserted is { Id: 'Contact/1', Name: 'foo' }
+
+const updated = await update('Contact', inserted);
+// updated is { Id: 'Contact/1', Name: 'foo' }
+
+await remove('Contact', updated);
+```
+
+### Execute commands within a transaction
 ```ts
 await transaction(async (commands, tr) => {
     const { soql, insert, update, remove } = commands;
@@ -253,7 +265,7 @@ await transaction(async (commands, tr) => {
 ```
 
 
-## Features
+## 💎 Features
 ### Syntax
 
 * `Select` field list
@@ -416,11 +428,11 @@ await transaction(async (commands, tr) => {
 
 ---
 
-## Usage
+## 📖 Usage
 
-### Module `open-soql/modules/builder`
+### 📦 Module `open-soql/modules/builder`
 
-#### `build()`
+#### 🟢 `build()`
 
 ```ts
 export interface QueryBuilderInfo {
@@ -475,7 +487,7 @@ export function build(builder: QueryBuilderInfo): {
 };
 ```
 
-* Setup the resolvers.
+* Set up the resolvers.
 
 ##### parameters:
 
@@ -492,9 +504,9 @@ export function build(builder: QueryBuilderInfo): {
 
 
 
-### Module `open-soql/modules/sort`
+### 📦 Module `open-soql/modules/sort`
 
-#### `sortRecords()`
+#### 🟢 `sortRecords()`
 
 ```ts
 export function sortRecords(query: PreparedQuery, records: any[]): any[];
@@ -513,9 +525,9 @@ export function sortRecords(query: PreparedQuery, records: any[]): any[];
 
 
 
-### Module `open-soql/modules/filters`
+### 📦 Module `open-soql/modules/filters`
 
-#### `applyWhereConditions()`
+#### 🟢 `applyWhereConditions()`
 
 ```ts
 export function applyWhereConditions(
@@ -536,7 +548,7 @@ export function applyWhereConditions(
 
 
 
-#### `applyHavingConditions()`
+#### 🟢 `applyHavingConditions()`
 
 ```ts
 export function applyHavingConditions(
@@ -557,9 +569,9 @@ export function applyHavingConditions(
 
 
 
-### Module `open-soql/modules/resolvers`
+### 📦 Module `open-soql/modules/resolvers`
 
-#### `staticJsonResolverBuilder()`
+#### 🟢 `staticJsonResolverBuilder()`
 
 ```ts
 export interface StaticResolverConfig {
@@ -586,7 +598,7 @@ export const staticJsonResolverBuilder:
 
 
 
-#### `staticCsvResolverBuilder()`
+#### 🟢 `staticCsvResolverBuilder()`
 
 ```ts
 export const staticCsvResolverBuilder:
@@ -607,7 +619,7 @@ export const staticCsvResolverBuilder:
 
 
 
-#### `passThroughResolverBuilder()`
+#### 🟢 `passThroughResolverBuilder()`
 
 ```ts
 export const passThroughResolverBuilder:
@@ -630,15 +642,15 @@ export const passThroughResolverBuilder:
 
 ---
 
-## FAQ
+## 🙋 FAQ
 
 * What does `SOQL` stand for?
-  * In `Open SOQL`, `SOQL` stands for `SOQL is Object Query Language`.
-    * In [original SOQL](https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql.htm), `SOQL` stands for `Salesforce Object Query Language`.
+  * 👉 In `Open SOQL`, `SOQL` stands for `SOQL is Object Query Language`.
+  * 👉 In [original SOQL](https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql.htm), `SOQL` stands for `Salesforce Object Query Language`.
 
 
 ---
 
-## License
+## ⚖️ License
 ISC  
 Copyright (c) 2020 Shellyl_N and Authors
