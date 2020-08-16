@@ -111,7 +111,7 @@ const commands1 = build({
 });
 
 
-describe("operators-3", function() {
+describe("operators-4", function() {
     it("Operator 'not' (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
@@ -228,10 +228,8 @@ describe("operators-3", function() {
             }
         }
     });
-});
 
 
-describe("operators-3", function() {
     it("Operator 'and' (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
@@ -425,181 +423,179 @@ describe("operators-3", function() {
     });
 
 
-    describe("operators-3", function() {
-        it("Operator 'or' (1)", async function() {
-            for (const cf of resolverConfigs) {
-                setDefaultStaticResolverConfig(cf);
-    
-                const { soql, insert, update, remove, transaction } = commands1;
+    it("Operator 'or' (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
 
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where foo >= 'aaa/z2' or foo=''`;
-                    const expects = [
-                        // { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        { Foo: 'aaa/z3' },
-                        // { Foo: null },
-                        { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where (foo >= 'aaa/z2' or foo='')`;
-                    const expects = [
-                        // { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        { Foo: 'aaa/z3' },
-                        // { Foo: null },
-                        { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where (foo >= 'aaa/z2') or (foo='')`;
-                    const expects = [
-                        // { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        { Foo: 'aaa/z3' },
-                        // { Foo: null },
-                        { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where ((foo >= 'aaa/z2') or (foo=''))`;
-                    const expects = [
-                        // { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        { Foo: 'aaa/z3' },
-                        // { Foo: null },
-                        { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
+            const { soql, insert, update, remove, transaction } = commands1;
 
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where ((not foo <= 'aaa/z2'))`;
-                    const expects = [
-                        // { Foo: 'aaa/z1' },
-                        // { Foo: 'aaa/z2' },
-                        { Foo: 'aaa/z3' },
-                        { Foo: null },
-                        // { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where ((not foo>='aaa/z2'))`;
-                    const expects = [
-                        { Foo: 'aaa/z1' },
-                        // { Foo: 'aaa/z2' },
-                        // { Foo: 'aaa/z3' },
-                        { Foo: null },
-                        { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where (not foo <= 'aaa/z2') or (not foo>='aaa/z2')`;
-                    const expects = [
-                        { Foo: 'aaa/z1' },
-                        // { Foo: 'aaa/z2' },
-                        { Foo: 'aaa/z3' },
-                        { Foo: null },
-                        { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where not((not foo <= 'aaa/z2') or (not foo>='aaa/z2'))`;
-                    const expects = [
-                        // { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        // { Foo: 'aaa/z3' },
-                        // { Foo: null },
-                        // { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where foo='aaa/z1' or foo='aaa/z2' or foo=null`;
-                    const expects = [
-                        { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        // { Foo: 'aaa/z3' },
-                        { Foo: null },
-                        // { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where (foo='aaa/z1' or foo='aaa/z2' or foo=null)`;
-                    const expects = [
-                        { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        // { Foo: 'aaa/z3' },
-                        { Foo: null },
-                        // { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
-                {
-                    const result = await soql`
-                        select
-                            foo
-                        from contact
-                        where ((foo='aaa/z1') or (foo='aaa/z2') or (foo=null))`;
-                    const expects = [
-                        { Foo: 'aaa/z1' },
-                        { Foo: 'aaa/z2' },
-                        // { Foo: 'aaa/z3' },
-                        { Foo: null },
-                        // { Foo: '' },
-                    ];
-                    expect(result).toEqual(expects);
-                }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where foo >= 'aaa/z2' or foo=''`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
             }
-        });
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where (foo >= 'aaa/z2' or foo='')`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where (foo >= 'aaa/z2') or (foo='')`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where ((foo >= 'aaa/z2') or (foo=''))`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where ((not foo <= 'aaa/z2'))`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    { Foo: 'aaa/z3' },
+                    { Foo: null },
+                    // { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where ((not foo>='aaa/z2'))`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where (not foo <= 'aaa/z2') or (not foo>='aaa/z2')`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    // { Foo: 'aaa/z2' },
+                    { Foo: 'aaa/z3' },
+                    { Foo: null },
+                    { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where not((not foo <= 'aaa/z2') or (not foo>='aaa/z2'))`;
+                const expects = [
+                    // { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    // { Foo: null },
+                    // { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where foo='aaa/z1' or foo='aaa/z2' or foo=null`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    { Foo: null },
+                    // { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where (foo='aaa/z1' or foo='aaa/z2' or foo=null)`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    { Foo: null },
+                    // { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact
+                    where ((foo='aaa/z1') or (foo='aaa/z2') or (foo=null))`;
+                const expects = [
+                    { Foo: 'aaa/z1' },
+                    { Foo: 'aaa/z2' },
+                    // { Foo: 'aaa/z3' },
+                    { Foo: null },
+                    // { Foo: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
     });
 });
