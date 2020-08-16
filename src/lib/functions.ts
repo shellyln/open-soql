@@ -402,40 +402,40 @@ export const fnInfo_day_only_lc: QueryFuncInfo = {
 export const fnInfo_hour_in_day: QueryFuncInfo = {
     type: 'scalar',
     name: 'hour_in_day',
-    fn: dateScalarFunctionGen('hour_in_day', (dateStr) => new Date(dateStr).getUTCHours()),
+    fn: dateScalarFunctionGen('hour_in_day', (dateStr) => new Date(dateStr).getUTCHours()), // 0 , ... , 23
 };
 
 
 export const fnInfo_hour_in_day_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'hour_in_day_lc',
-    fn: dateScalarFunctionGen('hour_in_day_lc', (dateStr) => new Date(dateStr).getHours()),
+    fn: dateScalarFunctionGen('hour_in_day_lc', (dateStr) => new Date(dateStr).getHours()), // 0 , ... , 23
 };
 
 
 export const fnInfo_week_in_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_month',
-    fn: dateScalarFunctionGen('week_in_month', (dateStr) => Math.floor(new Date(dateStr).getUTCDate() / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_month', (dateStr) => Math.floor((new Date(dateStr).getUTCDate() - 1) / 7) + 1), // 1(day 1~7) , ... , 5(day 29~31)
 };
 
 
 export const fnInfo_week_in_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_month_lc',
-    fn: dateScalarFunctionGen('week_in_month_lc', (dateStr) => Math.floor(new Date(dateStr).getDate() / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_month_lc', (dateStr) => Math.floor((new Date(dateStr).getDate() - 1) / 7) + 1), // 1(day 1~7) , ... , 5(day 29~31)
 };
 
 
 export const fnInfo_week_in_year: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_year',
-    fn: dateScalarFunctionGen('week_in_year', (dateStr) => Math.floor(getUTCDayInYear(new Date(dateStr)) / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_year', (dateStr) => Math.floor((getUTCDayInYear(new Date(dateStr)) - 1) / 7) + 1),
 };
 
 
 export const fnInfo_week_in_year_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_year_lc',
-    fn: dateScalarFunctionGen('week_in_year_lc', (dateStr) => Math.floor(getDayInYear(new Date(dateStr)) / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_year_lc', (dateStr) => Math.floor((getDayInYear(new Date(dateStr)) - 1) / 7) + 1),
 };
