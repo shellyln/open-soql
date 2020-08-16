@@ -112,7 +112,7 @@ const commands1 = build({
 
 
 describe("functions-3", function() {
-    it("Functions (1): day_in_month", async function() {
+    it("Functions: day_in_month (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -294,7 +294,7 @@ describe("functions-3", function() {
     });
 
 
-    it("Functions (1): day_in_week", async function() {
+    it("Functions: day_in_week (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -476,7 +476,7 @@ describe("functions-3", function() {
     });
 
 
-    it("Functions (1): day_in_year", async function() {
+    it("Functions: day_in_year (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 

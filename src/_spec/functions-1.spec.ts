@@ -112,7 +112,7 @@ const commands1 = build({
 
 
 describe("functions-1", function() {
-    it("Functions (1): cast_to_string", async function() {
+    it("Functions: cast_to_string (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -141,7 +141,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (2): cast_to_number", async function() {
+    it("Functions: cast_to_number (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -170,7 +170,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (3): cast_to_boolean", async function() {
+    it("Functions: cast_to_boolean (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -199,7 +199,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (1): concat", async function() {
+    it("Functions: concat (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -264,7 +264,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (1): add", async function() {
+    it("Functions: add (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -384,7 +384,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (1): sub", async function() {
+    it("Functions: sub (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -523,7 +523,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (1): mul", async function() {
+    it("Functions: mul (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -643,7 +643,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (1): div", async function() {
+    it("Functions: div (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -782,7 +782,7 @@ describe("functions-1", function() {
     });
 
 
-    it("Functions (1): mod", async function() {
+    it("Functions: mod (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 

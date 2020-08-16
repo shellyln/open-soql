@@ -112,7 +112,7 @@ const commands1 = build({
 
 
 describe("functions-2", function() {
-    it("Functions (1): calendar_month", async function() {
+    it("Functions: calendar_month (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -293,7 +293,7 @@ describe("functions-2", function() {
         }
     });
 
-    it("Functions (1): calendar_month", async function() {
+    it("Functions: calendar_month (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -474,7 +474,7 @@ describe("functions-2", function() {
         }
     });
 
-    it("Functions (1): calendar_year", async function() {
+    it("Functions: calendar_year (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
