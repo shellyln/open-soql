@@ -315,14 +315,14 @@ export const fnInfo_calendar_month_lc: QueryFuncInfo = {
 export const fnInfo_calendar_quarter: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_quarter',
-    fn: dateScalarFunctionGen('calendar_quarter', (dateStr) => (new Date(dateStr).getUTCMonth() / 4) + 1),
+    fn: dateScalarFunctionGen('calendar_quarter', (dateStr) => Math.floor(new Date(dateStr).getUTCMonth() / 3) + 1),
 };
 
 
 export const fnInfo_calendar_quarter_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_quarter_lc',
-    fn: dateScalarFunctionGen('calendar_quarter_lc', (dateStr) => (new Date(dateStr).getMonth() / 4) + 1),
+    fn: dateScalarFunctionGen('calendar_quarter_lc', (dateStr) => Math.floor(new Date(dateStr).getMonth() / 3) + 1),
 };
 
 
