@@ -409,6 +409,7 @@ await transaction(async (commands, tr) => {
   * [x] `insert`
   * [x] `update`
   * [x] `remove`
+* [ ] Pub / Sub (subscribe to DML events with filtering conditions)
 * [x] transaction scope
 * [x] template string
 

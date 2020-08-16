@@ -301,28 +301,28 @@ function dateScalarFunctionGen(fnName: string, fn: (dateStr: string) => any): Sc
 export const fnInfo_calendar_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_month',
-    fn: dateScalarFunctionGen('calendar_month', (dateStr) => new Date(dateStr).getUTCMonth() + 1),
+    fn: dateScalarFunctionGen('calendar_month', (dateStr) => new Date(dateStr).getUTCMonth() + 1), // 1, ... , 12
 };
 
 
 export const fnInfo_calendar_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_month_lc',
-    fn: dateScalarFunctionGen('calendar_month_lc', (dateStr) => new Date(dateStr).getMonth() + 1),
+    fn: dateScalarFunctionGen('calendar_month_lc', (dateStr) => new Date(dateStr).getMonth() + 1), // 1, ... , 12
 };
 
 
 export const fnInfo_calendar_quarter: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_quarter',
-    fn: dateScalarFunctionGen('calendar_quarter', (dateStr) => (new Date(dateStr).getUTCMonth() / 4) + 1),
+    fn: dateScalarFunctionGen('calendar_quarter', (dateStr) => Math.floor(new Date(dateStr).getUTCMonth() / 3) + 1), // 1, ... , 4
 };
 
 
 export const fnInfo_calendar_quarter_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_quarter_lc',
-    fn: dateScalarFunctionGen('calendar_quarter_lc', (dateStr) => (new Date(dateStr).getMonth() / 4) + 1),
+    fn: dateScalarFunctionGen('calendar_quarter_lc', (dateStr) => Math.floor(new Date(dateStr).getMonth() / 3) + 1), // 1, ... , 4
 };
 
 
@@ -343,42 +343,42 @@ export const fnInfo_calendar_year_lc: QueryFuncInfo = {
 export const fnInfo_day_in_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_month',
-    fn: dateScalarFunctionGen('day_in_month', (dateStr) => new Date(dateStr).getUTCDate()),
+    fn: dateScalarFunctionGen('day_in_month', (dateStr) => new Date(dateStr).getUTCDate()), // 1 , ... , 31
 };
 
 
 export const fnInfo_day_in_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_month_lc',
-    fn: dateScalarFunctionGen('day_in_month_lc', (dateStr) => new Date(dateStr).getDate()),
+    fn: dateScalarFunctionGen('day_in_month_lc', (dateStr) => new Date(dateStr).getDate()), // 1 , ... , 31
 };
 
 
 export const fnInfo_day_in_week: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_week',
-    fn: dateScalarFunctionGen('day_in_week', (dateStr) => new Date(dateStr).getUTCDay() + 1),
+    fn: dateScalarFunctionGen('day_in_week', (dateStr) => new Date(dateStr).getUTCDay() + 1), // Sun:1 , ... , Sat:7
 };
 
 
 export const fnInfo_day_in_week_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_week_lc',
-    fn: dateScalarFunctionGen('day_in_week_lc', (dateStr) => new Date(dateStr).getDay() + 1),
+    fn: dateScalarFunctionGen('day_in_week_lc', (dateStr) => new Date(dateStr).getDay() + 1), // Sun:1 , ... , Sat:7
 };
 
 
 export const fnInfo_day_in_year: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_year',
-    fn: dateScalarFunctionGen('day_in_year', (dateStr) => getUTCDayInYear(new Date(dateStr))),
+    fn: dateScalarFunctionGen('day_in_year', (dateStr) => getUTCDayInYear(new Date(dateStr))), // 1 , ... , 366
 };
 
 
 export const fnInfo_day_in_year_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_year_lc',
-    fn: dateScalarFunctionGen('day_in_year_lc', (dateStr) => getDayInYear(new Date(dateStr))),
+    fn: dateScalarFunctionGen('day_in_year_lc', (dateStr) => getDayInYear(new Date(dateStr))), // 1 , ... , 366
 };
 
 
@@ -402,40 +402,40 @@ export const fnInfo_day_only_lc: QueryFuncInfo = {
 export const fnInfo_hour_in_day: QueryFuncInfo = {
     type: 'scalar',
     name: 'hour_in_day',
-    fn: dateScalarFunctionGen('hour_in_day', (dateStr) => new Date(dateStr).getUTCHours()),
+    fn: dateScalarFunctionGen('hour_in_day', (dateStr) => new Date(dateStr).getUTCHours()), // 0 , ... , 23
 };
 
 
 export const fnInfo_hour_in_day_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'hour_in_day_lc',
-    fn: dateScalarFunctionGen('hour_in_day_lc', (dateStr) => new Date(dateStr).getHours()),
+    fn: dateScalarFunctionGen('hour_in_day_lc', (dateStr) => new Date(dateStr).getHours()), // 0 , ... , 23
 };
 
 
 export const fnInfo_week_in_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_month',
-    fn: dateScalarFunctionGen('week_in_month', (dateStr) => Math.floor(new Date(dateStr).getUTCDate() / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_month', (dateStr) => Math.floor((new Date(dateStr).getUTCDate() - 1) / 7) + 1), // 1(day 1~7) , ... , 5(day 29~31)
 };
 
 
 export const fnInfo_week_in_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_month_lc',
-    fn: dateScalarFunctionGen('week_in_month_lc', (dateStr) => Math.floor(new Date(dateStr).getDate() / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_month_lc', (dateStr) => Math.floor((new Date(dateStr).getDate() - 1) / 7) + 1), // 1(day 1~7) , ... , 5(day 29~31)
 };
 
 
 export const fnInfo_week_in_year: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_year',
-    fn: dateScalarFunctionGen('week_in_year', (dateStr) => Math.floor(getUTCDayInYear(new Date(dateStr)) / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_year', (dateStr) => Math.floor((getUTCDayInYear(new Date(dateStr)) - 1) / 7) + 1),
 };
 
 
 export const fnInfo_week_in_year_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'week_in_year_lc',
-    fn: dateScalarFunctionGen('week_in_year_lc', (dateStr) => Math.floor(getDayInYear(new Date(dateStr)) / 7) + 1),
+    fn: dateScalarFunctionGen('week_in_year_lc', (dateStr) => Math.floor((getDayInYear(new Date(dateStr)) - 1) / 7) + 1),
 };

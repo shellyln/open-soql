@@ -216,7 +216,7 @@ async function execCondSubQueries(
 
 function mapSelectFields(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        x: PreparedResolver, records: any[]) {
+        x: PreparedResolver, records: any[], isAggregation: boolean) {
 
     for (const record of records) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -240,8 +240,11 @@ function mapSelectFields(
                         record[field.aliasName!] = callScalarFunction(ctx, field, fnInfo, 'any', record);
                         break;
                     case 'immediate-scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
+                        // NOTE: If aggregation, immediate-scalar function will be called at `aggregateFields()`.
+                        if (! isAggregation) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                            record[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
+                        }
                         break;
                     default:
                         // Nothing to do.
@@ -362,6 +365,9 @@ function aggregateFields(
                         agg[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
                         break;
                     default:
+                        // TODO: Accept `scalar` functions
+                        //       if all parameters are already aggregated (include `group by` fields) or literal values.
+
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                     }
                 }
@@ -613,10 +619,16 @@ export async function executeCompiledQuery(
                     primaryCapabilities.sorting = false;
                 }
 
-                records = mapSelectFields(ctxGen, x, records);
+                if (hasAliasNameCond) {
+                    records = mapSelectFields(ctxGen, x, records, isAggregation);
+                }
 
                 if (! ctx.resolverCapabilities.filtering) {
                     records = applyWhereConditions(ctxGen, condWhere, records);
+                }
+
+                if (! hasAliasNameCond) {
+                    records = mapSelectFields(ctxGen, x, records, isAggregation);
                 }
 
                 if (isAggregation) {
@@ -666,10 +678,16 @@ export async function executeCompiledQuery(
                         ctx.resolverCapabilities.sorting = false;
                     }
 
-                    recs = mapSelectFields(ctxGen, x, recs);
+                    if (hasAliasNameCond) {
+                        recs = mapSelectFields(ctxGen, x, recs, isAggregation);
+                    }
 
                     if (! ctx.resolverCapabilities.filtering) {
                         recs = applyWhereConditions(ctxGen, condWhere, recs);
+                    }
+
+                    if (! hasAliasNameCond) {
+                        recs = mapSelectFields(ctxGen, x, recs, isAggregation);
                     }
 
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
