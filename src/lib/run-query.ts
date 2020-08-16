@@ -613,10 +613,16 @@ export async function executeCompiledQuery(
                     primaryCapabilities.sorting = false;
                 }
 
-                records = mapSelectFields(ctxGen, x, records);
+                if (hasAliasNameCond) {
+                    records = mapSelectFields(ctxGen, x, records);
+                }
 
                 if (! ctx.resolverCapabilities.filtering) {
                     records = applyWhereConditions(ctxGen, condWhere, records);
+                }
+
+                if (! hasAliasNameCond) {
+                    records = mapSelectFields(ctxGen, x, records);
                 }
 
                 if (isAggregation) {
@@ -666,10 +672,16 @@ export async function executeCompiledQuery(
                         ctx.resolverCapabilities.sorting = false;
                     }
 
-                    recs = mapSelectFields(ctxGen, x, recs);
+                    if (hasAliasNameCond) {
+                        recs = mapSelectFields(ctxGen, x, recs);
+                    }
 
                     if (! ctx.resolverCapabilities.filtering) {
                         recs = applyWhereConditions(ctxGen, condWhere, recs);
+                    }
+
+                    if (! hasAliasNameCond) {
+                        recs = mapSelectFields(ctxGen, x, recs);
                     }
 
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access

@@ -68,12 +68,12 @@ const commands1 = build({
         query: {
             Contact: staticCsvResolverBuilder(
                 'Contact', () => Promise.resolve(`
-                    Id         , Foo      , Bar      , Baz      , Qux      , Quux     ,   Corge , Grault       , Garply                 , AccountId
-                    Contact/z1 , aaa/z1   , bbb/z1   , ccc/z1   , ddd/z1   , eee/z1   ,    -1.0 , 2019-12-31   , 2019-12-31T23:59:59Z   , Account/z1
-                    Contact/z2 , aaa/z2   , bbb/z2   , ccc/z2   , ddd/z2   , eee/z2   ,     0.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z1
-                    Contact/z3 , "aaa/z3" , "bbb/z3" , "ccc/z3" , "ddd/z3" , "eee/z3" ,     1   , "2020-01-02" , "2020-01-01T00:00:01Z" , "Account/z2"
-                    Contact/z4 ,          ,          ,          ,          ,          ,         ,              ,                        ,
-                    Contact/z5 ,       "" ,       "" ,      " " ,       "" ,       "" ,         ,              ,                        ,
+                    Id         , Foo      , Bar      , Baz      , Qux      , Quux  ,   Corge , Grault       , Garply                 , AccountId
+                    Contact/z1 , aaa/z1   , bbb/z1   , ccc/z1   , ddd/z1   , false ,    -1.0 , 2019-12-31   , 2019-12-31T23:59:59Z   , Account/z1
+                    Contact/z2 , aaa/z2   , bbb/z2   , ccc/z2   , ddd/z2   , true  ,     0.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z1
+                    Contact/z3 , "aaa/z3" , "bbb/z3" , "ccc/z3" , "ddd/z3" ,       ,     1   , "2020-01-02" , "2020-01-01T00:00:01Z" , "Account/z2"
+                    Contact/z4 ,          ,          ,          ,          ,       ,         ,              ,                        ,
+                    Contact/z5 ,       "" ,       "" ,      " " ,       "" ,       ,         ,              ,                        ,
                 `)
             ),
             Account: staticCsvResolverBuilder(
@@ -112,41 +112,80 @@ const commands1 = build({
 
 
 describe("functions-1", function() {
-    // it("Functions (1)", async function() {
-    //     for (const cf of resolverConfigs) {
-    //         setDefaultStaticResolverConfig(cf);
+    /*
+    it("Functions (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
 
-    //         const { soql, insert, update, remove, transaction } = commands1;
+            const { soql, insert, update, remove, transaction } = commands1;
 
-    //         {
-    //             const result = await soql`
-    //                 select
-    //                     calendar_month(),
-    //                     calendar_month_lc(),
-    //                     calendar_quarter(),
-    //                     calendar_quarter_lc(),
-    //                     calendar_year(),
-    //                     calendar_year_lc(),
-    //                     day_in_month(),
-    //                     day_in_month_lc(),
-    //                     day_in_week(),
-    //                     day_in_week_lc(),
-    //                     day_in_year(),
-    //                     day_in_year_lc(),
-    //                     day_only(),
-    //                     day_only_lc(),
-    //                     hour_in_day(),
-    //                     hour_in_day_lc(),
-    //                     week_in_month(),
-    //                     week_in_month_lc(),
-    //                     week_in_year(),
-    //                     week_in_year_lc()
-    //                 from contact`;
-    //             const expects = [
-    //                 {},
-    //             ];
-    //             expect(result).toEqual(expects);
-    //         }
-    //     }
-    // });
+            {
+                const result = await soql`
+                    select
+                        cast_to_string(foo)    expr_foo,
+                        cast_to_string(quux)   expr_quux,
+                        cast_to_string(corge)  expr_corge,
+                        cast_to_string(grault) expr_grault,
+                        cast_to_string(garply) expr_garply,
+                    from contact
+                    `;
+                const expects = [
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+    it("Functions (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        cast_to_number()      expr_,
+                        cast_to_boolean()     expr_,
+                        concat()              expr_,
+                        add()                 expr_,
+                        sub()                 expr_,
+                        mul()                 expr_,
+                        div()                 expr_,
+                        mod()                 expr_,
+                        calendar_month()      expr_,
+                        calendar_month_lc()   expr_,
+                        calendar_quarter()    expr_,
+                        calendar_quarter_lc() expr_,
+                        calendar_year()       expr_,
+                        calendar_year_lc()    expr_,
+                        day_in_month()        expr_,
+                        day_in_month_lc()     expr_,
+                        day_in_week()         expr_,
+                        day_in_week_lc()      expr_,
+                        day_in_year()         expr_,
+                        day_in_year_lc()      expr_,
+                        day_only()            expr_,
+                        day_only_lc()         expr_,
+                        hour_in_day()         expr_,
+                        hour_in_day_lc()      expr_,
+                        week_in_month()       expr_,
+                        week_in_month_lc()    expr_,
+                        week_in_year()        expr_,
+                        week_in_year_lc()     expr_
+                    from contact
+                    `;
+                const expects = [
+                    {},
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+    */
 });
