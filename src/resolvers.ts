@@ -73,6 +73,12 @@ function csvRecordsParser(src: string) {
 }
 
 
+function passThroughParser(src: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return src;
+}
+
+
 function filterAndSliceRecords(
         records: any[], fields: string[], conditions: PreparedCondition[],
         limit: number | null, offset: number | null, ctx: ResolverContext,
@@ -170,71 +176,10 @@ function filterAndSliceRecords(
 }
 
 
-const StaticResolverBuilderGen:
-        (parser: (s: string) => any[]) =>
-            (resolverName: string,
-                fetcher: () => Promise<string>,
-                config: StaticResolverConfig) => QueryResolverFn =
-    (parser) => {
-        return (resolverName, fetcher, config) => {
+function staticResolverBuilderGen<T>(parser: (s: T) => any[]):
+        (resolverName: string, fetcher: () => Promise<T>, config: StaticResolverConfig) => QueryResolverFn {
 
-            return async (fields, conditions, limit, offset, ctx) => {
-                let cache: Map<string, string> | null;
-                let src: string | null = null;
-
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                if (ctx.resolverData.cache) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    cache = ctx.resolverData.cache;
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    if (cache!.has(resolverName)) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        src = cache!.get(resolverName)!;
-                    }
-                } else {
-                    cache = new Map<string, string>();
-                    if (! config.noCache) {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                        ctx.resolverData.cache = cache;
-                    }
-                }
-
-                let records: any[] | null = null;
-                if (src === null) {
-                    const fetched = await fetcher();
-                    records = parser(fetched);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    cache!.set(resolverName, fetched);
-                } else {
-                    records = parser(src);
-                }
-
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx, config);
-            };
-        }
-    };
-
-
-export const staticJsonResolverBuilder:
-        (resolverName: string, fetcher: () => Promise<string>, config?: StaticResolverConfig) => QueryResolverFn =
-    (resolverName, fetcher, config) => {
-        return StaticResolverBuilderGen(jsonRecordsParser)(resolverName, fetcher, config ?? defaultStaticResolverConfig);
-    };
-
-
-export const staticCsvResolverBuilder:
-        (resolverName: string, fetcher: () => Promise<string>, config?: StaticResolverConfig) => QueryResolverFn =
-    (resolverName, fetcher, config) => {
-        return StaticResolverBuilderGen(csvRecordsParser)(resolverName, fetcher, config ?? defaultStaticResolverConfig);
-    };
-
-
-export const passThroughResolverBuilder:
-        (resolverName: string, fetcher: () => Promise<any[]>, config?: StaticResolverConfig) => QueryResolverFn =
-    (resolverName, fetcher, config) => {
-        const conf2 = config ?? defaultStaticResolverConfig;
-
+    return (resolverName, fetcher, config) => {
         return async (fields, conditions, limit, offset, ctx) => {
             let cache: Map<string, any[]> | null;
             let cachedRecords: any[] | null = null;
@@ -250,7 +195,7 @@ export const passThroughResolverBuilder:
                 }
             } else {
                 cache = new Map<string, any[]>();
-                if (! conf2.noCache) {
+                if (! config.noCache) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     ctx.resolverData.cache = cache;
                 }
@@ -258,7 +203,8 @@ export const passThroughResolverBuilder:
 
             let records: any[] | null = null;
             if (cachedRecords === null) {
-                records = (await fetcher());
+                const fetched = await fetcher();
+                records = parser(fetched);
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
                 cache!.set(resolverName, records.map(x => ({...x})));
             } else {
@@ -267,6 +213,28 @@ export const passThroughResolverBuilder:
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx, conf2);
+            return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx, config);
         };
+    }
+}
+
+
+export const staticJsonResolverBuilder:
+        (resolverName: string, fetcher: () => Promise<string>, config?: StaticResolverConfig) => QueryResolverFn =
+    (resolverName, fetcher, config) => {
+        return staticResolverBuilderGen(jsonRecordsParser)(resolverName, fetcher, config ?? defaultStaticResolverConfig);
+    };
+
+
+export const staticCsvResolverBuilder:
+        (resolverName: string, fetcher: () => Promise<string>, config?: StaticResolverConfig) => QueryResolverFn =
+    (resolverName, fetcher, config) => {
+        return staticResolverBuilderGen(csvRecordsParser)(resolverName, fetcher, config ?? defaultStaticResolverConfig);
+    };
+
+
+export const passThroughResolverBuilder:
+        (resolverName: string, fetcher: () => Promise<any[]>, config?: StaticResolverConfig) => QueryResolverFn =
+    (resolverName, fetcher, config) => {
+        return staticResolverBuilderGen(passThroughParser)(resolverName, fetcher, config ?? defaultStaticResolverConfig);
     };
