@@ -111,7 +111,7 @@ const commands1 = build({
 });
 
 
-describe("functions-2", function() {
+describe("functions-3", function() {
     it("Functions (1): day_in_month", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
@@ -476,38 +476,184 @@ describe("functions-2", function() {
     });
 
 
-    /*
-    it("Functions (1)", async function() {
+    it("Functions (1): day_in_year", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
             const { soql, insert, update, remove, transaction } = commands1;
 
             {
+                const offset = new Date().getTimezoneOffset();
                 const result = await soql`
                     select
-                        day_in_year()         expr_,
-                        day_in_year_lc()      expr_,
-                        day_only()            expr_,
-                        day_only_lc()         expr_,
-                        hour_in_day()         expr_,
-                        hour_in_day_lc()      expr_,
-                        week_in_month()       expr_,
-                        week_in_month_lc()    expr_,
-                        week_in_year()        expr_,
-                        week_in_year_lc()     expr_
+                        day_in_year(grault) d_utc,
+                        day_in_year(garply) dt_utc
                     from contact
                     `;
                 const expects = [
-                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
-                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
-                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
-                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
-                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { d_utc:  365, dt_utc:  365 },
+                    { d_utc:    1, dt_utc:    1 },
+                    { d_utc:    2, dt_utc:    1 },
+                    { d_utc: null, dt_utc: null },
+                    { d_utc: null, dt_utc: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        day_in_year(2019-12-01) d_utc,
+                        day_in_year(2019-12-01T00:00:00Z) dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 335, dt_utc: 335 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-01-01') d_utc,
+                        day_in_year('2020-01-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 1, dt_utc: 1 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-02-01') d_utc,
+                        day_in_year('2020-02-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 32, dt_utc: 32 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-03-01') d_utc,
+                        day_in_year('2020-03-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 61, dt_utc: 61 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-04-01') d_utc,
+                        day_in_year('2020-04-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 92, dt_utc: 92 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-05-01') d_utc,
+                        day_in_year('2020-05-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 122, dt_utc: 122 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-06-01') d_utc,
+                        day_in_year('2020-06-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 153, dt_utc: 153 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-07-01') d_utc,
+                        day_in_year('2020-07-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 183, dt_utc: 183 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-08-01') d_utc,
+                        day_in_year('2020-08-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 214, dt_utc: 214 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-09-01') d_utc,
+                        day_in_year('2020-09-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 245, dt_utc: 245 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-10-01') d_utc,
+                        day_in_year('2020-10-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 275, dt_utc: 275 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-11-01') d_utc,
+                        day_in_year('2020-11-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 306, dt_utc: 306 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2020-12-01') d_utc,
+                        day_in_year('2020-12-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 336, dt_utc: 336 },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        day_in_year('2021-01-01') d_utc,
+                        day_in_year('2021-01-01T00:00:00Z') dt_utc
+                    from contact where id='Contact/z1'`;
+                const expects = [
+                    { d_utc: 1, dt_utc: 1 },
                 ];
                 expect(result).toEqual(expects);
             }
         }
     });
-    */
 });

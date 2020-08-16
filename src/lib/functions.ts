@@ -343,42 +343,42 @@ export const fnInfo_calendar_year_lc: QueryFuncInfo = {
 export const fnInfo_day_in_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_month',
-    fn: dateScalarFunctionGen('day_in_month', (dateStr) => new Date(dateStr).getUTCDate()), // 1, ... , 31
+    fn: dateScalarFunctionGen('day_in_month', (dateStr) => new Date(dateStr).getUTCDate()), // 1 , ... , 31
 };
 
 
 export const fnInfo_day_in_month_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_month_lc',
-    fn: dateScalarFunctionGen('day_in_month_lc', (dateStr) => new Date(dateStr).getDate()), // 1, ... , 31
+    fn: dateScalarFunctionGen('day_in_month_lc', (dateStr) => new Date(dateStr).getDate()), // 1 , ... , 31
 };
 
 
 export const fnInfo_day_in_week: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_week',
-    fn: dateScalarFunctionGen('day_in_week', (dateStr) => new Date(dateStr).getUTCDay() + 1), // Sun:1, ... , Sat:7
+    fn: dateScalarFunctionGen('day_in_week', (dateStr) => new Date(dateStr).getUTCDay() + 1), // Sun:1 , ... , Sat:7
 };
 
 
 export const fnInfo_day_in_week_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_week_lc',
-    fn: dateScalarFunctionGen('day_in_week_lc', (dateStr) => new Date(dateStr).getDay() + 1), // Sun:1, ... , Sat:7
+    fn: dateScalarFunctionGen('day_in_week_lc', (dateStr) => new Date(dateStr).getDay() + 1), // Sun:1 , ... , Sat:7
 };
 
 
 export const fnInfo_day_in_year: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_year',
-    fn: dateScalarFunctionGen('day_in_year', (dateStr) => getUTCDayInYear(new Date(dateStr))),
+    fn: dateScalarFunctionGen('day_in_year', (dateStr) => getUTCDayInYear(new Date(dateStr))), // 1 , ... , 366
 };
 
 
 export const fnInfo_day_in_year_lc: QueryFuncInfo = {
     type: 'scalar',
     name: 'day_in_year_lc',
-    fn: dateScalarFunctionGen('day_in_year_lc', (dateStr) => getDayInYear(new Date(dateStr))),
+    fn: dateScalarFunctionGen('day_in_year_lc', (dateStr) => getDayInYear(new Date(dateStr))), // 1 , ... , 366
 };
 
 
