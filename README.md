@@ -14,6 +14,16 @@ SOQL is an object-oriented query language that allows you to query related data 
 [![GitHub forks](https://img.shields.io/github/forks/shellyln/open-soql.svg?style=social&label=Fork)](https://github.com/shellyln/open-soql/fork)
 [![GitHub stars](https://img.shields.io/github/stars/shellyln/open-soql.svg?style=social&label=Star)](https://github.com/shellyln/open-soql)
 
+---
+
+## Table of contents
+
+* [Install](#%EF%B8%8F-install)
+* [Get started](#-get-started)
+* [Features](#-features)
+* [Usage](#-usage)
+* [FAQ](#-faq)
+* [License](#%EF%B8%8F-license)
 
 ---
 
