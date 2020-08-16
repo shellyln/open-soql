@@ -112,8 +112,7 @@ const commands1 = build({
 
 
 describe("functions-1", function() {
-    /*
-    it("Functions (1)", async function() {
+    it("Functions (1): cast_to_string", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -126,20 +125,80 @@ describe("functions-1", function() {
                         cast_to_string(quux)   expr_quux,
                         cast_to_string(corge)  expr_corge,
                         cast_to_string(grault) expr_grault,
-                        cast_to_string(garply) expr_garply,
+                        cast_to_string(garply) expr_garply
                     from contact
                     `;
                 const expects = [
-                    {},
-                    {},
-                    {},
-                    {},
-                    {},
+                    { expr_foo: 'aaa/z1', expr_quux: 'false', expr_corge: '-1', expr_grault: '2019-12-31', expr_garply: '2019-12-31T23:59:59Z' },
+                    { expr_foo: 'aaa/z2', expr_quux: 'true' , expr_corge: '0' , expr_grault: '2020-01-01', expr_garply: '2020-01-01T00:00:00Z' },
+                    { expr_foo: 'aaa/z3', expr_quux: null   , expr_corge: '1' , expr_grault: '2020-01-02', expr_garply: '2020-01-01T00:00:01Z' },
+                    { expr_foo: null    , expr_quux: null   , expr_corge: null, expr_grault: null        , expr_garply: null                   },
+                    { expr_foo: ''      , expr_quux: null   , expr_corge: null, expr_grault: null        , expr_garply: null                   },
                 ];
                 expect(result).toEqual(expects);
             }
         }
     });
+
+
+    it("Functions (2): cast_to_number", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        cast_to_number(foo)    expr_foo,
+                        cast_to_number(quux)   expr_quux,
+                        cast_to_number(corge)  expr_corge,
+                        cast_to_number(grault) expr_grault,
+                        cast_to_number(garply) expr_garply
+                    from contact
+                    `;
+                const expects = [
+                    { expr_foo:  NaN, expr_quux:    0, expr_corge:   -1, expr_grault:  NaN, expr_garply:  NaN },
+                    { expr_foo:  NaN, expr_quux:    1, expr_corge:    0, expr_grault:  NaN, expr_garply:  NaN },
+                    { expr_foo:  NaN, expr_quux: null, expr_corge:    1, expr_grault:  NaN, expr_garply:  NaN },
+                    { expr_foo: null, expr_quux: null, expr_corge: null, expr_grault: null, expr_garply: null },
+                    { expr_foo:    0, expr_quux: null, expr_corge: null, expr_grault: null, expr_garply: null },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+
+    /*
+    it("Functions (3): cast_to_boolean", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        cast_to_boolean(foo)    expr_foo,
+                        cast_to_boolean(quux)   expr_quux,
+                        cast_to_boolean(corge)  expr_corge,
+                        cast_to_boolean(grault) expr_grault,
+                        cast_to_boolean(garply) expr_garply
+                    from contact
+                    `;
+                const expects = [
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
 
     it("Functions (1)", async function() {
         for (const cf of resolverConfigs) {
@@ -150,9 +209,35 @@ describe("functions-1", function() {
             {
                 const result = await soql`
                     select
-                        cast_to_number()      expr_,
-                        cast_to_boolean()     expr_,
-                        concat()              expr_,
+                        concat(foo)    expr_foo,
+                        concat(quux)   expr_quux,
+                        concat(corge)  expr_corge,
+                        concat(grault) expr_grault,
+                        concat(garply) expr_garply
+                    from contact
+                    `;
+                const expects = [
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+
+    it("Functions (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
                         add()                 expr_,
                         sub()                 expr_,
                         mul()                 expr_,
@@ -181,7 +266,11 @@ describe("functions-1", function() {
                     from contact
                     `;
                 const expects = [
-                    {},
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
+                    { expr_foo: '', expr_quux: '', expr_corge: '', expr_grault: '', expr_garply: '' },
                 ];
                 expect(result).toEqual(expects);
             }

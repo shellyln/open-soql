@@ -362,6 +362,9 @@ function aggregateFields(
                         agg[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
                         break;
                     default:
+                        // TODO: Accept `scalar` functions
+                        //       if all parameters are already aggregated (include `group by` fields) or literal values.
+
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                     }
                 }
