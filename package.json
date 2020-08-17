@@ -1,17 +1,21 @@
 {
   "name": "open-soql",
   "private": false,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Open source implementation of the SOQL.",
   "keywords": [
     "SOQL",
-    "Object query language",
+    "query-engine",
     "Graph query language",
+    "Object query language",
+    "graph-query",
+    "object-query",
     "SQL",
     "resolvers",
     "DML",
     "map-reduce",
-    "library"
+    "library",
+    "TypeScript"
   ],
   "main": "./bin/index.js",
   "module": "./modules/index.js",
