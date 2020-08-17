@@ -303,7 +303,7 @@ describe("foo", function() {
             disablePrint ?? console.log(JSON.stringify(z, null, 2));
             expect(1).toEqual(1);
 
-            const zz = await soql`
+            const zz = await soql<Partial<{id: string}>>`
                 Select
                     count(),
                     count(id) cnt,

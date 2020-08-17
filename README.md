@@ -172,7 +172,7 @@ const { soql, insert, update, remove, transaction } = build({
 
 ### Query
 ```ts
-const result = await soql`
+const result = await soql<Partial<Contact>>`
     Select
         acc.id         aid
       , acc.Region     reg
@@ -214,7 +214,7 @@ const result = await soql`
 
 ### Aggregate
 ```ts
-const aggregationResult = await soql`
+const aggregationResult = await soql<ContactAgg>`
     Select
         count()
       , count(id) cnt
@@ -243,7 +243,7 @@ const updated = await update('Contact', inserted);
 
 await remove('Contact', updated);
 
-const selected = await soql`Select Id, Name from Contact`;
+const selected = await soql<Partial<Contact>>`Select Id, Name from Contact`;
 const updated2 = await update('Contact', selected);
 ```
 
@@ -268,7 +268,7 @@ await transaction(async (commands, tr) => {
     const inserted = await insert('Contact', [{
         Name: 'foo',
     }]);
-    const selected = await soql`Select Id, Name from Contact`;
+    const selected = await soql<Partial<Contact>>`Select Id, Name from Contact`;
     const updated = await update('Contact', selected);
     await remove('Contact', updated);
 });
