@@ -152,18 +152,18 @@ const { soql, insert, update, remove, transaction } = build({
          *       `Account (resolver) -> contacts (relationship name)` direction is `Master to Details`.
          */
         Account: {
-            Contacts: ['Contact', 'Account'],                   // master->details relationship
-            Opportunities: ['Opportunity', 'Account'],          // master->details relationship
-        },
+            Contacts: ['Contact'],                      // master->details relationship
+            Opportunities: ['Opportunity', 'Account'],  // master->details relationship
+        },                                              //     (Explicitly specify relationship item)
         Contact: {
-            Account: { resolver: 'Account', id: 'AccountId' },  // detail->master relationship
+            Account: 'Account',                         // detail->master relationship
         },
         Opportunity: {
-            Account: { resolver: 'Account', id: 'AccountId' },  // detail->master relationship
+            Account: 'Account',                         // detail->master relationship
         },
         Event: {
-            Account: { resolver: 'Account', id: 'WhatId' },
-            Contact: { resolver: 'Contact', id: 'WhatId' },
+            Account: { resolver: 'Account', id: 'WhatId' },  // detail->master relationship
+            Contact: { resolver: 'Contact', id: 'WhatId' },  //     (Explicitly specify Id item)
             Opportunity: { resolver: 'Opportunity', id: 'WhatId' },
         },
     },
