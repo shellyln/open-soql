@@ -19,7 +19,7 @@ SOQL is an object-oriented query language that allows you to query related data 
 ## Table of contents
 
 * [Install](#%EF%B8%8F-install)
-* [Get started](#-get-started)
+* [Getting started](#-getting-started)
 * [Features](#-features)
 * [Usage](#-usage)
 * [FAQ](#-faq)
@@ -33,7 +33,7 @@ SOQL is an object-oriented query language that allows you to query related data 
 npm install open-soql
 ```
 
-## 🚀 Get started
+## 🚀 Getting started
 
 ### Set up the resolvers
 ```ts
