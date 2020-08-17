@@ -6,9 +6,11 @@
 import { QueryResolverFn,
          PreparedCondition,
          ResolverContext }      from './types';
-import { getObjectValue,
+import { dummyTargetObject,
+         isUnsafeVarNames,
+         getObjectValue,
          getTrueCaseFieldName, 
-         isEqualComplexName} from './lib/util';
+         isEqualComplexName }   from './lib/util';
 import { parse as parseCsv }    from './lib/csv-parser';
 import { sortRecords }          from './sort';
 import { applyWhereConditions } from './filters';
@@ -57,6 +59,13 @@ function csvRecordsParser(src: string) {
     }
 
     const header = rawRecords[0];
+
+    for (let c = 0; c < header.length; c++) {
+        if (isUnsafeVarNames(dummyTargetObject, header[c])) {
+            throw new Error(`Unsafe symbol name is appeared: ${header[c]}`);
+        }
+    }
+
     const records: any[] = [];
 
     for (let i = 1; i < rawRecords.length; i++) {
