@@ -513,7 +513,7 @@ function normalize(
     if (query.groupBy) {
         for (const x of query.groupBy) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            query.from[0]!.havingCondFields!.add(x);
+            query.from[0].havingCondFields!.add(x);
         }
     }
 
