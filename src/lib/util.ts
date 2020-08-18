@@ -50,7 +50,7 @@ export function isUnsafeVarNames(target: any, varName: string) {
     }
     if (typeof target === 'function') {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        if (!target.hasOwnProperty(varName)) {
+        if (! target.hasOwnProperty(varName)) {
             // function's prototypes' members
             return true;
         }

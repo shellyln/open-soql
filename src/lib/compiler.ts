@@ -3,11 +3,12 @@
 // https://github.com/shellyln
 
 
-import { PreparedQuery,
+import { ParsedQuery,
+         PreparedQuery,
          PreparedField,
          PreparedFnCall,
          PreparedFieldListItem,
-         PreparedResolver,
+         ParsedResolver,
          PreparedCondition,
          PreparedOrderByField,
          ResolverTreeDirection,
@@ -80,7 +81,7 @@ function makeResolverTree(
 
 
 function findResolver(
-    query: PreparedQuery,
+    query: ParsedQuery,
     x: PreparedField | PreparedOrderByField) {
 
     const rn = x.name.slice(0, x.name.length - 1);
@@ -89,9 +90,9 @@ function findResolver(
 
 
 function registerFields(
-        query: PreparedQuery,
+        query: ParsedQuery,
         x: PreparedField | PreparedOrderByField,
-        fn: (rslv: PreparedResolver) => Set<string>) {
+        fn: (rslv: ParsedResolver) => Set<string>) {
 
     const resolver = findResolver(query, x);
     if (resolver) {
@@ -211,7 +212,7 @@ function recureseForEachConditionFields(
 
 
 function normalize(
-        builder: QueryBuilderInfoInternal, query: PreparedQuery,
+        builder: QueryBuilderInfoInternal, query: ParsedQuery,
         parentName: string[], parentAliases: Map<string, string[]> | null): PreparedQuery {
 
     // Check and normalize `from` resolvers
@@ -451,15 +452,15 @@ function normalize(
 
     const registerQueryFields = (x: PreparedField) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        registerFields(query, x, (rslv: PreparedResolver) => rslv.queryFields!);
+        registerFields(query, x, (rslv: ParsedResolver) => rslv.queryFields!);
 
     const registerCondFields = (x: PreparedField | PreparedOrderByField) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        registerFields(query, x, (rslv: PreparedResolver) => rslv.condFields!);
+        registerFields(query, x, (rslv: ParsedResolver) => rslv.condFields!);
 
     const registerHavingCondFields = (x: PreparedField | PreparedOrderByField) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        registerFields(query, x, (rslv: PreparedResolver) => rslv.havingCondFields!);
+        registerFields(query, x, (rslv: ParsedResolver) => rslv.havingCondFields!);
 
     let exprCount = 0;
     for (const x of query.select) {
@@ -476,7 +477,7 @@ function normalize(
                 if (! x.aliasName) {
                     x.aliasName = `expr${exprCount++}`; // TODO: Check conflict
                 }
-                let resolver: PreparedResolver | undefined = void 0;
+                let resolver: ParsedResolver | undefined = void 0;
                 for (const arg of x.args) {
                     switch (typeof arg) {
                     case 'object':
@@ -635,12 +636,12 @@ function normalize(
         }
     }
 
-    return query;
+    return query as PreparedQuery;
 }
 
 
 export function compile(
-    builder: QueryBuilderInfoInternal, query: PreparedQuery): PreparedQuery {
+    builder: QueryBuilderInfoInternal, query: ParsedQuery): PreparedQuery {
 
     return normalize(builder, query, [], null);
 }

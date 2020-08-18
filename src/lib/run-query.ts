@@ -219,8 +219,7 @@ function mapSelectFields(
         x: PreparedResolver, records: any[], isAggregation: boolean) {
 
     for (const record of records) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (const ent of x.queryFieldsMap!.entries()) {
+        for (const ent of x.queryFieldsMap.entries()) {
             const [fieldName, field] = ent;
 
             switch (field.type) {
@@ -236,14 +235,14 @@ function mapSelectFields(
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
                     switch (fnInfo?.type) {
                     case 'scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName!] = callScalarFunction(ctx, field, fnInfo, 'any', record);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        record[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', record);
                         break;
                     case 'immediate-scalar':
                         // NOTE: If aggregation, immediate-scalar function will be called at `aggregateFields()`.
                         if (! isAggregation) {
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            record[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                            record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
                         }
                         break;
                     default:
@@ -284,8 +283,7 @@ function groupRecords(
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 let v = getObjectValueWithFieldNameMap(fieldNameMap, record, k);
                 if (v === null || v === void 0) {
-                    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-                    v = '__$$GENSYM_VT4iHbNbZW3C7taC7J6bx8pruw40cX5X$$_' + i++;
+                    v = `__$$GENSYM_VT4iHbNbZW3C7taC7J6bx8pruw40cX5X$$_${i++}`;
                 }
                 key.push(v);
             }
@@ -322,8 +320,7 @@ function aggregateFields(
 
     for (const g of records) {
         const agg = {};
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (const ent of x.queryFieldsMap!.entries()) {
+        for (const ent of x.queryFieldsMap.entries()) {
             const [, field] = ent;
 
             switch (field.type) {
@@ -357,12 +354,12 @@ function aggregateFields(
 
                     switch (fnInfo?.type) {
                     case 'aggregate':
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName!] = callAggregateFunction(ctx, field, fnInfo, 'any', g);
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        agg[field.aliasName] = callAggregateFunction(ctx, field, fnInfo, 'any', g);
                         break;
                     case 'immediate-scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName!] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
                         break;
                     default:
                         // TODO: Accept `scalar` functions
@@ -388,8 +385,7 @@ function getRemovingFields(x: PreparedResolver, records: any[], isAggregation: b
         const requestedFields = new Set<string>();
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const rec = records[0];
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (const ent of x.queryFieldsMap!.entries()) {
+        for (const ent of x.queryFieldsMap.entries()) {
             const f = ent[1];
             if (isAggregation && f.type === 'field' && f.aliasName) {
                 requestedFields.add(f.aliasName);
@@ -441,14 +437,11 @@ function getResolversInfo(builder: QueryBuilderInfoInternal, resolverNames: Map<
         ? masterRelationshipInfo.id as string
         : i === 0
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? builder.rules.foreignIdFieldName!(parentResolverName!)
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            : builder.rules.foreignIdFieldName!(resolverName!) ;
+            ? builder.rules.foreignIdFieldName(parentResolverName!)
+            : builder.rules.foreignIdFieldName(resolverName) ;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const parentIdFieldName = parentResolverName ? builder.rules.idFieldName!(parentResolverName) : void 0;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const currentIdFieldName = builder.rules.idFieldName!(resolverName);
+    const parentIdFieldName = parentResolverName ? builder.rules.idFieldName(parentResolverName) : void 0;
+    const currentIdFieldName = builder.rules.idFieldName(resolverName);
 
     return ({
         parentType,
@@ -531,24 +524,19 @@ export async function executeCompiledQuery(
             let records: any[] = [];
             const parentRecords = queriedRecords.get(parentKey);
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const hasAliasNameCond = (x.condAliasFields!.size > 0) ? true : false;
+            const hasAliasNameCond = (x.condAliasFields.size > 0) ? true : false;
             const isAggregation = (i === 0 && query.groupBy) ? true : false;
 
             const queryFields =
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                Array.from(x.queryFields!.values());
+                Array.from(x.queryFields.values());
             const condFields =
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                Array.from(x.condFields!.values());
+                Array.from(x.condFields.values());
             const groupFields: string[] =
-                (i === 0 && query.groupBy) ? query.groupBy : [];
+                (i === 0 && query.groupBy) ? query.groupBy : []; // NOTE: condition is same as `isAggregation`
             const sortFields =
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                Array.from(x.sortFieldNames!.values());
+                Array.from(x.sortFieldNames.values());
             const relationshipIdFields =
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                Array.from(x.relationshipIdFields!.values());
+                Array.from(x.relationshipIdFields.values());
 
             const resolvingFields =
                 Array.from(
@@ -560,13 +548,10 @@ export async function executeCompiledQuery(
                         .concat(relationshipIdFields)
                     ).values());
 
-            let condWhere = deepCloneObject(condWhereTemplate);
-            let condHaving = deepCloneObject(condHavingTemplate);
-
-            condWhere = condWhere
+            const condWhere = deepCloneObject(condWhereTemplate)
                 .map(cond => pruneCondition(x.name, cond))
                 .filter(filterZeroLengthCondFn);
-            condHaving = condHaving
+            const condHaving = deepCloneObject(condHavingTemplate)
                 .map(cond => pruneCondition(x.name, cond))
                 .filter(filterZeroLengthCondFn);
 
@@ -632,15 +617,15 @@ export async function executeCompiledQuery(
                 }
 
                 if (isAggregation) {
+                    // TODO: `count()` on non-aggregation query
+
                     primaryCapabilities.limit = false;
                     primaryCapabilities.offset = false;
                     primaryCapabilities.sorting = false;
 
-                    let grouped = groupRecords(ctxGen, query.groupBy ?? [], x, records);
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    grouped = applyHavingConditions(ctxGen, condHaving, grouped);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    records = aggregateFields(ctxGen, query.groupBy!, x, grouped);
+                    const grouped = groupRecords(ctxGen, groupFields, x, records);
+                    const filteredGrouped = applyHavingConditions(ctxGen, condHaving, grouped);
+                    records = aggregateFields(ctxGen, groupFields, x, filteredGrouped);
                 }
 
                 primaryRecords = records;

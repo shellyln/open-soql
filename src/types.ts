@@ -44,13 +44,18 @@ export interface PreparedFieldBase {
 }
 
 
+export interface PreparedFieldBaseForFnCall {
+    aliasName: string; // NOTE: Set after compiling.
+}
+
+
 export interface PreparedField extends PreparedFieldBase {
     type: 'field';
     name: string[];
 }
 
 
-export interface PreparedFnCall extends PreparedFieldBase {
+export interface PreparedFnCall extends PreparedFieldBaseForFnCall {
     type: 'fncall';
     fn: string;
     args: Array<Omit<PreparedField, 'aliasName'> |
@@ -68,13 +73,18 @@ export type PreparedFieldListItem =
     PreparedField | PreparedFnCall | PreparedSubQuery;
 
 
-export interface PreparedResolver {
+export interface ParsedResolverBase {
     name: string[];
     aliasName: string | null;
 
     // Followings are for internal use.
     //   Set these on `compile` phase.
 
+    resolver?: QueryResolverFn;
+    resolverName?: string;
+}
+
+export interface PreparedResolverCompiledProps {
     queryFields?: Set<string>;
     queryFieldsMap?: Map<string, PreparedFieldListItem>;
     condFields?: Set<string>;
@@ -83,10 +93,14 @@ export interface PreparedResolver {
     fieldAliasNames?: Set<string>;
     sortFieldNames?: Set<string>;
     relationshipIdFields?: Set<string>;
-
-    resolver?: QueryResolverFn;
-    resolverName?: string;
 }
+
+export type ParsedResolver =
+    ParsedResolverBase & PreparedResolverCompiledProps;
+
+
+export type PreparedResolver =
+    ParsedResolverBase & Required<PreparedResolverCompiledProps>;
 
 
 export type PreparedConditionOperand =
@@ -107,9 +121,8 @@ export interface PreparedOrderByField {
 }
 
 
-export interface PreparedQuery {
+export interface ParsedQueryBase {
     select: PreparedFieldListItem[];
-    from: PreparedResolver[];
     where?: PreparedCondition[];
     having?: PreparedCondition[];
     groupBy?: string[];
@@ -117,14 +130,28 @@ export interface PreparedQuery {
     limit?: number | null;
     offset?: number | null;
     for?: string[];
+}
 
-    // Followings are for internal use.
-    //   Set these on `compile` phase.
-
+export interface PreparedQueryCompiledProps {
     whereSubQueries?: PreparedSubQuery[];
     havingSubQueries?: PreparedSubQuery[];
     selectSubQueries?: PreparedSubQuery[];
 }
+
+export type ParsedQuery =
+    ParsedQueryBase &
+    {
+        from: ParsedResolver[];
+    } &
+    PreparedQueryCompiledProps;
+
+
+export type PreparedQuery =
+    ParsedQueryBase &
+    {
+        from: PreparedResolver[];
+    } &
+    PreparedQueryCompiledProps;
 
 
 export interface ExecutionPlan {
@@ -265,16 +292,42 @@ export type QueryFuncInfo =
     AggregateQueryFuncInfo | ScalarQueryFuncInfo | ImmediateScalarQueryFuncInfo;
 
 
+export interface QueryBuilderInfoRulesSection {
+    // childRelationshipName?: (s: string) => string;
+    // resolverCase?: (s: string) => string;
+    // fieldCase?: (s: string) => string;
+    idFieldName?: (resolverName: string) => string;
+    foreignIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
+}
+
+
+export interface QueryBuilderInfoResolversSection {
+    query: {
+        /**
+         * Object names and Child relation names.
+         * Rest names resolverName is '*'.
+         */
+        [resolverNames: string]: QueryResolverFn;
+    };
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    insert?: {
+        [resolverNames: string]: InsertResolverFn;
+    };
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    update?: {
+        [resolverNames: string]: UpdateResolverFn;
+    };
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    remove?: {
+        [resolverNames: string]: RemoveResolverFn;
+    };
+}
+
+
 export interface QueryBuilderInfo {
     /** Additional (user defined) SOQL functions */
     functions?: QueryFuncInfo[];
-    rules?: {
-        // childRelationshipName?: (s: string) => string;
-        // resolverCase?: (s: string) => string;
-        // fieldCase?: (s: string) => string;
-        idFieldName?: (resolverName: string) => string;
-        foreignIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
-    };
+    rules?: QueryBuilderInfoRulesSection;
     /** */
     events?: {
         beginTransaction?: (evt: ResolverEvent) => Promise<void>;
@@ -287,27 +340,7 @@ export interface QueryBuilderInfo {
         afterDetailSubQueries?: (evt: ResolverEvent) => Promise<void>;
     };
     /** */
-    resolvers: {
-        query: {
-            /**
-             * Object names and Child relation names.
-             * Rest names resolverName is '*'.
-             */
-            [resolverNames: string]: QueryResolverFn;
-        };
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        insert?: {
-            [resolverNames: string]: InsertResolverFn;
-        };
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        update?: {
-            [resolverNames: string]: UpdateResolverFn;
-        };
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        remove?: {
-            [resolverNames: string]: RemoveResolverFn;
-        };
-    };
+    resolvers: QueryBuilderInfoResolversSection;
     /** */
     relationships?: {
         /**
@@ -340,4 +373,9 @@ export interface QueryBuilderInfo {
 }
 
 
-export type QueryBuilderInfoInternal = Required<QueryBuilderInfo>;
+export type QueryBuilderInfoInternal =
+    Required<QueryBuilderInfo> &
+    {
+        rules: Required<QueryBuilderInfoRulesSection>;
+        resolvers: Required<QueryBuilderInfoResolversSection>;
+    };

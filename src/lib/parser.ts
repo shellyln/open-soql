@@ -13,7 +13,7 @@ import { PreparedValue,
          PreparedResolver,
          PreparedCondition,
          PreparedOrderByField,
-         PreparedQuery }              from '../types';
+         ParsedQuery }                from '../types';
 import { DatePattern,
          DateTimePattern,
          dummyTargetObject,
@@ -40,7 +40,7 @@ interface SxName {
 type SxToken =
     SxSymbol | SxObject | SxName |
     PreparedValue | PreparedFieldListItem | PreparedResolver |
-    PreparedCondition | PreparedOrderByField | Partial<PreparedQuery> |
+    PreparedCondition | PreparedOrderByField | Partial<ParsedQuery> |
     string | number | boolean | null | SxToken[];
 
 type Ast = SxToken | SxOp | undefined | Ast[];
@@ -875,7 +875,7 @@ const program =
         end(), ));
 
 
-export function parse(strings: TemplateStringsArray | string, ...values: any[]): PreparedQuery {
+export function parse(strings: TemplateStringsArray | string, ...values: any[]): ParsedQuery {
     // TODO: deny dangerous names
     const z = program(
         typeof strings === 'string'
