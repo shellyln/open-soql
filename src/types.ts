@@ -45,7 +45,7 @@ export interface PreparedFieldBase {
 
 
 export interface PreparedFieldBaseForFnCall {
-    aliasName: string; // NOTE: Set after compiling.
+    aliasName: string; // NOTE: It is set at compile time.
 }
 
 
@@ -78,7 +78,7 @@ export interface ParsedResolverBase {
     aliasName: string | null;
 
     // Followings are for internal use.
-    //   Set these on `compile` phase.
+    //   These are set at compile time.
 
     resolver?: QueryResolverFn;
     resolverName?: string;
@@ -303,10 +303,7 @@ export interface QueryBuilderInfoRulesSection {
 
 export interface QueryBuilderInfoResolversSection {
     query: {
-        /**
-         * Object names and Child relation names.
-         * Rest names resolverName is '*'.
-         */
+        // Node (table/entity/sObject) names.
         [resolverNames: string]: QueryResolverFn;
     };
     // eslint-disable-next-line @typescript-eslint/ban-types
