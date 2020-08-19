@@ -104,7 +104,6 @@ function filterAndSliceRecords(
 
     for (const field of requestedFields.keys()) {
         if (! recordFields.has(field)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             throw new Error(`Field "${field}" is not supplied from resolver "${ctx.resolverName}".`);
         }
     }

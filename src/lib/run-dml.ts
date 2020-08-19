@@ -20,8 +20,7 @@ export async function executeInsertDML(
         records: any[]
         ): Promise<any[]> {
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const resolvers = builder.resolvers.insert!;
+    const resolvers = builder.resolvers.insert;
     let resolverInfo: InsertResolverFn | null = null;
     for (const key of Object.keys(resolvers)) {
         if (key.toLowerCase() === resolverName.toLowerCase()) {
@@ -93,8 +92,7 @@ export async function executeUpdateDML(
         records: any[]
         ): Promise<any[]> {
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const resolvers = builder.resolvers.update!;
+    const resolvers = builder.resolvers.update;
     let resolverInfo: UpdateResolverFn | null = null;
     for (const key of Object.keys(resolvers)) {
         if (key.toLowerCase() === resolverName.toLowerCase()) {
@@ -166,8 +164,7 @@ export async function executeRemoveDML(
         records: any[]
         ): Promise<void> {
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const resolvers = builder.resolvers.remove!;
+    const resolvers = builder.resolvers.remove;
     let resolverInfo: RemoveResolverFn | null = null;
     for (const key of Object.keys(resolvers)) {
         if (key.toLowerCase() === resolverName.toLowerCase()) {
