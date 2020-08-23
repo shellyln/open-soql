@@ -360,6 +360,7 @@ function aggregateFields(
         return true;
     };
 
+    // TODO: pre-determine field types and cache (push function to array that indexed by field entries index).
     for (const g of records) {
         const agg = {};
         for (const ent of x.queryFieldsMap.entries()) {
