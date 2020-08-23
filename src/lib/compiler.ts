@@ -366,8 +366,8 @@ function normalize(
             }
             break;
         case 'having':
-            if (index === 0 && found.type !== 'aggregate') {
-                // NOTE: only aggregate is allowed.
+            if (index === 0 && !(found.type === 'aggregate' || found.type === 'immediate-scalar')) {
+                // NOTE: aggregation should be at operand 1.
                 throw new Error(`Non-aggregate function '${x.fn}' is not allowed.`);
             }
             break;

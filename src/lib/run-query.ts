@@ -556,6 +556,8 @@ export async function executeCompiledQuery(
                 Array.from(x.queryFields.values());
             const condFields =
                 Array.from(x.condFields.values());
+            const havingCondFields =
+                Array.from(x.havingCondFields.values());
             const groupFields: string[] =
                 (i === 0 && query.groupBy) ? query.groupBy : []; // NOTE: condition is same as `isAggregation`
             const sortFields =
@@ -567,6 +569,7 @@ export async function executeCompiledQuery(
                 Array.from(
                     new Set<string>(queryFields
                         .concat(condFields)
+                        .concat(havingCondFields)
                         .concat(builder.rules.idFieldName ? [builder.rules.idFieldName(resolverName)] : [])
                         .concat(groupFields)
                         .concat(sortFields)

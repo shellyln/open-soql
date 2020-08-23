@@ -195,7 +195,6 @@ describe("nested-fn-1", function() {
                 expect(result).toEqual(expects);
             }
             {
-                const zzz = 1;
                 const result = await soql`
                     select
                         id
@@ -221,14 +220,13 @@ describe("nested-fn-1", function() {
         }
     });
 
-    it("Nested function call: scalar (3)", async function() {
+    it("Nested function call: aggregate (1)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
             const { soql, insert, update, remove, transaction } = commands1;
 
             {
-                const zzz = 1;
                 const result = await soql`
                     select
                         accountid,
@@ -263,6 +261,250 @@ describe("nested-fn-1", function() {
                     { AccountId: 'Account/z3', expr_a: 'qwerty', expr_b: 'bbb/z5', expr_c: 'bbb/z5', expr_d: 'bbb/z5', expr_e: 'bbb/z5bbb/z5;ccc/z5ccc/z5', expr_foo: 'aaa/z5' },
                     { AccountId: null        , expr_a: 'qwerty', expr_b: null    , expr_c: 'null'  , expr_d: 'null'  , expr_e: 'nullnull;nullnull'        , expr_foo: null     },
                     { AccountId: null        , expr_a: 'qwerty', expr_b: ''      , expr_c: ''      , expr_d: ''      , expr_e: ';  '                      , expr_foo: ''       },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        testspec_pass_thru('qwerty') expr_a,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_a: 'qwerty', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z2', expr_a: 'qwerty', expr_foo: 'aaa/z3' },
+                    { AccountId: 'Account/z3', expr_a: 'qwerty', expr_foo: 'aaa/z5' },
+                    { AccountId: null        , expr_a: 'qwerty', expr_foo: null     },
+                    { AccountId: null        , expr_a: 'qwerty', expr_foo: ''       },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        testspec_pass_thru(min(bar)) expr_b,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_b: 'bbb/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z2', expr_b: 'bbb/z3', expr_foo: 'aaa/z3' },
+                    { AccountId: 'Account/z3', expr_b: 'bbb/z5', expr_foo: 'aaa/z5' },
+                    { AccountId: null        , expr_b: null    , expr_foo: null     },
+                    { AccountId: null        , expr_b: ''      , expr_foo: ''       },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        testspec_pass_thru(
+                            min(
+                                testspec_string_concat(bar)
+                            )
+                        ) expr_c,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_c: 'bbb/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z2', expr_c: 'bbb/z3', expr_foo: 'aaa/z3' },
+                    { AccountId: 'Account/z3', expr_c: 'bbb/z5', expr_foo: 'aaa/z5' },
+                    { AccountId: null        , expr_c: 'null'  , expr_foo: null     },
+                    { AccountId: null        , expr_c: ''      , expr_foo: ''       },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        testspec_pass_thru(
+                            min(
+                                testspec_pass_thru(testspec_string_concat(bar))
+                            )
+                        ) expr_d,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_d: 'bbb/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z2', expr_d: 'bbb/z3', expr_foo: 'aaa/z3' },
+                    { AccountId: 'Account/z3', expr_d: 'bbb/z5', expr_foo: 'aaa/z5' },
+                    { AccountId: null        , expr_d: 'null'  , expr_foo: null     },
+                    { AccountId: null        , expr_d: ''      , expr_foo: ''       },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        testspec_pass_thru(
+                            min(
+                                concat(
+                                    testspec_pass_thru(testspec_string_twice(bar)),
+                                    ';',
+                                    testspec_pass_thru(testspec_string_twice(baz))
+                                )
+                            )
+                        ) expr_e,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_e: 'bbb/z1bbb/z1;ccc/z1ccc/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z2', expr_e: 'bbb/z3bbb/z3;ccc/z3ccc/z3', expr_foo: 'aaa/z3' },
+                    { AccountId: 'Account/z3', expr_e: 'bbb/z5bbb/z5;ccc/z5ccc/z5', expr_foo: 'aaa/z5' },
+                    { AccountId: null        , expr_e: 'nullnull;nullnull'        , expr_foo: null     },
+                    { AccountId: null        , expr_e: ';  '                      , expr_foo: ''       },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+    it("Nested function call: aggregate (2)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const zzz = 1;
+                const result = await soql`
+                    select
+                        accountid,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        testspec_pass_thru('qwerty') = 'qwerty'
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z2', expr_foo: 'aaa/z3' },
+                    { AccountId: 'Account/z3', expr_foo: 'aaa/z5' },
+                    { AccountId: null        , expr_foo: null     },
+                    { AccountId: null        , expr_foo: ''       },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        testspec_pass_thru(min(bar)) = 'bbb/z1' or
+                        testspec_pass_thru(min(bar)) = 'bbb/z5'
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z3', expr_foo: 'aaa/z5' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        testspec_pass_thru(
+                            min(
+                                testspec_string_concat(bar)
+                            )
+                        ) = 'bbb/z1' or
+                        testspec_pass_thru(
+                            min(
+                                testspec_string_concat(bar)
+                            )
+                        ) = 'bbb/z5'
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z3', expr_foo: 'aaa/z5' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        testspec_pass_thru(
+                            min(
+                                testspec_pass_thru(testspec_string_concat(bar))
+                            )
+                        ) = 'bbb/z1' or
+                        testspec_pass_thru(
+                            min(
+                                testspec_pass_thru(testspec_string_concat(bar))
+                            )
+                        ) = 'bbb/z5'
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z3', expr_foo: 'aaa/z5' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        accountid,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        testspec_pass_thru(
+                            min(
+                                concat(
+                                    testspec_pass_thru(testspec_string_twice(bar)),
+                                    ';',
+                                    testspec_pass_thru(testspec_string_twice(baz))
+                                )
+                            )
+                        ) = 'bbb/z1bbb/z1;ccc/z1ccc/z1' or
+                        testspec_pass_thru(
+                            min(
+                                concat(
+                                    testspec_pass_thru(testspec_string_twice(bar)),
+                                    ';',
+                                    testspec_pass_thru(testspec_string_twice(baz))
+                                )
+                            )
+                        ) = 'bbb/z5bbb/z5;ccc/z5ccc/z5'
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z3', expr_foo: 'aaa/z5' },
                 ];
                 expect(result).toEqual(expects);
             }
