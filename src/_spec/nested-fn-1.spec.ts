@@ -125,7 +125,6 @@ describe("nested-fn-1", function() {
             const { soql, insert, update, remove, transaction } = commands1;
 
             {
-                const zzz = 1;
                 const result = await soql`
                     select
                         concat(
@@ -142,6 +141,28 @@ describe("nested-fn-1", function() {
                 ];
                 expect(result).toEqual(expects);
             }
+            {
+                const result = await soql`
+                    select
+                        concat(
+                            testspec_string_twice(foo),
+                            ';',
+                            testspec_pass_thru(testspec_string_twice(bar)),
+                            ';',
+                            testspec_string_twice(corge),
+                            ';',
+                            testspec_pass_thru(testspec_string_twice(quux)),
+                            testspec_pass_thru('!'),
+                            testspec_string_twice(testspec_pass_thru('?'))
+                        ) expr_a
+                    from contact
+                    where id='Contact/z1'
+                    `;
+                const expects = [
+                    { expr_a: 'aaa/z1aaa/z1;bbb/z1bbb/z1;-1-1;falsefalse!??' },
+                ];
+                expect(result).toEqual(expects);
+            }
         }
     });
 
@@ -152,7 +173,6 @@ describe("nested-fn-1", function() {
             const { soql, insert, update, remove, transaction } = commands1;
 
             {
-                const zzz = 1;
                 const result = await soql`
                     select
                         id
@@ -164,6 +184,30 @@ describe("nested-fn-1", function() {
                             testspec_string_twice(corge),
                             testspec_pass_thru('!')
                         ) = 'aaa/z1aaa/z1;-1-1!'
+                    `;
+                const expects = [
+                    { Id: 'Contact/z1' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const zzz = 1;
+                const result = await soql`
+                    select
+                        id
+                    from contact
+                    where
+                        concat(
+                            testspec_string_twice(foo),
+                            ';',
+                            testspec_pass_thru(testspec_string_twice(bar)),
+                            ';',
+                            testspec_string_twice(corge),
+                            ';',
+                            testspec_pass_thru(testspec_string_twice(quux)),
+                            testspec_pass_thru('!'),
+                            testspec_string_twice(testspec_pass_thru('?'))
+                        ) = 'aaa/z1aaa/z1;bbb/z1bbb/z1;-1-1;falsefalse!??'
                     `;
                 const expects = [
                     { Id: 'Contact/z1' },
