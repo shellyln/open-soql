@@ -162,6 +162,31 @@ function flatConditions(
 }
 
 
+function recureseForEachConditionFieldsFncall(
+        x: PreparedFnCall,
+        fn: (field: PreparedField | PreparedOrderByField) => void) {
+
+    for (const arg of x.args) {
+        switch (typeof arg) {
+        case 'object':
+            if (arg === null) {
+                // NOTE: Nothing to do.
+            } else {
+                switch (arg.type) {
+                case 'field':
+                    fn(arg);
+                    break;
+                case 'fncall':
+                    recureseForEachConditionFieldsFncall(arg, fn);
+                    break;
+                }
+            }
+            break;
+        }
+    }
+}
+
+
 function recureseForEachConditionFields(
         cond: PreparedCondition,
         fn: (field: PreparedField | PreparedOrderByField) => void) {
@@ -193,6 +218,9 @@ function recureseForEachConditionFields(
                                     switch (arg.type) {
                                     case 'field':
                                         fn(arg);
+                                        break;
+                                    case 'fncall':
+                                        recureseForEachConditionFieldsFncall(arg, fn);
                                         break;
                                     }
                                 }
@@ -495,7 +523,8 @@ function normalize(
             }
         }
         if (! nested) {
-            (resolver ?? query.from[0]).queryFieldsMap?.set(x.aliasName, x);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            (resolver ?? query.from[0]).queryFieldsMap!.set(x.aliasName, x);
         }
     };
 
@@ -505,7 +534,8 @@ function normalize(
             {
                 registerQueryFields(x);
                 const resolver = findResolver(query, x); // TODO: find twice!
-                resolver?.queryFieldsMap?.set(x.name[x.name.length - 1], x);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                resolver?.queryFieldsMap!.set(x.name[x.name.length - 1], x);
             }
             break;
         case 'fncall':

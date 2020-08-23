@@ -26,6 +26,12 @@ const commands1 = build({
         },
     }, {
         type: 'scalar',
+        name: 'testspec_string_twice',
+        fn: (ctx, args, records) => {
+            return String(args[0]) + String(args[0]);
+        },
+    }, {
+        type: 'scalar',
         name: 'testspec_number_add',
         fn: (ctx, args, records) => {
             return args.map(c => Number(c)).reduce((a, b) => a + b);
@@ -122,13 +128,45 @@ describe("nested-fn-1", function() {
                 const zzz = 1;
                 const result = await soql`
                     select
-                        concat(cast_to_string(foo), ';', cast_to_string(corge)) expr_a
-                        -- concat(foo, ';', corge) expr_a
+                        concat(
+                            testspec_string_twice(foo),
+                            ';',
+                            testspec_string_twice(corge),
+                            testspec_pass_thru('!')
+                        ) expr_a
                     from contact
                     where id='Contact/z1'
                     `;
                 const expects = [
-                    { expr_a: 'aaa/z1;-1' },
+                    { expr_a: 'aaa/z1aaa/z1;-1-1!' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+    it("Nested function call: scalar (2)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const zzz = 1;
+                const result = await soql`
+                    select
+                        id
+                    from contact
+                    where
+                        concat(
+                            testspec_string_twice(foo),
+                            ';',
+                            testspec_string_twice(corge),
+                            testspec_pass_thru('!')
+                        ) = 'aaa/z1aaa/z1;-1-1!'
+                    `;
+                const expects = [
+                    { Id: 'Contact/z1' },
                 ];
                 expect(result).toEqual(expects);
             }
