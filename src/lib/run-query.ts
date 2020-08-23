@@ -9,15 +9,16 @@ import { PreparedQuery,
          PreparedCondition,
          ResolverCapabilities,
          ResolverContext,
-         QueryBuilderInfoInternal, 
-         PreparedFnCall}       from '../types';
+         QueryBuilderInfoInternal }       from '../types';
 import { deepCloneObject,
          isEqualComplexName,
          getTrueCaseFieldName,
          getObjectValueWithFieldNameMap } from './util';
 import { callAggregateFunction,
          callScalarFunction,
-         callImmediateScalarFunction }    from './call';
+         callImmediateScalarFunction,
+         getGroupFieldTrueCaseName,
+         isScalarFnCallable }             from './call';
 import { sortRecords }                    from '../sort';
 import { applyWhereConditions,
          applyHavingConditions }          from '../filters';
@@ -318,48 +319,6 @@ function aggregateFields(
     const groupFields = new Map<string, string>(
         groupBy.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
-    const getGroupFieldTrueCaseName = (name: string) => {
-        if (groupFields.has(name)) {
-            const trueCaseName = groupFields.get(name);
-            if (trueCaseName) {
-                return trueCaseName;
-            }
-        }
-        return null;
-    };
-
-    const isScalarFnCallable = (args: PreparedFnCall['args']) => {
-        for (const a of args) {
-            switch (typeof a) {
-            case 'object':
-                switch (a?.type) {
-                case 'field':
-                    {
-                        const trueCaseName = getGroupFieldTrueCaseName(a.name[a.name.length - 1]);
-                        if (! trueCaseName) {
-                            return false;
-                        }
-                    }
-                    break;
-                case 'fncall':
-                    {
-                        const argFnNameI = a.fn.toLowerCase();
-                        const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
-                        switch (argFnInfo?.type) {
-                        case 'scalar':
-                            if (! isScalarFnCallable(a.args)) {
-                                return false;
-                            }
-                        }
-                    }
-                    break;
-                }
-                break;
-            }
-        }
-        return true;
-    };
-
     // TODO: pre-determine field types and cache (push function to array that indexed by field entries index).
     for (const g of records) {
         const agg = {};
@@ -369,7 +328,7 @@ function aggregateFields(
             switch (field.type) {
             case 'field':
                 {
-                    const trueCaseName = getGroupFieldTrueCaseName(field.name[field.name.length - 1]);
+                    const trueCaseName = getGroupFieldTrueCaseName(groupFields, field.name[field.name.length - 1]);
 
                     if (trueCaseName) {
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -400,7 +359,7 @@ function aggregateFields(
                         agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', null, g);
                         break;
                     case 'scalar':
-                        if (! isScalarFnCallable(field.args)) {
+                        if (! isScalarFnCallable(ctx, groupFields, field.args)) {
                             throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                         }
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

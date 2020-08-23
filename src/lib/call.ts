@@ -9,7 +9,8 @@ import { FieldResultType,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
          AggregateQueryFuncInfo } from '../types';
-import { getObjectValue }         from './util';
+import { getObjectValue,
+         getTrueCaseFieldName }   from './util';
 
 
 
@@ -203,4 +204,51 @@ export function callAggregateFunction(
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fnInfo.fn(ctx, args, records);
+}
+
+
+export function getGroupFieldTrueCaseName(groupFields: Map<string, string>, name: string): string | null {
+    if (groupFields.has(name)) {
+        const trueCaseName = groupFields.get(name);
+        if (trueCaseName) {
+            return trueCaseName;
+        }
+    }
+    return null;
+}
+
+
+export function isScalarFnCallable(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        groupFields: Map<string, string>, args: PreparedFnCall['args']): boolean {
+
+    for (const a of args) {
+        switch (typeof a) {
+        case 'object':
+            switch (a?.type) {
+            case 'field':
+                {
+                    const trueCaseName = getGroupFieldTrueCaseName(groupFields, a.name[a.name.length - 1]);
+                    if (! trueCaseName) {
+                        return false;
+                    }
+                }
+                break;
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    switch (argFnInfo?.type) {
+                    case 'scalar':
+                        if (! isScalarFnCallable(ctx, groupFields, a.args)) {
+                            return false;
+                        }
+                    }
+                }
+                break;
+            }
+            break;
+        }
+    }
+    return true;
 }

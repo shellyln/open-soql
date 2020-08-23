@@ -4,7 +4,6 @@
 
 
 import { FieldResultType,
-         PreparedFnCall,
          PreparedConditionOperand,
          PreparedCondition,
          ResolverContext }                from './types';
@@ -12,12 +11,15 @@ import { getTrueCaseFieldName,
          getObjectValueWithFieldNameMap } from './lib/util';
 import { callAggregateFunction,
          callScalarFunction,
-         callImmediateScalarFunction }    from './lib/call';
+         callImmediateScalarFunction,
+         isScalarFnCallable }             from './lib/call';
 
 
 
 function getOp1Value(
-        fieldNameMap: Map<string, string>, isAggregation: boolean,
+        fieldNameMap: Map<string, string>,
+        groupFields: Map<string, string> | null,
+        isAggregation: boolean,
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any) {
 
@@ -75,52 +77,9 @@ function getOp1Value(
                         if (isAggregation) {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                             const firstRec = record[0];
-                            const groupFields = new Map<string, string>(
-                                ctx.query?.groupBy?.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
-                            const getGroupFieldTrueCaseName = (name: string) => {
-                                if (groupFields.has(name)) {
-                                    const trueCaseName = groupFields.get(name);
-                                    if (trueCaseName) {
-                                        return trueCaseName;
-                                    }
-                                }
-                                return null;
-                            };
-
-                            const isScalarFnCallable = (args: PreparedFnCall['args']) => {
-                                for (const a of args) {
-                                    switch (typeof a) {
-                                    case 'object':
-                                        switch (a?.type) {
-                                        case 'field':
-                                            {
-                                                const trueCaseName = getGroupFieldTrueCaseName(a.name[a.name.length - 1]);
-                                                if (! trueCaseName) {
-                                                    return false;
-                                                }
-                                            }
-                                            break;
-                                        case 'fncall':
-                                            {
-                                                const argFnNameI = a.fn.toLowerCase();
-                                                const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
-                                                switch (argFnInfo?.type) {
-                                                case 'scalar':
-                                                    if (! isScalarFnCallable(a.args)) {
-                                                        return false;
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        }
-                                        break;
-                                    }
-                                }
-                                return true;
-                            };
-
-                            if (! isScalarFnCallable(op.args)) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            if (! isScalarFnCallable(ctx, groupFields!, op.args)) {
                                 throw new Error(`${op.fn} is not allowed. Aggregate function is needed.`);
                             }
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -206,7 +165,9 @@ function getOp2Value(
 
 
 function evalRecursiveCondition(
-        fieldNameMap: Map<string, string>, isAggregation: boolean,
+        fieldNameMap: Map<string, string>,
+        groupFields: Map<string, string> | null,
+        isAggregation: boolean,
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         w: PreparedConditionOperand, record: any): boolean {
 
@@ -222,7 +183,7 @@ function evalRecursiveCondition(
             }
             switch (w.type) {
             case 'condition':
-                ret = evalCondition(fieldNameMap, isAggregation, ctx, w, record);
+                ret = evalCondition(fieldNameMap, groupFields, isAggregation, ctx, w, record);
                 break;
             default:
                 throw new Error(`Unexpected type appears in the condition.`);
@@ -279,7 +240,9 @@ function convertPattern(v: string) {
 
 
 function evalCondition(
-        fieldNameMap: Map<string, string>, isAggregation: boolean,
+        fieldNameMap: Map<string, string>,
+        groupFields: Map<string, string> | null,
+        isAggregation: boolean,
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any): boolean {
 
@@ -290,7 +253,7 @@ function evalCondition(
         break;
     case 'and':
         for (const w of cond.operands) {
-            if (! evalRecursiveCondition(fieldNameMap, isAggregation, ctx, w, record)) {
+            if (! evalRecursiveCondition(fieldNameMap, groupFields, isAggregation, ctx, w, record)) {
                 ret = false;
                 break EVAL;
             }
@@ -298,19 +261,19 @@ function evalCondition(
         break;
     case 'or':
         for (const w of cond.operands) {
-            if (evalRecursiveCondition(fieldNameMap, isAggregation, ctx, w, record)) {
+            if (evalRecursiveCondition(fieldNameMap, groupFields, isAggregation, ctx, w, record)) {
                 break EVAL;
             }
         }
         ret = false;
         break;
     case 'not':
-        ret = !evalRecursiveCondition(fieldNameMap, isAggregation, ctx, cond.operands[0], record);
+        ret = !evalRecursiveCondition(fieldNameMap, groupFields, isAggregation, ctx, cond.operands[0], record);
         break;
     default:
         {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const v1 = getOp1Value(fieldNameMap, isAggregation, ctx, cond, record);
+            const v1 = getOp1Value(fieldNameMap, groupFields, isAggregation, ctx, cond, record);
             const v2 = getOp2Value(ctx, cond, record);
             switch (cond.op) {
             case '=':
@@ -509,7 +472,7 @@ export function applyWhereConditions(
 
     NEXTREC: for (const record of records) {
         for (const cond of conds) {
-            if (! evalCondition(fieldNameMap, false, ctx, cond, record)) {
+            if (! evalCondition(fieldNameMap, null, false, ctx, cond, record)) {
                 continue NEXTREC;
             }
         }
@@ -534,9 +497,14 @@ export function applyHavingConditions(
     }
     const fieldNameMap = new Map<string, string>(Object.keys(groupedRecsArray[0][0]).map(x => [x.toLowerCase(), x]));
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const firstRec = groupedRecsArray[0][0];
+    const groupFields = new Map<string, string>(
+        ctx.query?.groupBy?.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
+
     NEXTREC: for (const groupedRecs of groupedRecsArray) {
         for (const cond of conds) {
-            if (! evalCondition(fieldNameMap, true, ctx, cond, groupedRecs)) {
+            if (! evalCondition(fieldNameMap, groupFields, true, ctx, cond, groupedRecs)) {
                 continue NEXTREC;
             }
         }
