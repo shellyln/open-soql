@@ -319,7 +319,7 @@ function aggregateFields(
     const groupFields = new Map<string, string>(
         groupBy.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
-    // TODO: pre-determine field types and cache (push function to array that indexed by field entries index).
+    // TODO: [improve performance] Predetermine field types and cache (Push function to array that indexed by field entries index).
     for (const g of records) {
         const agg = {};
         for (const ent of x.queryFieldsMap.entries()) {
