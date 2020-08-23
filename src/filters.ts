@@ -4,10 +4,12 @@
 
 
 import { FieldResultType,
+         PreparedFnCall,
          PreparedConditionOperand,
          PreparedCondition,
          ResolverContext }                from './types';
-import { getObjectValueWithFieldNameMap } from './lib/util';
+import { getTrueCaseFieldName,
+         getObjectValueWithFieldNameMap } from './lib/util';
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction }    from './lib/call';
@@ -60,6 +62,7 @@ function getOp1Value(
                 {
                     const fnNameI = op.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
+
                     switch (fnInfo?.type) {
                     case 'aggregate':
                         if (! isAggregation) {
@@ -70,10 +73,62 @@ function getOp1Value(
                         break;
                     case 'scalar':
                         if (isAggregation) {
-                            throw new Error(`Scalar function ${fnInfo.name} is not allowed.`);
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                            const firstRec = record[0];
+                            const groupFields = new Map<string, string>(
+                                ctx.query?.groupBy?.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
+
+                            const getGroupFieldTrueCaseName = (name: string) => {
+                                if (groupFields.has(name)) {
+                                    const trueCaseName = groupFields.get(name);
+                                    if (trueCaseName) {
+                                        return trueCaseName;
+                                    }
+                                }
+                                return null;
+                            };
+
+                            const isScalarFnCallable = (args: PreparedFnCall['args']) => {
+                                for (const a of args) {
+                                    switch (typeof a) {
+                                    case 'object':
+                                        switch (a?.type) {
+                                        case 'field':
+                                            {
+                                                const trueCaseName = getGroupFieldTrueCaseName(a.name[a.name.length - 1]);
+                                                if (! trueCaseName) {
+                                                    return false;
+                                                }
+                                            }
+                                            break;
+                                        case 'fncall':
+                                            {
+                                                const argFnNameI = a.fn.toLowerCase();
+                                                const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                                                switch (argFnInfo?.type) {
+                                                case 'scalar':
+                                                    if (! isScalarFnCallable(a.args)) {
+                                                        return false;
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                        break;
+                                    }
+                                }
+                                return true;
+                            };
+
+                            if (! isScalarFnCallable(op.args)) {
+                                throw new Error(`${op.fn} is not allowed. Aggregate function is needed.`);
+                            }
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, firstRec, record);
+                        } else {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, record, null);
                         }
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, record, null);
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -119,6 +174,7 @@ function getOp2Value(
                 {
                     const fnNameI = op.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
+
                     switch (fnInfo?.type) {
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

@@ -364,11 +364,13 @@ function normalize(
                 // NOTE: scalar and immediate-scalar is allowed.
                 throw new Error(`Aggregate function '${x.fn}' is not allowed.`);
             }
+            if (index !== 0 && found.type !== 'immediate-scalar') {
+                throw new Error(`Function '${x.fn}' is not allowed at operand ${index + 1}.`);
+            }
             break;
         case 'having':
-            if (index === 0 && !(found.type === 'aggregate' || found.type === 'immediate-scalar')) {
-                // NOTE: aggregation should be at operand 1.
-                throw new Error(`Non-aggregate function '${x.fn}' is not allowed.`);
+            if (index !== 0 && found.type !== 'immediate-scalar') {
+                throw new Error(`Function '${x.fn}' is not allowed at operand ${index + 1}.`);
             }
             break;
         }

@@ -587,4 +587,73 @@ describe("nested-fn-1", function() {
             }
         }
     });
+
+    it("Nested function call: aggregate (4)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        concat(accountid, '!') = 'Account/z2!'
+                    `;
+                const expects = [
+                    { expr_foo: 'aaa/z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                try {
+                    const result = await soql`
+                        select
+                            min(foo) expr_foo
+                        from contact
+                        group by accountid
+                        having
+                            concat(bar, '!') = 'bbb/z2'
+                        `;
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    expect(1).toEqual(1);
+                }
+            }
+
+            {
+                const result = await soql`
+                    select
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        concat(accountid, '!', max(bar)) = 'Account/z2!bbb/z4'
+                    `;
+                const expects = [
+                    { expr_foo: 'aaa/z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    having
+                        testspec_pass_thru(max(bar)) = 'bbb/z4'
+                    `;
+                const expects = [
+                    { expr_foo: 'aaa/z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
 });
