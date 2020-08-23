@@ -433,6 +433,9 @@ const selectFieldFunctionCall =
             erase(cls(',')),
             erase(repeat(commentOrSpace)),
             first(
+                // eslint-disable-next-line @typescript-eslint/ban-types
+                trans(tokens => [{type: 'fncall', ...(tokens[0] as object)}])(
+                    input => selectFieldFunctionCall(input), ),
                 literalValue,
                 // eslint-disable-next-line @typescript-eslint/ban-types
                 trans(tokens => [{type: 'field', ...(tokens[0] as object)}])(

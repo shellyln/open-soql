@@ -44,6 +44,23 @@ export function callScalarFunction(
                 default:
                     return a.value;
                 }
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    switch (argFnInfo?.type) {
+                    // case 'aggregate':
+                    //     break;
+                    case 'scalar':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callScalarFunction(ctx, a, argFnInfo, 'any', record);
+                    case 'immediate-scalar':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record);
+                    default:
+                        throw new Error(`Nested function ${a.fn} is not allowed.`);
+                    }
+                }
             default:
                 return a;
             }
@@ -59,7 +76,7 @@ export function callScalarFunction(
 
 export function callImmediateScalarFunction(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType): any {
+        field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType, record: any | null): any {
 
     const args = field.args.map(a => {
         switch (typeof a) {
@@ -76,6 +93,26 @@ export function callImmediateScalarFunction(
                     return new Date(a.value).getTime();
                 default:
                     return a.value;
+                }
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    switch (argFnInfo?.type) {
+                    // case 'aggregate':
+                    //     break;
+                    case 'scalar':
+                        if (record === null) {
+                            throw new Error(`Nested function ${a.fn} is not allowed.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callScalarFunction(ctx, a, argFnInfo, 'any', record);
+                    case 'immediate-scalar':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record);
+                    default:
+                        throw new Error(`Nested function ${a.fn} is not allowed.`);
+                    }
                 }
             default:
                 return a;
@@ -119,6 +156,22 @@ export function callAggregateFunction(
                     return new Date(a.value).getTime();
                 default:
                     return a.value;
+                }
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    switch (argFnInfo?.type) {
+                    // case 'aggregate':
+                    //     break;
+                    // case 'scalar':
+                    //     break;
+                    // case 'immediate-scalar':
+                    //     break;
+                    default:
+                        throw new Error(`Nested function ${a.fn} is not allowed.`);
+                    }
+                    return null;
                 }
             default:
                 return a;

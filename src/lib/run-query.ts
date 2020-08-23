@@ -242,11 +242,12 @@ function mapSelectFields(
                         // NOTE: If aggregation, immediate-scalar function will be called at `aggregateFields()`.
                         if (! isAggregation) {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
+                            record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', record);
                         }
                         break;
                     default:
                         // Nothing to do.
+                        // (Aggregation functions will be called at `aggregateFields()`)
                         break;
                     }
                 }
@@ -359,12 +360,13 @@ function aggregateFields(
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
+                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', null);
                         break;
-                    default:
+                    case 'scalar':
                         // TODO: Accept `scalar` functions
                         //       if all parameters are already aggregated (include `group by` fields) or literal values.
-
+                        // pass_through
+                    default:
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                     }
                 }
