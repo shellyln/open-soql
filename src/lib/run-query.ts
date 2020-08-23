@@ -9,7 +9,8 @@ import { PreparedQuery,
          PreparedCondition,
          ResolverCapabilities,
          ResolverContext,
-         QueryBuilderInfoInternal }       from '../types';
+         QueryBuilderInfoInternal, 
+         PreparedFnCall}       from '../types';
 import { deepCloneObject,
          isEqualComplexName,
          getTrueCaseFieldName,
@@ -230,24 +231,22 @@ function mapSelectFields(
                 }
                 break;
             case 'fncall':
-                {
+                // NOTE: If aggregation, function will be called at `aggregateFields()`.
+                if (! isAggregation) {
                     const fnNameI = field.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
+
                     switch (fnInfo?.type) {
                     case 'scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', record);
+                        record[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', record, null);
                         break;
                     case 'immediate-scalar':
-                        // NOTE: If aggregation, immediate-scalar function will be called at `aggregateFields()`.
-                        if (! isAggregation) {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', record, null);
-                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', record, null);
                         break;
                     default:
                         // Nothing to do.
-                        // (Aggregation functions will be called at `aggregateFields()`)
                         break;
                     }
                 }
@@ -319,6 +318,48 @@ function aggregateFields(
     const groupFields = new Map<string, string>(
         groupBy.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
+    const getGroupFieldTrueCaseName = (name: string) => {
+        if (groupFields.has(name)) {
+            const trueCaseName = groupFields.get(name);
+            if (trueCaseName) {
+                return trueCaseName;
+            }
+        }
+        return null;
+    };
+
+    const isScalarFnCallable = (args: PreparedFnCall['args']) => {
+        for (const a of args) {
+            switch (typeof a) {
+            case 'object':
+                switch (a?.type) {
+                case 'field':
+                    {
+                        const trueCaseName = getGroupFieldTrueCaseName(a.name[a.name.length - 1]);
+                        if (! trueCaseName) {
+                            return false;
+                        }
+                    }
+                    break;
+                case 'fncall':
+                    {
+                        const argFnNameI = a.fn.toLowerCase();
+                        const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                        switch (argFnInfo?.type) {
+                        case 'scalar':
+                            if (! isScalarFnCallable(a.args)) {
+                                return false;
+                            }
+                        }
+                    }
+                    break;
+                }
+                break;
+            }
+        }
+        return true;
+    };
+
     for (const g of records) {
         const agg = {};
         for (const ent of x.queryFieldsMap.entries()) {
@@ -327,29 +368,24 @@ function aggregateFields(
             switch (field.type) {
             case 'field':
                 {
-                    let found = false;
-                    const name = field.name[field.name.length - 1];
+                    const trueCaseName = getGroupFieldTrueCaseName(field.name[field.name.length - 1]);
 
-                    if (groupFields.has(name)) {
-                        const trueCaseName = groupFields.get(name);
-                        if (trueCaseName) {
-                            found = true;
+                    if (trueCaseName) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        agg[trueCaseName] = g[0][trueCaseName];
+
+                        if (field.aliasName) {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            agg[trueCaseName] = g[0][trueCaseName];
-
-                            if (field.aliasName) {
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                                agg[field.aliasName] = g[0][trueCaseName];
-                            }
+                            agg[field.aliasName] = g[0][trueCaseName];
                         }
-                    }
-                    if (! found) {
+                    } else {
                         throw new Error(`${field.name.join('.')} is not allowed. Aggregate function is needed.`);
                     }
                 }
                 break;
             case 'fncall':
                 {
+                    // TODO: cache fnInfo!
                     const fnNameI = field.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
 
@@ -363,32 +399,12 @@ function aggregateFields(
                         agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', null, g);
                         break;
                     case 'scalar':
-                        // TODO: Accept `scalar` functions
-                        //       if all parameters are already aggregated (include `group by` fields) or literal values.
-                        // {
-                        //     for (const a of field.args) {
-                        //         switch (typeof a) {
-                        //         case 'object':
-                        //             switch (a?.type) {
-                        //             case 'fncall':
-                        //                 {
-                        //                     const argFnNameI = a.fn.toLowerCase();
-                        //                     const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
-                        //                     switch (argFnInfo?.type) {
-                        //                     case 'aggregate':
-                        //                     case 'immediate-scalar':
-                        //                     case 'scalar':
-                        //                     }
-                        //                 }
-                        //                 break;
-                        //             }
-                        //             break;
-                        //         default:
-                        //             break;
-                        //         }
-                        //     }
-                        // }
-                        // pass_through
+                        if (! isScalarFnCallable(field.args)) {
+                            throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        agg[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', g[0], g);
+                        break;
                     default:
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                     }

@@ -73,13 +73,13 @@ function getOp1Value(
                             throw new Error(`Scalar function ${fnInfo.name} is not allowed.`);
                         }
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, record);
+                        v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, record, null);
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         v = callImmediateScalarFunction(
                             ctx, op, fnInfo, op2FieldResultType,
-                            isAggregation ? null : record, isAggregation? record : null);
+                            isAggregation ? null : record, isAggregation ? record : null);
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(1).`);
