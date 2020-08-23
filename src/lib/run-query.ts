@@ -242,7 +242,7 @@ function mapSelectFields(
                         // NOTE: If aggregation, immediate-scalar function will be called at `aggregateFields()`.
                         if (! isAggregation) {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', record);
+                            record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', record, null);
                         }
                         break;
                     default:
@@ -360,11 +360,34 @@ function aggregateFields(
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', null);
+                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', null, g);
                         break;
                     case 'scalar':
                         // TODO: Accept `scalar` functions
                         //       if all parameters are already aggregated (include `group by` fields) or literal values.
+                        // {
+                        //     for (const a of field.args) {
+                        //         switch (typeof a) {
+                        //         case 'object':
+                        //             switch (a?.type) {
+                        //             case 'fncall':
+                        //                 {
+                        //                     const argFnNameI = a.fn.toLowerCase();
+                        //                     const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
+                        //                     switch (argFnInfo?.type) {
+                        //                     case 'aggregate':
+                        //                     case 'immediate-scalar':
+                        //                     case 'scalar':
+                        //                     }
+                        //                 }
+                        //                 break;
+                        //             }
+                        //             break;
+                        //         default:
+                        //             break;
+                        //         }
+                        //     }
+                        // }
                         // pass_through
                     default:
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);

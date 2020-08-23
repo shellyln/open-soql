@@ -56,7 +56,7 @@ export function callScalarFunction(
                         return callScalarFunction(ctx, a, argFnInfo, 'any', record);
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record);
+                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record, null);
                     default:
                         throw new Error(`Nested function ${a.fn} is not allowed.`);
                     }
@@ -76,7 +76,8 @@ export function callScalarFunction(
 
 export function callImmediateScalarFunction(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType, record: any | null): any {
+        field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType,
+        record: any | null, groupedRecs: any[] | null): any {
 
     const args = field.args.map(a => {
         switch (typeof a) {
@@ -99,8 +100,12 @@ export function callImmediateScalarFunction(
                     const argFnNameI = a.fn.toLowerCase();
                     const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
                     switch (argFnInfo?.type) {
-                    // case 'aggregate':
-                    //     break;
+                    case 'aggregate':
+                        if (groupedRecs === null) {
+                            throw new Error(`Nested function ${a.fn} is not allowed.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callAggregateFunction(ctx, a, argFnInfo, 'any', groupedRecs);
                     case 'scalar':
                         if (record === null) {
                             throw new Error(`Nested function ${a.fn} is not allowed.`);
@@ -109,7 +114,7 @@ export function callImmediateScalarFunction(
                         return callScalarFunction(ctx, a, argFnInfo, 'any', record);
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record);
+                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record, groupedRecs);
                     default:
                         throw new Error(`Nested function ${a.fn} is not allowed.`);
                     }
@@ -162,16 +167,23 @@ export function callAggregateFunction(
                     const argFnNameI = a.fn.toLowerCase();
                     const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
                     switch (argFnInfo?.type) {
-                    // case 'aggregate':
-                    //     break;
-                    // case 'scalar':
-                    //     break;
-                    // case 'immediate-scalar':
-                    //     break;
+                    case 'scalar':
+                        {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            const z = records.map(w => callScalarFunction(ctx, a, argFnInfo, 'any', w));
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            return z;
+                        }
+                    case 'immediate-scalar':
+                        {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            const z = records.map(w => callImmediateScalarFunction(ctx, a, argFnInfo, 'any', w, records));
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            return z;
+                        }
                     default:
                         throw new Error(`Nested function ${a.fn} is not allowed.`);
                     }
-                    return null;
                 }
             default:
                 return a;

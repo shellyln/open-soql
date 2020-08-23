@@ -77,7 +77,9 @@ function getOp1Value(
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callImmediateScalarFunction(ctx, op, fnInfo, op2FieldResultType, isAggregation ? null : record);
+                        v = callImmediateScalarFunction(
+                            ctx, op, fnInfo, op2FieldResultType,
+                            isAggregation ? null : record, isAggregation? record : null);
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(1).`);
@@ -120,7 +122,7 @@ function getOp2Value(
                     switch (fnInfo?.type) {
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callImmediateScalarFunction(ctx, op, fnInfo, 'any', null);
+                        v = callImmediateScalarFunction(ctx, op, fnInfo, 'any', null, null);
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(2).`);

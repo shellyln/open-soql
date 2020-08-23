@@ -78,8 +78,12 @@ const commands1 = build({
                     Contact/z1 , aaa/z1   , bbb/z1   , ccc/z1   ,     , false ,    -1.0 , 2019-12-31   , 2019-12-31T23:59:59Z   , Account/z1
                     Contact/z2 , aaa/z2   , bbb/z2   , ccc/z2   ,     , true  ,     0.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z1
                     Contact/z3 , "aaa/z3" , "bbb/z3" , "ccc/z3" ,     ,       ,     1   , "2020-01-02" , "2020-01-01T00:00:01Z" , "Account/z2"
-                    Contact/z4 ,          ,          ,          ,     ,       ,         ,              ,                        ,
-                    Contact/z5 ,       "" ,       "" ,      " " ,     ,       ,         ,              ,                        ,
+                    Contact/z4 , aaa/z4   , bbb/z4   , ccc/z4   ,     ,       ,     3.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z2
+                    Contact/z5 , aaa/z5   , bbb/z5   , ccc/z5   ,     ,       ,     5.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z3
+                    Contact/z6 , aaa/z6   , bbb/z6   , ccc/z6   ,     ,       ,     7.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z3
+                    Contact/z7 , aaa/z7   , bbb/z7   , ccc/z7   ,     ,       ,    11.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z3
+                    Contact/z8 ,          ,          ,          ,     ,       ,         ,              ,                        ,
+                    Contact/z9 ,       "" ,       "" ,      " " ,     ,       ,         ,              ,                        ,
                 `)
             ),
             Account: staticCsvResolverBuilder(
@@ -211,6 +215,54 @@ describe("nested-fn-1", function() {
                     `;
                 const expects = [
                     { Id: 'Contact/z1' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+    it("Nested function call: scalar (3)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const zzz = 1;
+                const result = await soql`
+                    select
+                        accountid,
+                        testspec_pass_thru('qwerty') expr_a,
+                        testspec_pass_thru(min(bar)) expr_b,
+                        testspec_pass_thru(
+                            min(
+                                testspec_string_concat(bar)
+                            )
+                        ) expr_c,
+                        testspec_pass_thru(
+                            min(
+                                testspec_pass_thru(testspec_string_concat(bar))
+                            )
+                        ) expr_d,
+                        testspec_pass_thru(
+                            min(
+                                concat(
+                                    testspec_pass_thru(testspec_string_twice(bar)),
+                                    ';',
+                                    testspec_pass_thru(testspec_string_twice(baz))
+                                )
+                            )
+                        ) expr_e,
+                        min(foo) expr_foo
+                    from contact
+                    group by accountid
+                    `;
+                const expects = [
+                    { AccountId: 'Account/z1', expr_a: 'qwerty', expr_b: 'bbb/z1', expr_c: 'bbb/z1', expr_d: 'bbb/z1', expr_e: 'bbb/z1bbb/z1;ccc/z1ccc/z1', expr_foo: 'aaa/z1' },
+                    { AccountId: 'Account/z2', expr_a: 'qwerty', expr_b: 'bbb/z3', expr_c: 'bbb/z3', expr_d: 'bbb/z3', expr_e: 'bbb/z3bbb/z3;ccc/z3ccc/z3', expr_foo: 'aaa/z3' },
+                    { AccountId: 'Account/z3', expr_a: 'qwerty', expr_b: 'bbb/z5', expr_c: 'bbb/z5', expr_d: 'bbb/z5', expr_e: 'bbb/z5bbb/z5;ccc/z5ccc/z5', expr_foo: 'aaa/z5' },
+                    { AccountId: null        , expr_a: 'qwerty', expr_b: null    , expr_c: 'null'  , expr_d: 'null'  , expr_e: 'nullnull;nullnull'        , expr_foo: null     },
+                    { AccountId: null        , expr_a: 'qwerty', expr_b: ''      , expr_c: ''      , expr_d: ''      , expr_e: ';  '                      , expr_foo: ''       },
                 ];
                 expect(result).toEqual(expects);
             }
