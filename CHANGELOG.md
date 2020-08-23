@@ -1,14 +1,11 @@
 # Changelog
 
-## v0.1.3
-
-* Update dependencies.
-
-
 ## v0.1.2
 
+* Nested scalar/aggregate function calls.
 * Improve typings.
 * Update README.
+* Update dependencies.
 
 
 ## v0.1.1
