@@ -3,6 +3,7 @@
 ## v0.1.2
 
 * Nested scalar/aggregate function calls.
+* Improve `select` query performance.
 * Improve typings.
 * Update README.
 * Update dependencies.
