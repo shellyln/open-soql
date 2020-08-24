@@ -82,6 +82,43 @@ function filterCondOperands(name: string[], cond: PreparedCondition) {
 }
 
 
+function pruneConditionCheckFncall(name: string[], x: PreparedFnCall): PreparedCondition | null {
+    for (const arg of x.args) {
+        switch (typeof arg) {
+        case 'object':
+            if (arg === null) {
+                // NOTE: Nothing to do.
+            } else {
+                switch (arg.type) {
+                case 'field':
+                    // TODO: Check all arguments' resolver are equal
+                    if (! isEqualComplexName(name, arg.name.slice(0, arg.name.length - 1))) {
+                        return ({
+                            type: 'condition',
+                            op: 'true',
+                            operands: [],
+                        });
+                    } else {
+                        arg.name = arg.name.slice(arg.name.length - 1); // TODO:
+                    }
+                    break;
+                case 'fncall':
+                    {
+                        const tmp = pruneConditionCheckFncall(name, arg);
+                        if (tmp) {
+                            return tmp;
+                        }
+                    }
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    return null;
+}
+
+
 function pruneCondition(name: string[], cond: PreparedCondition): PreparedCondition {
     if (cond.operands.length) {
         const x = cond.operands[0];
@@ -107,28 +144,10 @@ function pruneCondition(name: string[], cond: PreparedCondition): PreparedCondit
                     }
                     break;
                 case 'fncall':
-                    for (const arg of x.args) {
-                        switch (typeof arg) {
-                        case 'object':
-                            if (arg === null) {
-                                // NOTE: Nothing to do.
-                            } else {
-                                switch (arg.type) {
-                                case 'field':
-                                    // TODO: Check all arguments' resolver are equal
-                                    if (! isEqualComplexName(name, arg.name.slice(0, arg.name.length - 1))) {
-                                        return ({
-                                            type: 'condition',
-                                            op: 'true',
-                                            operands: [],
-                                        });
-                                    } else {
-                                        arg.name = arg.name.slice(arg.name.length - 1); // TODO:
-                                    }
-                                    break;
-                                }
-                            }
-                            break;
+                    {
+                        const tmp = pruneConditionCheckFncall(name, x);
+                        if (tmp) {
+                            return tmp;
                         }
                     }
                 }

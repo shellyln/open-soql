@@ -3,32 +3,112 @@
 // https://github.com/shellyln
 
 
-import { FieldResultType,
+import { ResolverContext,
+         FieldResultType,
          PreparedConditionOperand,
          PreparedCondition,
-         ResolverContext }                from './types';
+         PreparedAtomValue,
+         PreparedField,
+         PreparedFnCall,
+         ScalarQueryFuncInfo,
+         ImmediateScalarQueryFuncInfo,
+         AggregateQueryFuncInfo }         from './types';
 import { getTrueCaseFieldName,
          getObjectValueWithFieldNameMap } from './lib/util';
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction,
          isScalarFnCallable }             from './lib/call';
+import { CondOp1CacheValue,
+         condOp1FnCache,
+         condOp2ValueCache }              from './lib/cache';
 
 
 
-function getOp1Value(
-        fieldNameMap: Map<string, string>,
-        groupFields: Map<string, string> | null,
-        isAggregation: boolean,
-        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cond: PreparedCondition, record: any) {
+const getOp1Noop = (
+    fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+    cache: CondOp1CacheValue, record: any) => void 0;
 
-    let v = null;
+
+const getOp1AggregateFnValue = (
+        fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cache: CondOp1CacheValue, record: any) => {
+
+    const { op, op2FieldResultType, fnInfo } = cache;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return callAggregateFunction(
+        ctx, op as PreparedFnCall, fnInfo as AggregateQueryFuncInfo, op2FieldResultType,
+        record);
+}
+
+
+const getOp1ScalarOnAggFnValue = (
+        fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cache: CondOp1CacheValue, record: any) => {
+
+    const { op, op2FieldResultType, fnInfo } = cache;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const firstRec = record[0];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+    return callScalarFunction(
+        ctx, op as PreparedFnCall, fnInfo as ScalarQueryFuncInfo, op2FieldResultType,
+        firstRec, record);
+}
+
+
+const getOp1ScalarOnNonAggFnValue = (
+        fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cache: CondOp1CacheValue, record: any) => {
+
+    const { op, op2FieldResultType, fnInfo } = cache;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+    return callScalarFunction(
+        ctx, op as PreparedFnCall, fnInfo as ScalarQueryFuncInfo, op2FieldResultType,
+        record, null);
+}
+
+
+const getOp1ImmediateScalarOnAggFnValue = (
+        fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cache: CondOp1CacheValue, record: any) => {
+
+    const { op, op2FieldResultType, fnInfo } = cache;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+    return callImmediateScalarFunction(
+        ctx, op as PreparedFnCall, fnInfo as ImmediateScalarQueryFuncInfo, op2FieldResultType,
+        null, record);
+}
+
+
+const getOp1ImmediateScalarOnNonAggFnValue = (
+        fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cache: CondOp1CacheValue, record: any) => {
+
+    const { op, op2FieldResultType, fnInfo } = cache;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+    return callImmediateScalarFunction(
+        ctx, op as PreparedFnCall, fnInfo as ImmediateScalarQueryFuncInfo, op2FieldResultType,
+        record,  null);
+}
+
+
+function createOp1Cache(
+    groupFields: Map<string, string> | null,
+    isAggregation: boolean,
+    ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+    cond: PreparedCondition) {
+
+    let cache: CondOp1CacheValue | undefined = condOp1FnCache.get(cond);
     const op = cond.operands[0];
-
     const op2 = cond.operands[1];
     let op2IsDateOrDatetime = false;
     let op2FieldResultType: FieldResultType = 'any';
+
     switch (typeof op2) {
     case 'object':
         if (op2 === null) {
@@ -54,11 +134,15 @@ function getOp1Value(
         } else {
             switch (op.type) {
             case 'field':
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                v = getObjectValueWithFieldNameMap(fieldNameMap, record, op.name[op.name.length - 1]);
-                if (op2IsDateOrDatetime && v !== null) {
-                    v = new Date(v).getTime();
-                }
+                cache = {
+                    isField: true,
+                    isDateOrDatetime: op2IsDateOrDatetime,
+                    op,
+                    op2FieldResultType,
+                    fnInfo: null,
+                    fn: getOp1Noop,
+                };
+                condOp1FnCache.set(cond, cache);
                 break;
             case 'fncall':
                 {
@@ -70,30 +154,55 @@ function getOp1Value(
                         if (! isAggregation) {
                             throw new Error(`Aggregate function ${fnInfo.name} is not allowed.`);
                         }
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callAggregateFunction(ctx, op, fnInfo, op2FieldResultType, record);
+                        cache = {
+                            isField: false,
+                            isDateOrDatetime: false,
+                            op,
+                            op2FieldResultType,
+                            fnInfo,
+                            fn: getOp1AggregateFnValue,
+                        };
+                        condOp1FnCache.set(cond, cache);
                         break;
                     case 'scalar':
                         if (isAggregation) {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            const firstRec = record[0];
-
                             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                             if (! isScalarFnCallable(ctx, groupFields!, op.args)) {
                                 throw new Error(`${op.fn} is not allowed. Aggregate function is needed.`);
                             }
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, firstRec, record);
+                            cache = {
+                                isField: false,
+                                isDateOrDatetime: false,
+                                op,
+                                op2FieldResultType,
+                                fnInfo,
+                                fn: getOp1ScalarOnAggFnValue,
+                            };
+                            condOp1FnCache.set(cond, cache);
                         } else {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            v = callScalarFunction(ctx, op, fnInfo, op2FieldResultType, record, null);
+                            cache = {
+                                isField: false,
+                                isDateOrDatetime: false,
+                                op,
+                                op2FieldResultType,
+                                fnInfo,
+                                fn: getOp1ScalarOnNonAggFnValue,
+                            };
+                            condOp1FnCache.set(cond, cache);
                         }
                         break;
                     case 'immediate-scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callImmediateScalarFunction(
-                            ctx, op, fnInfo, op2FieldResultType,
-                            isAggregation ? null : record, isAggregation ? record : null);
+                        cache = {
+                            isField: false,
+                            isDateOrDatetime: false,
+                            op,
+                            op2FieldResultType,
+                            fnInfo,
+                            fn: isAggregation
+                                ? getOp1ImmediateScalarOnAggFnValue
+                                : getOp1ImmediateScalarOnNonAggFnValue,
+                        };
+                        condOp1FnCache.set(cond, cache);
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(1).`);
@@ -109,6 +218,45 @@ function getOp1Value(
         throw new Error(`Unexpected type appears in the operand(1).`);
     }
 
+    return cache as CondOp1CacheValue;
+}
+
+
+function getOp1Value(
+        fieldNameMap: Map<string, string>,
+        groupFields: Map<string, string> | null,
+        isAggregation: boolean,
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        cond: PreparedCondition, record: any) {
+
+    let v = null;
+    const op = cond.operands[0];
+
+    const cache: CondOp1CacheValue = condOp1FnCache.get(cond)
+        ?? createOp1Cache(groupFields, isAggregation, ctx, cond);
+    
+    if (op === null) {
+        // NOTE: `cache` is possibly undefined.
+        // nothing to do (v is null)
+    } else if (Array.isArray(op)) {
+        throw new Error(`Array is not allowed in the operand(1).`);
+    } else if (cache.isField) {
+        // NOTE: Inline expansion
+
+        const { isDateOrDatetime, op } = cache;
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        v = getObjectValueWithFieldNameMap(
+            fieldNameMap, record, (op as PreparedField).name[(op as PreparedField).name.length - 1]);
+
+        if (isDateOrDatetime && v !== null) {
+            v = new Date(v).getTime();
+        }
+    } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        v = cache.fn(fieldNameMap, ctx, cache, record);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return v;
 }
@@ -116,7 +264,14 @@ function getOp1Value(
 
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cond: PreparedCondition, record: any) {
+        cond: PreparedCondition, record: any):
+        string | number | PreparedAtomValue[] | null {
+
+    const cached = condOp2ValueCache.get(cond);
+    if (cached) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return cached.value;
+    }
 
     let v = null;
     const op = cond.operands[1];
@@ -160,6 +315,7 @@ function getOp2Value(
         break;
     }
 
+    condOp2ValueCache.set(cond, { value: v });
     return v;
 }
 

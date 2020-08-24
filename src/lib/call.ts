@@ -9,8 +9,8 @@ import { FieldResultType,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
          AggregateQueryFuncInfo } from '../types';
-import { getObjectValue,
-         getTrueCaseFieldName }   from './util';
+import { getObjectValue }         from './util';
+import { nestedFnInfoCache }      from './cache';
 
 
 
@@ -48,8 +48,12 @@ export function callScalarFunction(
                 }
             case 'fncall':
                 {
-                    const argFnNameI = a.fn.toLowerCase();
-                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    let argFnInfoTmp = nestedFnInfoCache.get(a);
+                    if (! argFnInfoTmp) {
+                        const argFnNameI = a.fn.toLowerCase();
+                        argFnInfoTmp = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    }
+                    const argFnInfo = argFnInfoTmp;
 
                     switch (argFnInfo?.type) {
                     case 'aggregate':
@@ -104,8 +108,12 @@ export function callImmediateScalarFunction(
                 }
             case 'fncall':
                 {
-                    const argFnNameI = a.fn.toLowerCase();
-                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    let argFnInfoTmp = nestedFnInfoCache.get(a);
+                    if (! argFnInfoTmp) {
+                        const argFnNameI = a.fn.toLowerCase();
+                        argFnInfoTmp = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    }
+                    const argFnInfo = argFnInfoTmp;
 
                     switch (argFnInfo?.type) {
                     case 'aggregate':
@@ -172,8 +180,12 @@ export function callAggregateFunction(
                 }
             case 'fncall':
                 {
-                    const argFnNameI = a.fn.toLowerCase();
-                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    let argFnInfoTmp = nestedFnInfoCache.get(a);
+                    if (! argFnInfoTmp) {
+                        const argFnNameI = a.fn.toLowerCase();
+                        argFnInfoTmp = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    }
+                    const argFnInfo = argFnInfoTmp;
 
                     switch (argFnInfo?.type) {
                     case 'scalar':

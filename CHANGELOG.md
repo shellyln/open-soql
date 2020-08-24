@@ -4,6 +4,7 @@
 
 * Nested scalar/aggregate function calls.
 * Improve `select` query performance.
+* `[FIX]` Nested function on relational query result is broken.
 * Improve typings.
 * Update README.
 * Update dependencies.
