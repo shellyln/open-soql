@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.1.2
+## v0.2.0
 
 * Nested scalar/aggregate function calls.
 * Improve `select` query performance.
@@ -9,6 +9,8 @@
 * Update README.
 * Update dependencies.
 
+
+---
 
 ## v0.1.1
 
