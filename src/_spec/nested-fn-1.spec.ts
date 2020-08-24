@@ -705,4 +705,53 @@ describe("nested-fn-1", function() {
             }
         }
     });
+
+    it("Nested function call: relational scalar (2)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        id,
+                        acc.id
+                    from contact, account acc
+                    where id='Contact/z3' and
+                        concat(
+                            testspec_string_twice(acc.name),
+                            ';',
+                            testspec_string_twice(acc.address),
+                            testspec_pass_thru('!')
+                        ) = 'fff/z2fff/z2;ggg/z2ggg/z2!'
+                    `;
+                const expects = [
+                    { Id: 'Contact/z3', Account: { Id: 'Account/z2' } },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        id,
+                        acc.id
+                    from contact, account acc
+                    where id='Contact/z3' and
+                        concat(
+                            testspec_string_twice(acc.name),
+                            ';',
+                            testspec_pass_thru(testspec_string_twice(acc.address)),
+                            ';',
+                            testspec_pass_thru('!'),
+                            testspec_string_twice(testspec_pass_thru('?'))
+                        ) = 'fff/z2fff/z2;ggg/z2ggg/z2;!??'
+                    `;
+                const expects = [
+                    { Id: 'Contact/z3', Account: { Id: 'Account/z2' } },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
 });
