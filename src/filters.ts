@@ -5,7 +5,6 @@
 
 import { ResolverContext,
          FieldResultType,
-         QueryFuncInfo,
          PreparedConditionOperand,
          PreparedCondition,
          PreparedAtomValue,
@@ -20,33 +19,20 @@ import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction,
          isScalarFnCallable }             from './lib/call';
+import { CondOp1CacheValue,
+         condOp1FnCache,
+         condOp2ValueCache }              from './lib/cache';
 
-
-
-interface Op1CacheValue {
-    isField: boolean,
-    isDateOrDatetime: boolean,
-    op: PreparedConditionOperand,
-    op2FieldResultType: FieldResultType,
-    fnInfo: QueryFuncInfo | null,
-    fn: (fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cache: Op1CacheValue, record: any) => any,
-}
-
-
-const op1FnCache = new WeakMap<PreparedCondition, Op1CacheValue>();
 
 
 const getOp1Noop = (
     fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-    cache: Op1CacheValue, record: any) => {
-    return;
-}
+    cache: CondOp1CacheValue, record: any) => void 0;
 
 
 const getOp1AggregateFnValue = (
         fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cache: Op1CacheValue, record: any) => {
+        cache: CondOp1CacheValue, record: any) => {
 
     const { op, op2FieldResultType, fnInfo } = cache;
 
@@ -59,7 +45,7 @@ const getOp1AggregateFnValue = (
 
 const getOp1ScalarOnAggFnValue = (
         fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cache: Op1CacheValue, record: any) => {
+        cache: CondOp1CacheValue, record: any) => {
 
     const { op, op2FieldResultType, fnInfo } = cache;
 
@@ -74,7 +60,7 @@ const getOp1ScalarOnAggFnValue = (
 
 const getOp1ScalarOnNonAggFnValue = (
         fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cache: Op1CacheValue, record: any) => {
+        cache: CondOp1CacheValue, record: any) => {
 
     const { op, op2FieldResultType, fnInfo } = cache;
 
@@ -87,7 +73,7 @@ const getOp1ScalarOnNonAggFnValue = (
 
 const getOp1ImmediateScalarOnAggFnValue = (
         fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cache: Op1CacheValue, record: any) => {
+        cache: CondOp1CacheValue, record: any) => {
 
     const { op, op2FieldResultType, fnInfo } = cache;
 
@@ -100,7 +86,7 @@ const getOp1ImmediateScalarOnAggFnValue = (
 
 const getOp1ImmediateScalarOnNonAggFnValue = (
         fieldNameMap: Map<string, string>, ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cache: Op1CacheValue, record: any) => {
+        cache: CondOp1CacheValue, record: any) => {
 
     const { op, op2FieldResultType, fnInfo } = cache;
 
@@ -117,7 +103,7 @@ function createOp1Cache(
     ctx: Omit<ResolverContext, 'resolverCapabilities'>,
     cond: PreparedCondition) {
 
-    let cache: Op1CacheValue | undefined = op1FnCache.get(cond);
+    let cache: CondOp1CacheValue | undefined = condOp1FnCache.get(cond);
     const op = cond.operands[0];
     const op2 = cond.operands[1];
     let op2IsDateOrDatetime = false;
@@ -156,7 +142,7 @@ function createOp1Cache(
                     fnInfo: null,
                     fn: getOp1Noop,
                 };
-                op1FnCache.set(cond, cache);
+                condOp1FnCache.set(cond, cache);
                 break;
             case 'fncall':
                 {
@@ -176,7 +162,7 @@ function createOp1Cache(
                             fnInfo,
                             fn: getOp1AggregateFnValue,
                         };
-                        op1FnCache.set(cond, cache);
+                        condOp1FnCache.set(cond, cache);
                         break;
                     case 'scalar':
                         if (isAggregation) {
@@ -192,7 +178,7 @@ function createOp1Cache(
                                 fnInfo,
                                 fn: getOp1ScalarOnAggFnValue,
                             };
-                            op1FnCache.set(cond, cache);
+                            condOp1FnCache.set(cond, cache);
                         } else {
                             cache = {
                                 isField: false,
@@ -202,7 +188,7 @@ function createOp1Cache(
                                 fnInfo,
                                 fn: getOp1ScalarOnNonAggFnValue,
                             };
-                            op1FnCache.set(cond, cache);
+                            condOp1FnCache.set(cond, cache);
                         }
                         break;
                     case 'immediate-scalar':
@@ -216,7 +202,7 @@ function createOp1Cache(
                                 ? getOp1ImmediateScalarOnAggFnValue
                                 : getOp1ImmediateScalarOnNonAggFnValue,
                         };
-                        op1FnCache.set(cond, cache);
+                        condOp1FnCache.set(cond, cache);
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(1).`);
@@ -232,7 +218,7 @@ function createOp1Cache(
         throw new Error(`Unexpected type appears in the operand(1).`);
     }
 
-    return cache as Op1CacheValue;
+    return cache as CondOp1CacheValue;
 }
 
 
@@ -246,7 +232,7 @@ function getOp1Value(
     let v = null;
     const op = cond.operands[0];
 
-    const cache: Op1CacheValue = op1FnCache.get(cond)
+    const cache: CondOp1CacheValue = condOp1FnCache.get(cond)
         ?? createOp1Cache(groupFields, isAggregation, ctx, cond);
     
     if (op === null) {
@@ -276,20 +262,12 @@ function getOp1Value(
 }
 
 
-interface Op2CacheValue {
-    value: any,
-}
-
-
-const op2ValueCache = new WeakMap<PreparedCondition, Op2CacheValue>();
-
-
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any):
         string | number | PreparedAtomValue[] | null {
 
-    const cached = op2ValueCache.get(cond);
+    const cached = condOp2ValueCache.get(cond);
     if (cached) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return cached.value;
@@ -337,7 +315,7 @@ function getOp2Value(
         break;
     }
 
-    op2ValueCache.set(cond, { value: v });
+    condOp2ValueCache.set(cond, { value: v });
     return v;
 }
 
