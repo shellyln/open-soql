@@ -546,7 +546,8 @@ describe("nested-fn-1", function() {
                         `;
                     expect(1).toEqual(0);
                 } catch (e) {
-                    expect(1).toEqual(1);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect((e as any).message).toEqual('expr_a is not allowed. Aggregate function is needed.');
                 }
             }
 
@@ -621,7 +622,8 @@ describe("nested-fn-1", function() {
                         `;
                     expect(1).toEqual(0);
                 } catch (e) {
-                    expect(1).toEqual(1);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect((e as any).message).toEqual('concat is not allowed. Aggregate function is needed.');
                 }
             }
 
@@ -651,6 +653,53 @@ describe("nested-fn-1", function() {
                     `;
                 const expects = [
                     { expr_foo: 'aaa/z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+    it("Nested function call: relational scalar (1)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        id,
+                        concat(
+                            testspec_string_twice(acc.name),
+                            ';',
+                            testspec_string_twice(acc.address),
+                            testspec_pass_thru('!')
+                        ) expr_a
+                    from contact, account acc
+                    where id='Contact/z3'
+                    `;
+                const expects = [
+                    { Id: 'Contact/z3', Account: { expr_a: 'fff/z2fff/z2;ggg/z2ggg/z2!' } },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        id,
+                        concat(
+                            testspec_string_twice(acc.name),
+                            ';',
+                            testspec_pass_thru(testspec_string_twice(acc.address)),
+                            ';',
+                            testspec_pass_thru('!'),
+                            testspec_string_twice(testspec_pass_thru('?'))
+                        ) expr_a
+                    from contact, account acc
+                    where id='Contact/z3'
+                    `;
+                const expects = [
+                    { Id: 'Contact/z3', Account: { expr_a: 'fff/z2fff/z2;ggg/z2ggg/z2;!??' } },
                 ];
                 expect(result).toEqual(expects);
             }

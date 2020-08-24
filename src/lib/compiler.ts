@@ -346,7 +346,7 @@ function normalize(
         return x;
     };
 
-    const normalizeFnCall = (x: PreparedFnCall, index: number) => {
+    const normalizeFnCall = (x: PreparedFnCall, opIndex: number) => {
         const fnNameI = x.fn.toLowerCase();
         const found = builder.functions.find(z => z.name.toLowerCase() === fnNameI);
         if (! found) {
@@ -364,13 +364,13 @@ function normalize(
                 // NOTE: scalar and immediate-scalar is allowed.
                 throw new Error(`Aggregate function '${x.fn}' is not allowed.`);
             }
-            if (index !== 0 && found.type !== 'immediate-scalar') {
-                throw new Error(`Function '${x.fn}' is not allowed at operand ${index + 1}.`);
+            if (opIndex !== 0 && found.type !== 'immediate-scalar') {
+                throw new Error(`Function '${x.fn}' is not allowed at operand ${opIndex + 1}.`);
             }
             break;
         case 'having':
-            if (index !== 0 && found.type !== 'immediate-scalar') {
-                throw new Error(`Function '${x.fn}' is not allowed at operand ${index + 1}.`);
+            if (opIndex !== 0 && found.type !== 'immediate-scalar') {
+                throw new Error(`Function '${x.fn}' is not allowed at operand ${opIndex + 1}.`);
             }
             break;
         }
@@ -384,6 +384,9 @@ function normalize(
                     switch (arg.type) {
                     case 'field':
                         normalizeSelectField(arg);
+                        break;
+                    case 'fncall':
+                        normalizeFnCall(arg, 0); // NOTE: treat as opIndex = 0 (always correct)
                         break;
                     }
                 }
@@ -517,7 +520,12 @@ function normalize(
                         }
                         break;
                     case 'fncall':
-                        collectFncallQueryFields(arg, true);
+                        {
+                            const resolverTmp = collectFncallQueryFields(arg, true);
+                            if (! resolver) {
+                                resolver = resolverTmp;
+                            }
+                        }
                         break;
                     }
                 }
@@ -528,6 +536,7 @@ function normalize(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             (resolver ?? query.from[0]).queryFieldsMap!.set(x.aliasName, x);
         }
+        return resolver;
     };
 
     for (const x of query.select) {
