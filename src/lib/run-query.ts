@@ -5,10 +5,16 @@
 
 import { PreparedQuery,
          PreparedResolver,
+         PreparedFnCall,
          PreparedSubQuery,
+         PreparedFieldListItem,
          PreparedCondition,
          ResolverCapabilities,
          ResolverContext,
+         AggregateQueryFuncInfo,
+         ScalarQueryFuncInfo,
+         ImmediateScalarQueryFuncInfo,
+         QueryFuncInfo,
          QueryBuilderInfoInternal }       from '../types';
 import { deepCloneObject,
          isEqualComplexName,
@@ -220,38 +226,85 @@ function mapSelectFields(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         x: PreparedResolver, records: any[], isAggregation: boolean) {
 
-    for (const record of records) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const queryFieldsMapEntries:
+        Array<{
+            isField: boolean,
+            fieldName: string,
+            field: PreparedFieldListItem,
+            fn: (i: number, fieldName: string, field: PreparedFieldListItem, record: any) => void,
+        }> = new Array(x.queryFieldsMap.size);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const fnInfos: QueryFuncInfo[] = new Array(x.queryFieldsMap.size);
+
+    const fnScaler = (i: number, fieldName: string, field: PreparedFieldListItem, record: any) => {
+        const fnInfo: ScalarQueryFuncInfo = fnInfos[i] as ScalarQueryFuncInfo;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        record[(field as PreparedFnCall).aliasName] = callScalarFunction(ctx, field as PreparedFnCall, fnInfo, 'any', record, null);
+    };
+
+    const fnImmediateScaler = (i: number, fieldName: string, field: PreparedFieldListItem, record: any) => {
+        const fnInfo: ImmediateScalarQueryFuncInfo = fnInfos[i] as ImmediateScalarQueryFuncInfo;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        record[(field as PreparedFnCall).aliasName] = callImmediateScalarFunction(ctx, field as PreparedFnCall, fnInfo, 'any', record, null);
+    };
+
+    const fnNoop = (i: number, fieldName: string, field: PreparedFieldListItem, record: any) => void 0;
+
+    {
+        let i = 0;
         for (const ent of x.queryFieldsMap.entries()) {
             const [fieldName, field] = ent;
-
             switch (field.type) {
             case 'field':
-                if (field.aliasName) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                    record[field.aliasName] = record[fieldName];
-                }
+                queryFieldsMapEntries[i] = { isField: true, fieldName, field, fn: fnNoop };
                 break;
             case 'fncall':
                 // NOTE: If aggregation, function will be called at `aggregateFields()`.
-                if (! isAggregation) {
+                if (isAggregation) {
+                    queryFieldsMapEntries[i] = { isField: false, fieldName, field, fn: fnNoop };
+                } else {
                     const fnNameI = field.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
 
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    fnInfos[i] = fnInfo!;
+
                     switch (fnInfo?.type) {
                     case 'scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', record, null);
+                        queryFieldsMapEntries[i] = { isField: false, fieldName, field, fn: fnScaler };
                         break;
                     case 'immediate-scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', record, null);
+                        queryFieldsMapEntries[i] = { isField: false, fieldName, field, fn: fnImmediateScaler };
                         break;
                     default:
-                        // Nothing to do.
+                        queryFieldsMapEntries[i] = { isField: false, fieldName, field, fn: fnNoop };
                         break;
                     }
                 }
                 break;
+            default:
+                queryFieldsMapEntries[i] = { isField: false, fieldName, field, fn: fnNoop };
+                break;
+            }
+            i++;
+        }
+    }
+
+    for (const record of records) {
+        for (let i = 0; i < queryFieldsMapEntries.length; i++) {
+            const { isField, fieldName, field, fn } = queryFieldsMapEntries[i];
+
+            if (isField) {
+                // NOTE: Inline expansion
+
+                if(field.aliasName) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-non-null-assertion
+                    record[field.aliasName!] = record[fieldName];
+                }
+            } else {
+                fn(i, fieldName, field, record);
             }
         }
     }
@@ -319,57 +372,128 @@ function aggregateFields(
     const groupFields = new Map<string, string>(
         groupBy.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
-    // TODO: [improve performance] Predetermine field types and cache (Push function to array that indexed by field entries index).
-    for (const g of records) {
-        const agg = {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const queryFieldsMapEntries:
+        Array<{
+            isField: boolean,
+            field: PreparedFieldListItem,
+            trueCaseName: string,
+            fn: (i: number, field: PreparedFieldListItem, g: any[], agg: any) => void,
+        }> = new Array(x.queryFieldsMap.size);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const fnInfos: QueryFuncInfo[] = new Array(x.queryFieldsMap.size);
+
+    const fnAggregate = (i: number, field: PreparedFieldListItem, g: any[], agg: any) => {
+        const fnInfo: AggregateQueryFuncInfo = fnInfos[i] as AggregateQueryFuncInfo;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        agg[(field as PreparedFnCall).aliasName] = callAggregateFunction(ctx, field as PreparedFnCall, fnInfo, 'any', g);
+    };
+
+    const fnImmediateScalar = (i: number, field: PreparedFieldListItem, g: any[], agg: any) => {
+        const fnInfo: ImmediateScalarQueryFuncInfo = fnInfos[i] as ImmediateScalarQueryFuncInfo;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        agg[(field as PreparedFnCall).aliasName] = callImmediateScalarFunction(ctx, field as PreparedFnCall, fnInfo, 'any', null, g);
+    };
+
+    const fnScalar = (i: number, field: PreparedFieldListItem, g: any[], agg: any) => {
+        const fnInfo: ScalarQueryFuncInfo = fnInfos[i] as ScalarQueryFuncInfo;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        agg[(field as PreparedFnCall).aliasName] = callScalarFunction(ctx, field as PreparedFnCall, fnInfo, 'any', g[0], g);
+    };
+
+    const fnNoop = (i: number, field: PreparedFieldListItem, g: any[], agg: any) => void 0;
+
+    {
+        let i = 0;
         for (const ent of x.queryFieldsMap.entries()) {
             const [, field] = ent;
-
             switch (field.type) {
             case 'field':
                 {
                     const trueCaseName = getGroupFieldTrueCaseName(groupFields, field.name[field.name.length - 1]);
-
-                    if (trueCaseName) {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        agg[trueCaseName] = g[0][trueCaseName];
-
-                        if (field.aliasName) {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            agg[field.aliasName] = g[0][trueCaseName];
-                        }
-                    } else {
+                    if (! trueCaseName) {
                         throw new Error(`${field.name.join('.')} is not allowed. Aggregate function is needed.`);
                     }
+                    queryFieldsMapEntries[i] = {
+                        isField: true,
+                        field,
+                        trueCaseName,
+                        fn: fnNoop,
+                    };
                 }
                 break;
             case 'fncall':
                 {
-                    // TODO: cache fnInfo!
                     const fnNameI = field.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
 
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    fnInfos[i] = fnInfo!;
+
                     switch (fnInfo?.type) {
                     case 'aggregate':
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName] = callAggregateFunction(ctx, field, fnInfo, 'any', g);
+                        queryFieldsMapEntries[i] = {
+                            isField: false,
+                            field,
+                            trueCaseName: '',
+                            fn: fnAggregate,
+                        };
                         break;
                     case 'immediate-scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', null, g);
+                        queryFieldsMapEntries[i] = {
+                            isField: false,
+                            field,
+                            trueCaseName: '',
+                            fn: fnImmediateScalar,
+                        };
                         break;
                     case 'scalar':
                         if (! isScalarFnCallable(ctx, groupFields, field.args)) {
                             throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                         }
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', g[0], g);
+                        queryFieldsMapEntries[i] = {
+                            isField: false,
+                            field,
+                            trueCaseName: '',
+                            fn: fnScalar,
+                        };
                         break;
                     default:
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                     }
                 }
                 break;
+            default:
+                queryFieldsMapEntries[i] = {
+                    isField: false,
+                    field,
+                    trueCaseName: '',
+                    fn: fnNoop,
+                };
+                break;
+            }
+            i++;
+        }
+    }
+
+    for (const g of records) {
+        const agg = {};
+        for (let i = 0; i < queryFieldsMapEntries.length; i++) {
+            const { isField, field, trueCaseName, fn } = queryFieldsMapEntries[i];
+
+            if (isField) {
+                // NOTE: Inline expansion
+
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                agg[trueCaseName] = g[0][trueCaseName];
+
+                if (field.aliasName) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    agg[field.aliasName] = g[0][trueCaseName];
+                }
+            } else {
+                fn(i, field, g, agg);
             }
         }
         result.push(agg);
