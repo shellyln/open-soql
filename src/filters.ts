@@ -3,11 +3,12 @@
 // https://github.com/shellyln
 
 
-import { FieldResultType,
+import { ResolverContext,
+         FieldResultType,
          QueryFuncInfo,
          PreparedConditionOperand,
          PreparedCondition,
-         ResolverContext,
+         PreparedAtomValue,
          PreparedField,
          PreparedFnCall,
          ScalarQueryFuncInfo,
@@ -275,9 +276,24 @@ function getOp1Value(
 }
 
 
+interface Op2CacheValue {
+    value: any,
+}
+
+
+const op2ValueCache = new WeakMap<PreparedCondition, Op2CacheValue>();
+
+
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        cond: PreparedCondition, record: any) {
+        cond: PreparedCondition, record: any):
+        string | number | PreparedAtomValue[] | null {
+
+    const cached = op2ValueCache.get(cond);
+    if (cached) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return cached.value;
+    }
 
     let v = null;
     const op = cond.operands[1];
@@ -321,6 +337,7 @@ function getOp2Value(
         break;
     }
 
+    op2ValueCache.set(cond, { value: v });
     return v;
 }
 
