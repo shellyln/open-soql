@@ -286,7 +286,7 @@ See also usage example repo.
   * [x] resolver (relationship) alias name
   * [x] field alias name
   * [x] function call (aggregate | scalar | immediate_scalar)
-  * [ ] nested function call (call functions in actual parameters of functions)
+  * [x] nested function call (call functions in actual parameters of functions)
   * functions
     * Aggregate functions
       * [x] `count()`, `count(field)`

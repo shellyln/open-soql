@@ -92,9 +92,10 @@ function findResolver(
 function registerFields(
         query: ParsedQuery,
         x: PreparedField | PreparedOrderByField,
+        defaultResolver: ParsedResolver | undefined,
         fn: (rslv: ParsedResolver) => Set<string>) {
 
-    const resolver = findResolver(query, x);
+    const resolver = findResolver(query, x) ?? defaultResolver;
     if (resolver) {
         fn(resolver).add(x.name[x.name.length - 1]);
     }
@@ -161,6 +162,31 @@ function flatConditions(
 }
 
 
+function recureseForEachConditionFieldsFncall(
+        x: PreparedFnCall,
+        fn: (field: PreparedField | PreparedOrderByField) => void) {
+
+    for (const arg of x.args) {
+        switch (typeof arg) {
+        case 'object':
+            if (arg === null) {
+                // NOTE: Nothing to do.
+            } else {
+                switch (arg.type) {
+                case 'field':
+                    fn(arg);
+                    break;
+                case 'fncall':
+                    recureseForEachConditionFieldsFncall(arg, fn);
+                    break;
+                }
+            }
+            break;
+        }
+    }
+}
+
+
 function recureseForEachConditionFields(
         cond: PreparedCondition,
         fn: (field: PreparedField | PreparedOrderByField) => void) {
@@ -192,6 +218,9 @@ function recureseForEachConditionFields(
                                     switch (arg.type) {
                                     case 'field':
                                         fn(arg);
+                                        break;
+                                    case 'fncall':
+                                        recureseForEachConditionFieldsFncall(arg, fn);
                                         break;
                                     }
                                 }
@@ -335,11 +364,13 @@ function normalize(
                 // NOTE: scalar and immediate-scalar is allowed.
                 throw new Error(`Aggregate function '${x.fn}' is not allowed.`);
             }
+            if (index !== 0 && found.type !== 'immediate-scalar') {
+                throw new Error(`Function '${x.fn}' is not allowed at operand ${index + 1}.`);
+            }
             break;
         case 'having':
-            if (index === 0 && found.type !== 'aggregate') {
-                // NOTE: only aggregate is allowed.
-                throw new Error(`Non-aggregate function '${x.fn}' is not allowed.`);
+            if (index !== 0 && found.type !== 'immediate-scalar') {
+                throw new Error(`Function '${x.fn}' is not allowed at operand ${index + 1}.`);
             }
             break;
         }
@@ -452,52 +483,65 @@ function normalize(
 
     const registerQueryFields = (x: PreparedField) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        registerFields(query, x, (rslv: ParsedResolver) => rslv.queryFields!);
+        registerFields(query, x, query.from[0], (rslv: ParsedResolver) => rslv.queryFields!);
 
     const registerCondFields = (x: PreparedField | PreparedOrderByField) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        registerFields(query, x, (rslv: ParsedResolver) => rslv.condFields!);
+        registerFields(query, x, query.from[0], (rslv: ParsedResolver) => rslv.condFields!);
 
     const registerHavingCondFields = (x: PreparedField | PreparedOrderByField) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        registerFields(query, x, (rslv: ParsedResolver) => rslv.havingCondFields!);
+        registerFields(query, x, query.from[0], (rslv: ParsedResolver) => rslv.havingCondFields!);
 
     let exprCount = 0;
+
+    const collectFncallQueryFields = (x: PreparedFnCall, nested: boolean) => {
+        if (! nested) {
+            if (! x.aliasName) {
+                x.aliasName = `expr${exprCount++}`; // TODO: Check conflict
+            }
+        }
+        let resolver: ParsedResolver | undefined = void 0;
+        for (const arg of x.args) {
+            switch (typeof arg) {
+            case 'object':
+                if (arg === null) {
+                    // NOTE: Nothing to do.
+                } else {
+                    switch (arg.type) {
+                    case 'field':
+                        registerQueryFields(arg);
+                        if (! resolver) {
+                            // BUG: TODO: Check all arguments are same resolver's field.
+                            resolver = findResolver(query, arg);
+                        }
+                        break;
+                    case 'fncall':
+                        collectFncallQueryFields(arg, true);
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        if (! nested) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            (resolver ?? query.from[0]).queryFieldsMap!.set(x.aliasName, x);
+        }
+    };
+
     for (const x of query.select) {
         switch (x.type) {
         case 'field':
             {
                 registerQueryFields(x);
                 const resolver = findResolver(query, x); // TODO: find twice!
-                resolver?.queryFieldsMap?.set(x.name[x.name.length - 1], x);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                resolver?.queryFieldsMap!.set(x.name[x.name.length - 1], x);
             }
             break;
         case 'fncall':
-            {
-                if (! x.aliasName) {
-                    x.aliasName = `expr${exprCount++}`; // TODO: Check conflict
-                }
-                let resolver: ParsedResolver | undefined = void 0;
-                for (const arg of x.args) {
-                    switch (typeof arg) {
-                    case 'object':
-                        if (arg === null) {
-                            // NOTE: Nothing to do.
-                        } else {
-                            switch (arg.type) {
-                            case 'field':
-                                registerQueryFields(arg);
-                                if (! resolver) {
-                                    resolver = findResolver(query, arg);
-                                }
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-                (resolver ?? query.from[0]).queryFieldsMap?.set(x.aliasName, x);
-            }
+            collectFncallQueryFields(x, false);
             break;
         }
     }

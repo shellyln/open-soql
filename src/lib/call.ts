@@ -9,14 +9,16 @@ import { FieldResultType,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
          AggregateQueryFuncInfo } from '../types';
-import { getObjectValue }         from './util';
+import { getObjectValue,
+         getTrueCaseFieldName }   from './util';
 
 
 
 export function callScalarFunction(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        field: PreparedFnCall, fnInfo: ScalarQueryFuncInfo, fieldResultType: FieldResultType,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        field: PreparedFnCall, fnInfo: ScalarQueryFuncInfo, fieldResultType: FieldResultType, record: any): any {
+        record: any, groupedRecs: any[] | null): any {
 
     const args = field.args.map(a => {
         switch (typeof a) {
@@ -44,6 +46,28 @@ export function callScalarFunction(
                 default:
                     return a.value;
                 }
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+
+                    switch (argFnInfo?.type) {
+                    case 'aggregate':
+                        if (! groupedRecs) {
+                            throw new Error(`Nested function ${a.fn} is not allowed.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callAggregateFunction(ctx, a, argFnInfo, 'any', groupedRecs);
+                    case 'scalar':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callScalarFunction(ctx, a, argFnInfo, 'any', record, groupedRecs);
+                    case 'immediate-scalar':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record, groupedRecs);
+                    default:
+                        throw new Error(`Nested function ${a.fn} is not allowed.`);
+                    }
+                }
             default:
                 return a;
             }
@@ -59,7 +83,8 @@ export function callScalarFunction(
 
 export function callImmediateScalarFunction(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
-        field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType): any {
+        field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType,
+        record: any | null, groupedRecs: any[] | null): any {
 
     const args = field.args.map(a => {
         switch (typeof a) {
@@ -76,6 +101,31 @@ export function callImmediateScalarFunction(
                     return new Date(a.value).getTime();
                 default:
                     return a.value;
+                }
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+
+                    switch (argFnInfo?.type) {
+                    case 'aggregate':
+                        if (groupedRecs === null) {
+                            throw new Error(`Nested function ${a.fn} is not allowed.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callAggregateFunction(ctx, a, argFnInfo, 'any', groupedRecs);
+                    case 'scalar':
+                        if (record === null) {
+                            throw new Error(`Nested function ${a.fn} is not allowed.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callScalarFunction(ctx, a, argFnInfo, 'any', record, groupedRecs);
+                    case 'immediate-scalar':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                        return callImmediateScalarFunction(ctx, a, argFnInfo, 'any', record, groupedRecs);
+                    default:
+                        throw new Error(`Nested function ${a.fn} is not allowed.`);
+                    }
                 }
             default:
                 return a;
@@ -120,6 +170,30 @@ export function callAggregateFunction(
                 default:
                     return a.value;
                 }
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+
+                    switch (argFnInfo?.type) {
+                    case 'scalar':
+                        {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            const z = records.map(w => callScalarFunction(ctx, a, argFnInfo, 'any', w, records));
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            return z;
+                        }
+                    case 'immediate-scalar':
+                        {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            const z = records.map(w => callImmediateScalarFunction(ctx, a, argFnInfo, 'any', w, records));
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            return z;
+                        }
+                    default:
+                        throw new Error(`Nested function ${a.fn} is not allowed.`);
+                    }
+                }
             default:
                 return a;
             }
@@ -130,4 +204,51 @@ export function callAggregateFunction(
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fnInfo.fn(ctx, args, records);
+}
+
+
+export function getGroupFieldTrueCaseName(groupFields: Map<string, string>, name: string): string | null {
+    if (groupFields.has(name)) {
+        const trueCaseName = groupFields.get(name);
+        if (trueCaseName) {
+            return trueCaseName;
+        }
+    }
+    return null;
+}
+
+
+export function isScalarFnCallable(
+        ctx: Omit<ResolverContext, 'resolverCapabilities'>,
+        groupFields: Map<string, string>, args: PreparedFnCall['args']): boolean {
+
+    for (const a of args) {
+        switch (typeof a) {
+        case 'object':
+            switch (a?.type) {
+            case 'field':
+                {
+                    const trueCaseName = getGroupFieldTrueCaseName(groupFields, a.name[a.name.length - 1]);
+                    if (! trueCaseName) {
+                        return false;
+                    }
+                }
+                break;
+            case 'fncall':
+                {
+                    const argFnNameI = a.fn.toLowerCase();
+                    const argFnInfo = ctx.functions.find(x => x.name.toLowerCase() === argFnNameI);
+                    switch (argFnInfo?.type) {
+                    case 'scalar':
+                        if (! isScalarFnCallable(ctx, groupFields, a.args)) {
+                            return false;
+                        }
+                    }
+                }
+                break;
+            }
+            break;
+        }
+    }
+    return true;
 }

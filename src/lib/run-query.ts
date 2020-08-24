@@ -16,7 +16,9 @@ import { deepCloneObject,
          getObjectValueWithFieldNameMap } from './util';
 import { callAggregateFunction,
          callScalarFunction,
-         callImmediateScalarFunction }    from './call';
+         callImmediateScalarFunction,
+         getGroupFieldTrueCaseName,
+         isScalarFnCallable }             from './call';
 import { sortRecords }                    from '../sort';
 import { applyWhereConditions,
          applyHavingConditions }          from '../filters';
@@ -230,20 +232,19 @@ function mapSelectFields(
                 }
                 break;
             case 'fncall':
-                {
+                // NOTE: If aggregation, function will be called at `aggregateFields()`.
+                if (! isAggregation) {
                     const fnNameI = field.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
+
                     switch (fnInfo?.type) {
                     case 'scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        record[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', record);
+                        record[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', record, null);
                         break;
                     case 'immediate-scalar':
-                        // NOTE: If aggregation, immediate-scalar function will be called at `aggregateFields()`.
-                        if (! isAggregation) {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
-                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        record[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', record, null);
                         break;
                     default:
                         // Nothing to do.
@@ -318,6 +319,7 @@ function aggregateFields(
     const groupFields = new Map<string, string>(
         groupBy.map(w => [w.toLowerCase(), getTrueCaseFieldName(firstRec, w) ?? '']));
 
+    // TODO: [improve performance] Predetermine field types and cache (Push function to array that indexed by field entries index).
     for (const g of records) {
         const agg = {};
         for (const ent of x.queryFieldsMap.entries()) {
@@ -326,29 +328,24 @@ function aggregateFields(
             switch (field.type) {
             case 'field':
                 {
-                    let found = false;
-                    const name = field.name[field.name.length - 1];
+                    const trueCaseName = getGroupFieldTrueCaseName(groupFields, field.name[field.name.length - 1]);
 
-                    if (groupFields.has(name)) {
-                        const trueCaseName = groupFields.get(name);
-                        if (trueCaseName) {
-                            found = true;
+                    if (trueCaseName) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        agg[trueCaseName] = g[0][trueCaseName];
+
+                        if (field.aliasName) {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            agg[trueCaseName] = g[0][trueCaseName];
-
-                            if (field.aliasName) {
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                                agg[field.aliasName] = g[0][trueCaseName];
-                            }
+                            agg[field.aliasName] = g[0][trueCaseName];
                         }
-                    }
-                    if (! found) {
+                    } else {
                         throw new Error(`${field.name.join('.')} is not allowed. Aggregate function is needed.`);
                     }
                 }
                 break;
             case 'fncall':
                 {
+                    // TODO: cache fnInfo!
                     const fnNameI = field.fn.toLowerCase();
                     const fnInfo = ctx.functions.find(x => x.name.toLowerCase() === fnNameI);
 
@@ -359,12 +356,16 @@ function aggregateFields(
                         break;
                     case 'immediate-scalar':
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any');
+                        agg[field.aliasName] = callImmediateScalarFunction(ctx, field, fnInfo, 'any', null, g);
+                        break;
+                    case 'scalar':
+                        if (! isScalarFnCallable(ctx, groupFields, field.args)) {
+                            throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        agg[field.aliasName] = callScalarFunction(ctx, field, fnInfo, 'any', g[0], g);
                         break;
                     default:
-                        // TODO: Accept `scalar` functions
-                        //       if all parameters are already aggregated (include `group by` fields) or literal values.
-
                         throw new Error(`${field.aliasName ?? '(unnamed)'} is not allowed. Aggregate function is needed.`);
                     }
                 }
@@ -531,6 +532,8 @@ export async function executeCompiledQuery(
                 Array.from(x.queryFields.values());
             const condFields =
                 Array.from(x.condFields.values());
+            const havingCondFields =
+                Array.from(x.havingCondFields.values());
             const groupFields: string[] =
                 (i === 0 && query.groupBy) ? query.groupBy : []; // NOTE: condition is same as `isAggregation`
             const sortFields =
@@ -542,6 +545,7 @@ export async function executeCompiledQuery(
                 Array.from(
                     new Set<string>(queryFields
                         .concat(condFields)
+                        .concat(havingCondFields)
                         .concat(builder.rules.idFieldName ? [builder.rules.idFieldName(resolverName)] : [])
                         .concat(groupFields)
                         .concat(sortFields)
