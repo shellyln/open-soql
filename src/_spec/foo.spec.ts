@@ -493,4 +493,99 @@ describe("foo", function() {
             expect(1).toEqual(1);
         }
     });
+
+    it("foo-6 (benchmark)", async function() {
+        for (const cf of resolverConfigs) {
+            if (! cf.noCache) {
+                setDefaultStaticResolverConfig(cf);
+            }
+
+            let accCsvBody = '';
+            for (let i = 0; i < 1; i++) {
+                accCsvBody += `Account/z${i+1},Foobar${i+1} Co.\n`;
+            }
+
+            let conCsvBody = '';
+            for (let i = 0; i < 1; i++) {
+                conCsvBody += `Contact/z${i+1}, aaa/z${i+1}, bbb/z${i+1}, ccc/z${i+1}, ddd/z${i+1}, ${i+1}, Account/z${i+1}\n`;
+            }
+
+            const { soql } = build({
+                functions: [{
+                    type: 'scalar',
+                    name: 'testspec_string_concat',
+                    fn: (ctx, args, records) => {
+                        return args.map(c => String(c)).join('');
+                    },
+                }, {
+                    type: 'scalar',
+                    name: 'testspec_string_twice',
+                    fn: (ctx, args, records) => {
+                        return String(args[0]) + String(args[0]);
+                    },
+                }, {
+                    type: 'scalar',
+                    name: 'testspec_number_add',
+                    fn: (ctx, args, records) => {
+                        return args.map(c => Number(c)).reduce((a, b) => a + b);
+                    },
+                }, {
+                    type: 'scalar',
+                    name: 'testspec_twice',
+                    fn: (ctx, args, records) => {
+                        return Number(args[0]) * 2;
+                    },
+                }, {
+                    type: 'immediate-scalar',
+                    name: 'testspec_pass_thru',
+                    fn: (ctx, args) => {
+                        return args[0];
+                    },
+                }],
+                resolvers: {
+                    query: {
+                        Account: staticCsvResolverBuilder(
+                            'Account', () => Promise.resolve(`
+                                Id,        Name
+                                ${accCsvBody}
+                            `)
+                        ),
+                        Contact: staticCsvResolverBuilder(
+                            'Contact', () => Promise.resolve(`
+                                Id,         Foo,    Bar,    Baz,    Qux,    Quux,   AccountId
+                                ${conCsvBody}
+                            `)
+                        ),
+                    }
+                },
+                relationships: {
+                    Account: {
+                        Contacts: ['Contact'],
+                        // Contacts: ['Contact', 'Account'],
+                    },
+                    Contact: {
+                        Account: 'Account',
+                        // Account: { resolver: 'Account', id: 'AccountId' },
+                    },
+                },
+            });
+            const z = await soql`
+                Select
+                    id, foo, bar, baz, qux, quux
+                    , acc.id, acc.name
+                    , testspec_string_twice(testspec_string_concat(foo, bar))
+                    , testspec_string_twice(testspec_string_concat(acc.id, acc.name))
+                    -- , (Select Id, quux from acc.contacts)
+                from
+                      contact
+                    , account acc
+                where
+                        foo > ''
+                    and quux>=0
+                    and testspec_string_twice(testspec_string_concat(foo, bar)) > ''
+                    and testspec_pass_thru(testspec_string_twice(acc.name)) > ''
+            `;
+            expect(1).toEqual(1);
+        }
+    });
 });

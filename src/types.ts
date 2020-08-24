@@ -61,7 +61,7 @@ export interface PreparedFnCall extends PreparedFieldBaseForFnCall {
     args: Array<
             Omit<PreparedField, 'aliasName'> |
             PreparedAtomValue |
-            PreparedFnCall>; // TODO: nested function call
+            PreparedFnCall>;
 }
 
 

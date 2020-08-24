@@ -618,8 +618,6 @@ export function applyWhereConditions(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         conds: PreparedCondition[], records: any[]) {
 
-    // TODO: [improve performance] Predetermine the operators and push it onto the stack. (Consists of stack machine)
-
     const ret: any[] = [];
 
     if (! records.length) {
@@ -646,8 +644,6 @@ export function applyWhereConditions(
 export function applyHavingConditions(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         conds: PreparedCondition[], groupedRecsArray: any[][]) {
-
-    // TODO: [improve performance] Predetermine the operators and push it onto the stack. (Consists of stack machine)
 
     const ret: any[][] = [];
 

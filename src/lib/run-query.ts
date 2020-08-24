@@ -99,7 +99,7 @@ function pruneConditionCheckFncall(name: string[], x: PreparedFnCall): PreparedC
                             operands: [],
                         });
                     } else {
-                        arg.name = arg.name.slice(arg.name.length - 1); // TODO:
+                        arg.name = arg.name.slice(arg.name.length - 1);
                     }
                     break;
                 case 'fncall':
@@ -634,8 +634,6 @@ export async function executeCompiledQuery(
     }
 
     try {
-        // TODO: Move to `compile` phase
-
         const condWhereTemplate = query.where ?
             deepCloneObject(query.where) : [];
         const condHavingTemplate = query.having ?
@@ -832,7 +830,7 @@ export async function executeCompiledQuery(
                     await builder.events.afterMasterSubQueries(ctxGen);
                 }
 
-                const parentRemovingFields = removingFieldsMap.get(parentKey); // TODO: Is it always no effects?
+                const parentRemovingFields = removingFieldsMap.get(parentKey);
                 if (parentRemovingFields) {
                     parentRemovingFields.delete(parentFieldName);
                 }
@@ -916,7 +914,7 @@ export async function executeCompiledQuery(
                     }
                 }
 
-                const parentRemovingFields = removingFieldsMap.get(parentKey); // TODO: Is it always no effects?
+                const parentRemovingFields = removingFieldsMap.get(parentKey);
                 if (parentRemovingFields) {
                     parentRemovingFields.delete(subQueryName[subQueryName.length - 1]);
                 }

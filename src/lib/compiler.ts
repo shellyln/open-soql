@@ -342,7 +342,6 @@ function normalize(
             }
         }
 
-        // TODO: Add this field name to resolver's fields array.
         return x;
     };
 
