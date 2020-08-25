@@ -3,6 +3,7 @@
 ## v0.2.1
 
 * ✨`[NEW]` Pre-compiled query.
+* ✨`[NEW]` Named parameterized query.
 
 
 ## v0.2.0

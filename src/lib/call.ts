@@ -46,6 +46,20 @@ export function callScalarFunction(
                 default:
                     return a.value;
                 }
+            case 'parameter':
+                {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const z = ctx.params![a.name] ?? null;
+                    if (z === null) {
+                        return null;
+                    }
+                    switch (fieldResultType) {
+                    case 'date': case 'datetime':
+                        return new Date(z).getTime();
+                    default:
+                        return z;
+                    }
+                }
             case 'fncall':
                 {
                     let argFnInfoTmp = nestedFnInfoCache.get(a);
@@ -105,6 +119,20 @@ export function callImmediateScalarFunction(
                     return new Date(a.value).getTime();
                 default:
                     return a.value;
+                }
+            case 'parameter':
+                {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const z = ctx.params![a.name] ?? null;
+                    if (z === null) {
+                        return null;
+                    }
+                    switch (fieldResultType) {
+                    case 'date': case 'datetime':
+                        return new Date(z).getTime();
+                    default:
+                        return z;
+                    }
                 }
             case 'fncall':
                 {
@@ -177,6 +205,20 @@ export function callAggregateFunction(
                     return new Date(a.value).getTime();
                 default:
                     return a.value;
+                }
+            case 'parameter':
+                {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const z = ctx.params![a.name] ?? null;
+                    if (z === null) {
+                        return null;
+                    }
+                    switch (fieldResultType) {
+                    case 'date': case 'datetime':
+                        return new Date(z).getTime();
+                    default:
+                        return z;
+                    }
                 }
             case 'fncall':
                 {

@@ -281,7 +281,23 @@ function getOp2Value(
         if (op === null) {
             // nothing to do (v is null)
         } else if (Array.isArray(op)) {
-            v = op;
+            v = op.map(x => {
+                if (x === null) {
+                    return null;
+                }
+                switch (typeof x) {
+                case 'object':
+                    switch (x.type) {
+                    case 'date': case 'datetime':
+                        return x.value;
+                    case 'parameter':
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+                        return ctx.params![x.name] ?? null;
+                    }
+                default:
+                    return x;
+                }
+            });
         } else {
             switch (op.type) {
             case 'fncall':
@@ -302,6 +318,10 @@ function getOp2Value(
                 switch (op.type) {
                 case 'date': case 'datetime':
                     v = new Date(op.value).getTime();
+                    break;
+                case 'parameter':
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+                    v = ctx.params![op.name] ?? null;
                     break;
                 default:
                     throw new Error(`Unexpected type appears in the operand(2).`);

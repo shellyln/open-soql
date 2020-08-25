@@ -11,6 +11,8 @@ import { PreparedQuery,
          PreparedCondition,
          ResolverCapabilities,
          ResolverContext,
+         ResolverEvent,
+         QueryParams,
          AggregateQueryFuncInfo,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
@@ -198,6 +200,7 @@ function collectSubQueriesFromCondition(
 
 async function execCondSubQueries(
         builder: QueryBuilderInfoInternal,
+        params: QueryParams,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
         trOptions: any | undefined,
@@ -212,7 +215,7 @@ async function execCondSubQueries(
         condSubQueries
             .map(x =>
                 executeCompiledQuery(
-                    builder, tr, trOptions,
+                    builder, params, tr, trOptions,
                     x.subQuery.query, null, null, null, resolverData)
                 .then(r => ({ cond: x.cond, index: x.index, subQuery: x.subQuery, result: r })));
 
@@ -604,6 +607,7 @@ function getResolversInfo(builder: QueryBuilderInfoInternal, resolverNames: Map<
 
 export async function executeCompiledQuery(
         builder: QueryBuilderInfoInternal,
+        params: QueryParams,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
         trOptions: any | undefined,
@@ -639,8 +643,8 @@ export async function executeCompiledQuery(
         const condHavingTemplate = query.having ?
             deepCloneObject(query.having) : [];
 
-        await execCondSubQueries(builder, tr, trOptions, condWhereTemplate, resolverData);
-        await execCondSubQueries(builder, tr, trOptions, condHavingTemplate, resolverData);
+        await execCondSubQueries(builder, params, tr, trOptions, condWhereTemplate, resolverData);
+        await execCondSubQueries(builder, params, tr, trOptions, condHavingTemplate, resolverData);
 
         const removingFieldsAndRecords: Array<[Set<string>, any[]]> = [];
         const removingFieldsMap = new Map<string, Set<string>>();
@@ -703,6 +707,7 @@ export async function executeCompiledQuery(
             const ctxGen: Omit<ResolverContext, 'resolverCapabilities'> = {
                 functions: builder.functions,
                 query,
+                params,
                 graphPath: x.name,
                 resolverName,
                 parentResolverName,
@@ -863,31 +868,36 @@ export async function executeCompiledQuery(
                         currentIdFieldName,
                     } = getResolversInfo(builder, resolverNames, x.query.from[0], 0);
 
+                    const evtGen: ResolverEvent = {
+                        functions: builder.functions,
+                        query: x.query,
+                        params,
+                        graphPath: subQueryName,
+                        resolverName,
+                        parentResolverName,
+                        parentType,
+                        foreignIdField,
+                        masterIdField: parentIdFieldName,
+                        detailIdField: currentIdFieldName,
+                        parentRecords,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        resolverData,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionData: tr,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionOptions: trOptions,
+                    };
+
                     if (builder.events.beforeDetailSubQueries) {
                         await builder.events.beforeDetailSubQueries({
-                            functions: builder.functions,
-                            query: x.query,
-                            graphPath: subQueryName,
-                            resolverName,
-                            parentResolverName,
-                            parentType,
-                            foreignIdField,
-                            masterIdField: parentIdFieldName,
-                            detailIdField: currentIdFieldName,
-                            parentRecords,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            resolverData,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionData: tr,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionOptions: trOptions,
+                            ...evtGen,
                         });
                     }
 
                     for (const p of parentRecords) {
                         promises.push(
                             executeCompiledQuery(
-                                builder, tr, trOptions,
+                                builder, params, tr, trOptions,
                                 x.query, p, queriedRecords, resolverNames, resolverData)
                             .then(q => ({
                                 name: subQueryName,
@@ -900,16 +910,7 @@ export async function executeCompiledQuery(
 
                     if (builder.events.afterDetailSubQueries) {
                         await builder.events.afterDetailSubQueries({
-                            functions: builder.functions,
-                            query: x.query,
-                            graphPath: subQueryName,
-                            parentRecords,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            resolverData,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionData: tr,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionOptions: trOptions,
+                            ...evtGen,
                         });
                     }
                 }

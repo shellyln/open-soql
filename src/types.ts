@@ -31,8 +31,14 @@ export interface PreparedDateTimeValue {
 }
 
 
+export interface PreparedParameterizedValue {
+    type: 'parameter';
+    name: string;
+}
+
+
 export type PreparedAtomValue =
-    number | string | null | PreparedDateValue | PreparedDateTimeValue;
+    number | string | null | PreparedDateValue | PreparedDateTimeValue | PreparedParameterizedValue;
 
 
 export type PreparedValue =
@@ -192,9 +198,13 @@ export interface ResolverCapabilities {
 }
 
 
+export type QueryParams = { [paramNames: string]: number | string | null };
+
+
 export interface ResolverContext {
     functions: QueryFuncInfo[];
     query?: PreparedQuery;   // DON'T CHANGE any properties from the resolver!
+    params?: QueryParams;    // For named parameterized query.
     graphPath: string[];
     resolverName: string;
     parentResolverName?: string;

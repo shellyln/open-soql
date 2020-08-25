@@ -296,8 +296,7 @@ const stringValue =
             cat(repeat(first(
                 stringEscapeSeq,
                 combine(cls('\r', '\n'), err('Line breaks within strings are not allowed.')),
-                notCls("'"),
-            ))),
+                notCls("'"), ))),
         erase(seq("'")), );
 
 
@@ -333,6 +332,49 @@ const dateTimeValue =
                 cls(':'),
                 qty(2, 2)(classes.num), )),
         wordBoundary, ));
+
+
+const symbolStringValue =
+    trans(tokens => {
+        const sym = tokens[0] ?? '';
+        if (isUnsafeVarNames(dummyTargetObject, sym as string)) {
+            throw new Error(`Unsafe symbol name is appeared: ${sym as string}`);
+        }
+        return [sym];
+    })(
+        erase(seq('"')),
+            cat(repeat(first(
+                stringEscapeSeq,
+                combine(cls('\r', '\n'), err('Line breaks within strings are not allowed.')),
+                notCls('"'), ))),
+        erase(seq('"')), );
+
+
+const symbolName =
+    trans(tokens => {
+        if (isUnsafeVarNames(dummyTargetObject, tokens[0] as string)) {
+            throw new Error(`Unsafe symbol name is appeared: ${tokens[0] as string}`);
+        }
+        return tokens;
+    })(cat(combine(
+        first(classes.alpha, cls('$', '_')),
+        repeat(first(classes.alnum, cls('$', '_'))), )));
+
+
+const complexSymbolName =
+    trans(tokens => [{name: tokens}])(
+        first(symbolName, symbolStringValue),
+        repeat(combine(
+            erase(repeat(commentOrSpace),
+                  cls('.'),
+                  repeat(commentOrSpace), ),
+            first(symbolName, symbolStringValue), )));
+
+
+const parameterizedValue =
+    trans(tokens => [{type: 'parameter', name: tokens[0]}])(
+        erase(seq(':')),
+        symbolName, );
 
 
 const literalValue =
@@ -375,45 +417,8 @@ const literalValue =
         stringValue,
         trueValue,
         falseValue,
-        nullValue, );
-
-
-const symbolStringValue =
-    trans(tokens => {
-        const sym = tokens[0] ?? '';
-        if (isUnsafeVarNames(dummyTargetObject, sym as string)) {
-            throw new Error(`Unsafe symbol name is appeared: ${sym as string}`);
-        }
-        return [sym];
-    })(
-        erase(seq('"')),
-            cat(repeat(first(
-                stringEscapeSeq,
-                combine(cls('\r', '\n'), err('Line breaks within strings are not allowed.')),
-                notCls('"'),
-            ))),
-        erase(seq('"')), );
-
-
-const symbolName =
-    trans(tokens => {
-        if (isUnsafeVarNames(dummyTargetObject, tokens[0] as string)) {
-            throw new Error(`Unsafe symbol name is appeared: ${tokens[0] as string}`);
-        }
-        return tokens;
-    })(cat(combine(
-        first(classes.alpha, cls('$', '_')),
-        repeat(first(classes.alnum, cls('$', '_'))), )));
-
-
-const complexSymbolName =
-    trans(tokens => [{name: tokens}])(
-        first(symbolName, symbolStringValue),
-        repeat(combine(
-            erase(repeat(commentOrSpace),
-                  cls('.'),
-                  repeat(commentOrSpace), ),
-            first(symbolName, symbolStringValue), )));
+        nullValue,
+        parameterizedValue, );
 
 
 const selectFieldFunctionCall =
@@ -464,8 +469,7 @@ const listValue = trans(tokens => [tokens])(
     repeat(combine(
         erase(cls(','),
               repeat(commentOrSpace), ),
-        literalValue,
-    )),
+        literalValue, )),
     erase(repeat(commentOrSpace),
           cls(')'), ));
 
