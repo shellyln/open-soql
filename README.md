@@ -435,7 +435,7 @@ See also usage example repo.
 
 ### Other features
 * [x] prepared query (pre-compiled query)
-  * [ ] (named) parameterd query
+  * [ ] (named) parameterized query
 * standard query resolvers
   * [x] JSON string
   * [x] CSV string
