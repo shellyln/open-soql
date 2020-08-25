@@ -42,7 +42,7 @@ import { staticJsonResolverBuilder,
          staticCsvResolverBuilder,
          passThroughResolverBuilder } from 'open-soql/modules/resolvers';
 
-const { soql, insert, update, remove, transaction } = build({
+const { compile, soql, insert, update, remove, transaction } = build({
     // See `src/types.ts` > `QueryBuilderInfo`
     functions: [{ // optional: For defining custom functions.
         type: 'scalar',
@@ -212,6 +212,12 @@ const result = await soql<Partial<Contact>>`
 // result is [{...}, ...]
 ```
 
+### Pre-compiled query
+```ts
+const query = compile`Select id from account where id > ${'100'}`;
+const result = await query.execute<Partial<Account>>();
+```
+
 ### Aggregate
 ```ts
 const aggregationResult = await soql<ContactAgg>`
@@ -263,7 +269,7 @@ await remove('Contact', updated);
 ### Execute commands within a transaction
 ```ts
 await transaction(async (commands, tr) => {
-    const { soql, insert, update, remove } = commands;
+    const { compile, soql, insert, update, remove } = commands;
 
     const inserted = await insert('Contact', [{
         Name: 'foo',
@@ -271,6 +277,9 @@ await transaction(async (commands, tr) => {
     const selected = await soql<Partial<Contact>>`Select Id, Name from Contact`;
     const updated = await update('Contact', selected);
     await remove('Contact', updated);
+
+    const query = compile`Select id from account where id > ${'100'}`;
+    const selectedAccounts = await query.execute<Partial<Account>>();
 });
 ```
 
@@ -425,7 +434,8 @@ See also usage example repo.
 * [x] `For` clause
 
 ### Other features
-* [ ] prepared query (pre-compiled query)
+* [x] prepared query (pre-compiled query)
+  * [ ] (named) parameterd query
 * standard query resolvers
   * [x] JSON string
   * [x] CSV string
@@ -487,17 +497,22 @@ export interface QueryBuilderInfo {
 }
 
 export function build(builder: QueryBuilderInfo): {
+    compile: (strings: TemplateStringsArray | string, ...values: any[]) => Query;
     soql: (strings: TemplateStringsArray | string, ...values: any[]) => Promise<R[]>;
     insert: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     update: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     remove: (resolver: string, obj: T) => Promise<void>;
     transaction: (
             callback: (commands: {
-                soql, insert, update, remove
+                compile, soql, insert, update, remove
             }, tr: any) => Primise<void>,
             trOptions?: any,
         ) => Primise<void>;
 };
+
+class Query {
+    public execute<R>(): Promise<R[]>;
+}
 ```
 
 * Set up the resolvers.
@@ -509,6 +524,7 @@ export function build(builder: QueryBuilderInfo): {
 ##### returns:
 
 * Functions that execute select queries and DML
+  * `compile`: Compile the query.
   * `soql`: Select records.
   * `insert`: Insert record(s).
   * `update`: Update record(s).

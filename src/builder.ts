@@ -3,7 +3,8 @@
 // https://github.com/shellyln
 
 
-import { QueryBuilderInfo }     from './types';
+import { QueryBuilderInfo,
+         PreparedQuery }        from './types';
 import { prepareQuery,
          prepareBuilderInfo }   from './lib/prepare';
 import { executeCompiledQuery } from './lib/run-query';
@@ -11,6 +12,18 @@ import { executeInsertDML,
          executeUpdateDML,
          executeRemoveDML }     from './lib/run-dml';
 
+
+
+class Query {
+    constructor(private query: PreparedQuery, private runCompiledQuery: (q: PreparedQuery) => Promise<any[]>) {
+        // nothing to do.
+    }
+
+    public execute<R>(): Promise<R[]> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.runCompiledQuery(this.query);
+    }
+}
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -60,6 +73,27 @@ export function build(builder: QueryBuilderInfo) {
                 }
                 throw e;
             }
+        }
+
+        async function runCompiledQuery<R>(query: PreparedQuery): Promise<R[]> {
+            const run = async (tr: any, trOptions: any | undefined) => {
+                const ret = await executeCompiledQuery(preparedBI, tr, trOptions, query, null, null, null, null);
+
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return ret;
+            };
+
+            if (isIsolated) {
+                return await withTransactionEvents<R[]>({}, void 0, run);
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return await run(scopeTr, scopeTrOptions);
+            }
+        }
+
+        function compileQuery(strings: TemplateStringsArray | string, ...values: any[]): Query {
+            const query = prepareQuery(preparedBI, strings, ...values);
+            return new Query(query, runCompiledQuery);
         }
 
         async function runQuery<R>(strings: TemplateStringsArray | string, ...values: any[]): Promise<R[]> {
@@ -141,6 +175,7 @@ export function build(builder: QueryBuilderInfo) {
 
         async function transaction(
                 callback: (commands: {
+                        compile: typeof compileQuery,
                         soql: typeof runQuery,
                         insert: typeof runInsert,
                         update: typeof runUpdate,
@@ -154,6 +189,7 @@ export function build(builder: QueryBuilderInfo) {
 
             const run = async (_tr: any) => {
                 await callback({
+                    compile: commands.compile,
                     soql: commands.soql,
                     insert: commands.insert,
                     update: commands.update,
@@ -165,6 +201,7 @@ export function build(builder: QueryBuilderInfo) {
         }
 
         return ({
+            compile: compileQuery,
             soql: runQuery,
             insert: runInsert,
             update: runUpdate,

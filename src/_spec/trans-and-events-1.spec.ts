@@ -163,7 +163,7 @@ describe("trans-and-events-1", function() {
                     },
                 });
 
-                const { soql, insert, update, remove, transaction } = commands1;
+                const { compile, soql, insert, update, remove, transaction } = commands1;
 
                 for (let i = 0; i < 2; i++) {
                     const result = await soql`
@@ -192,6 +192,15 @@ describe("trans-and-events-1", function() {
                     ];
                     expect(result).toEqual(expects);
 
+                    const query = compile`
+                        select
+                            id, foo, bar, baz,
+                            account.id, account.name,
+                            (select id, name, amount from account.opportunities)
+                        from contact, account`;
+                    const result2 = await query.execute();
+                    expect(result2).toEqual(expects);
+
                     const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
                     expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
                     const updated = await update('Contact', inserted);
@@ -212,48 +221,66 @@ describe("trans-and-events-1", function() {
 
                     [ 8, 'beginTransaction',       void 0],
                     [ 9, 'beginExecute',           void 0],
-                    [10, 'insert',                 void 0],
-                    [11, 'endExecute',             void 0],
-                    [12, 'endTransaction',         void 0],
+                    [10, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [11, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [12, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [13, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [14, 'endExecute',             void 0],
+                    [15, 'endTransaction',         void 0],
 
-                    [13, 'beginTransaction',       void 0],
-                    [14, 'beginExecute',           void 0],
-                    [15, 'update',                 void 0],
-                    [16, 'endExecute',             void 0],
-                    [17, 'endTransaction',         void 0],
+                    [16, 'beginTransaction',       void 0],
+                    [17, 'beginExecute',           void 0],
+                    [18, 'insert',                 void 0],
+                    [19, 'endExecute',             void 0],
+                    [20, 'endTransaction',         void 0],
 
-                    [18, 'beginTransaction',       void 0],
-                    [19, 'beginExecute',           void 0],
-                    [20, 'remove',                 void 0],
-                    [21, 'endExecute',             void 0],
-                    [22, 'endTransaction',         void 0],
+                    [21, 'beginTransaction',       void 0],
+                    [22, 'beginExecute',           void 0],
+                    [23, 'update',                 void 0],
+                    [24, 'endExecute',             void 0],
+                    [25, 'endTransaction',         void 0],
 
-                    [23, 'beginTransaction',       void 0],
-                    [24, 'beginExecute',           void 0],
-                    [25, 'beforeMasterSubQueries', ['Contact', 'Account']],
-                    [26, 'afterMasterSubQueries',  ['Contact', 'Account']],
-                    [27, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
-                    [28, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [26, 'beginTransaction',       void 0],
+                    [27, 'beginExecute',           void 0],
+                    [28, 'remove',                 void 0],
                     [29, 'endExecute',             void 0],
                     [30, 'endTransaction',         void 0],
 
                     [31, 'beginTransaction',       void 0],
                     [32, 'beginExecute',           void 0],
-                    [33, 'insert',                 void 0],
-                    [34, 'endExecute',             void 0],
-                    [35, 'endTransaction',         void 0],
+                    [33, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [34, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [35, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [36, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [37, 'endExecute',             void 0],
+                    [38, 'endTransaction',         void 0],
 
-                    [36, 'beginTransaction',       void 0],
-                    [37, 'beginExecute',           void 0],
-                    [38, 'update',                 void 0],
-                    [39, 'endExecute',             void 0],
-                    [40, 'endTransaction',         void 0],
+                    [39, 'beginTransaction',       void 0],
+                    [40, 'beginExecute',           void 0],
+                    [41, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [42, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [43, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [44, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [45, 'endExecute',             void 0],
+                    [46, 'endTransaction',         void 0],
 
-                    [41, 'beginTransaction',       void 0],
-                    [42, 'beginExecute',           void 0],
-                    [43, 'remove',                 void 0],
-                    [44, 'endExecute',             void 0],
-                    [45, 'endTransaction',         void 0],
+                    [47, 'beginTransaction',       void 0],
+                    [48, 'beginExecute',           void 0],
+                    [49, 'insert',                 void 0],
+                    [50, 'endExecute',             void 0],
+                    [51, 'endTransaction',         void 0],
+
+                    [52, 'beginTransaction',       void 0],
+                    [53, 'beginExecute',           void 0],
+                    [54, 'update',                 void 0],
+                    [55, 'endExecute',             void 0],
+                    [56, 'endTransaction',         void 0],
+
+                    [57, 'beginTransaction',       void 0],
+                    [58, 'beginExecute',           void 0],
+                    [59, 'remove',                 void 0],
+                    [60, 'endExecute',             void 0],
+                    [61, 'endTransaction',         void 0],
                 ]);
             }
         }
@@ -336,7 +363,7 @@ describe("trans-and-events-1", function() {
                     },
                 });
 
-                const { soql, insert, update, remove, transaction } = commands1;
+                const { compile, soql, insert, update, remove, transaction } = commands1;
 
                 for (let i = 0; i < 2; i++) {
                     try {
@@ -366,6 +393,15 @@ describe("trans-and-events-1", function() {
                         ];
                         expect(result).toEqual(expects);
 
+                        const query = compile`
+                            select
+                                id, foo, bar, baz,
+                                account.id, account.name,
+                                (select id, name, amount from account.opportunities)
+                            from contact, account`;
+                        const result2 = await query.execute();
+                        expect(result2).toEqual(expects);
+
                         const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
                         expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
                         const updated = await update('Contact', inserted);
@@ -391,36 +427,54 @@ describe("trans-and-events-1", function() {
 
                     [ 8, 'beginTransaction',       void 0],
                     [ 9, 'beginExecute',           void 0],
-                    [10, 'insert',                 void 0],
-                    [11, 'endExecute',             void 0],
-                    [12, 'endTransaction',         void 0],
+                    [10, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [11, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [12, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [13, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [14, 'endExecute',             void 0],
+                    [15, 'endTransaction',         void 0],
 
-                    [13, 'beginTransaction',       void 0],
-                    [14, 'beginExecute',           void 0],
-                    [15, 'update',                 void 0],
-                    [16, 'endExecute(error:Error messae!!!)', void 0],
-                    [17, 'endTransaction(error:Error messae!!!)', void 0],
+                    [16, 'beginTransaction',       void 0],
+                    [17, 'beginExecute',           void 0],
+                    [18, 'insert',                 void 0],
+                    [19, 'endExecute',             void 0],
+                    [20, 'endTransaction',         void 0],
 
-                    [18, 'beginTransaction',       void 0],
-                    [19, 'beginExecute',           void 0],
-                    [20, 'beforeMasterSubQueries', ['Contact', 'Account']],
-                    [21, 'afterMasterSubQueries',  ['Contact', 'Account']],
-                    [22, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
-                    [23, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
-                    [24, 'endExecute',             void 0],
-                    [25, 'endTransaction',         void 0],
+                    [21, 'beginTransaction',       void 0],
+                    [22, 'beginExecute',           void 0],
+                    [23, 'update',                 void 0],
+                    [24, 'endExecute(error:Error messae!!!)', void 0],
+                    [25, 'endTransaction(error:Error messae!!!)', void 0],
 
                     [26, 'beginTransaction',       void 0],
                     [27, 'beginExecute',           void 0],
-                    [28, 'insert',                 void 0],
-                    [29, 'endExecute',             void 0],
-                    [30, 'endTransaction',         void 0],
+                    [28, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [29, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [30, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [31, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [32, 'endExecute',             void 0],
+                    [33, 'endTransaction',         void 0],
 
-                    [31, 'beginTransaction',       void 0],
-                    [32, 'beginExecute',           void 0],
-                    [33, 'update',                 void 0],
-                    [34, 'endExecute(error:Error messae!!!)', void 0],
-                    [35, 'endTransaction(error:Error messae!!!)', void 0],
+                    [34, 'beginTransaction',       void 0],
+                    [35, 'beginExecute',           void 0],
+                    [36, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [37, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [38, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [39, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [40, 'endExecute',             void 0],
+                    [41, 'endTransaction',         void 0],
+
+                    [42, 'beginTransaction',       void 0],
+                    [43, 'beginExecute',           void 0],
+                    [44, 'insert',                 void 0],
+                    [45, 'endExecute',             void 0],
+                    [46, 'endTransaction',         void 0],
+
+                    [47, 'beginTransaction',       void 0],
+                    [48, 'beginExecute',           void 0],
+                    [49, 'update',                 void 0],
+                    [50, 'endExecute(error:Error messae!!!)', void 0],
+                    [51, 'endTransaction(error:Error messae!!!)', void 0],
                 ]);
             }
         }
@@ -509,7 +563,7 @@ describe("trans-and-events-1", function() {
                 const { transaction } = commands1;
 
                 await transaction(async (commands) => {
-                    const { soql, insert, update, remove } = commands;
+                    const { compile, soql, insert, update, remove } = commands;
                     for (let i = 0; i < 2; i++) {
                         const result = await soql`
                             select
@@ -537,6 +591,15 @@ describe("trans-and-events-1", function() {
                         ];
                         expect(result).toEqual(expects);
 
+                        const query = compile`
+                            select
+                                id, foo, bar, baz,
+                                account.id, account.name,
+                                (select id, name, amount from account.opportunities)
+                            from contact, account`;
+                        const result2 = await query.execute();
+                        expect(result2).toEqual(expects);
+
                         const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
                         expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
                         const updated = await update('Contact', inserted);
@@ -557,37 +620,51 @@ describe("trans-and-events-1", function() {
                     [ 6, 'endExecute',             void 0],
 
                     [ 7, 'beginExecute',           void 0],
-                    [ 8, 'insert',                 void 0],
-                    [ 9, 'endExecute',             void 0],
-
-                    [10, 'beginExecute',           void 0],
-                    [11, 'update',                 void 0],
+                    [ 8, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [ 9, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [10, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [11, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
                     [12, 'endExecute',             void 0],
 
                     [13, 'beginExecute',           void 0],
-                    [14, 'remove',                 void 0],
+                    [14, 'insert',                 void 0],
                     [15, 'endExecute',             void 0],
 
                     [16, 'beginExecute',           void 0],
-                    [17, 'beforeMasterSubQueries', ['Contact', 'Account']],
-                    [18, 'afterMasterSubQueries',  ['Contact', 'Account']],
-                    [19, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
-                    [20, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [17, 'update',                 void 0],
+                    [18, 'endExecute',             void 0],
+
+                    [19, 'beginExecute',           void 0],
+                    [20, 'remove',                 void 0],
                     [21, 'endExecute',             void 0],
 
                     [22, 'beginExecute',           void 0],
-                    [23, 'insert',                 void 0],
-                    [24, 'endExecute',             void 0],
-
-                    [25, 'beginExecute',           void 0],
-                    [26, 'update',                 void 0],
+                    [23, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [24, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [25, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [26, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
                     [27, 'endExecute',             void 0],
 
                     [28, 'beginExecute',           void 0],
-                    [29, 'remove',                 void 0],
-                    [30, 'endExecute',             void 0],
+                    [29, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [30, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [31, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [32, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [33, 'endExecute',             void 0],
 
-                    [31, 'endTransaction',         void 0],
+                    [34, 'beginExecute',           void 0],
+                    [35, 'insert',                 void 0],
+                    [36, 'endExecute',             void 0],
+
+                    [37, 'beginExecute',           void 0],
+                    [38, 'update',                 void 0],
+                    [39, 'endExecute',             void 0],
+
+                    [40, 'beginExecute',           void 0],
+                    [41, 'remove',                 void 0],
+                    [42, 'endExecute',             void 0],
+
+                    [43, 'endTransaction',         void 0],
                 ]);
             }
         }
@@ -674,7 +751,7 @@ describe("trans-and-events-1", function() {
 
                 try {
                     await transaction(async (commands) => {
-                        const { soql, insert, update, remove } = commands;
+                        const { compile, soql, insert, update, remove } = commands;
                         for (let i = 0; i < 2; i++) {
                             const result = await soql`
                                 select
@@ -702,6 +779,15 @@ describe("trans-and-events-1", function() {
                             ];
                             expect(result).toEqual(expects);
 
+                            const query = compile`
+                                select
+                                    id, foo, bar, baz,
+                                    account.id, account.name,
+                                    (select id, name, amount from account.opportunities)
+                                from contact, account`;
+                            const result2 = await query.execute();
+                            expect(result2).toEqual(expects);
+
                             const inserted = await insert('Contact', [{Count: 0}, {Count: 0}] as any[]);
                             expect(inserted).toEqual([{Id: 'Contact/z1', Count: 0}, {Id: 'Contact/z2', Count: 0}]);
                             const updated = await update('Contact', inserted);
@@ -726,14 +812,21 @@ describe("trans-and-events-1", function() {
                     [ 6, 'endExecute',             void 0],
 
                     [ 7, 'beginExecute',           void 0],
-                    [ 8, 'insert',                 void 0],
-                    [ 9, 'endExecute',             void 0],
+                    [ 8, 'beforeMasterSubQueries', ['Contact', 'Account']],
+                    [ 9, 'afterMasterSubQueries',  ['Contact', 'Account']],
+                    [10, 'beforeDetailSubQueries', ['Contact', 'Account', 'Opportunities']],
+                    [11, 'afterDetailSubQueries',  ['Contact', 'Account', 'Opportunities']],
+                    [12, 'endExecute',             void 0],
 
-                    [10, 'beginExecute',           void 0],
-                    [11, 'update',                 void 0],
-                    [12, 'endExecute(error:Error messae!!!)', void 0],
+                    [13, 'beginExecute',           void 0],
+                    [14, 'insert',                 void 0],
+                    [15, 'endExecute',             void 0],
 
-                    [13, 'endTransaction(error:Error messae!!!)', void 0],
+                    [16, 'beginExecute',           void 0],
+                    [17, 'update',                 void 0],
+                    [18, 'endExecute(error:Error messae!!!)', void 0],
+
+                    [19, 'endTransaction(error:Error messae!!!)', void 0],
                 ]);
             }
         }
