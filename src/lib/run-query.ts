@@ -9,6 +9,7 @@ import { PreparedQuery,
          PreparedSubQuery,
          PreparedFieldListItem,
          PreparedCondition,
+         PreparedParameterizedValue,
          ResolverCapabilities,
          ResolverContext,
          ResolverEvent,
@@ -605,6 +606,39 @@ function getResolversInfo(builder: QueryBuilderInfoInternal, resolverNames: Map<
 }
 
 
+function normalizeLimitAndOffset(
+        params: QueryParams,
+        limit: number | PreparedParameterizedValue | null | undefined,
+        offset: number | PreparedParameterizedValue | null | undefined) {
+
+    limit = limit ?? null;
+    offset = offset ?? null;
+
+    if (limit !== null && typeof limit === 'object') {
+        if (! Object.prototype.hasOwnProperty.call(params, limit.name)) {
+            throw new Error(`Parameter '${limit.name}' is not found.`);
+        }
+        const w = params[limit.name] ?? null;
+        if (typeof w !== 'number') {
+            throw new Error(`Parameter '${limit.name}' should be number.`);
+        }
+        limit = w;
+    }
+    if (offset !== null && typeof offset === 'object') {
+        if (! Object.prototype.hasOwnProperty.call(params, offset.name)) {
+            throw new Error(`Parameter '${offset.name}' is not found.`);
+        }
+        const w = params[offset.name] ?? null;
+        if (typeof w !== 'number') {
+            throw new Error(`Parameter '${offset.name}' should be number.`);
+        }
+        offset = w;
+    }
+
+    return { limit, offset };
+}
+
+
 export async function executeCompiledQuery(
         builder: QueryBuilderInfoInternal,
         params: QueryParams,
@@ -625,6 +659,8 @@ export async function executeCompiledQuery(
     const resolverNames = parentResolverNames ?? new Map<string, string>();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const resolverData = parentResolverData ?? {};
+
+    const { limit, offset } = normalizeLimitAndOffset(params, query.limit, query.offset);
 
     if (!parent && builder.events.beginExecute) {
         await builder.events.beginExecute({
@@ -741,8 +777,8 @@ export async function executeCompiledQuery(
                 records = await x.resolver(
                     resolvingFields,
                     hasAliasNameCond ? [] : condWhere,
-                    (isAggregation || hasAliasNameCond) ? null : (query.limit ?? null),
-                    (isAggregation || hasAliasNameCond) ? null : (query.offset ?? null),
+                    (isAggregation || hasAliasNameCond) ? null : limit,
+                    (isAggregation || hasAliasNameCond) ? null : offset,
                     ctx,
                 );
                 primaryCapabilities = ctx.resolverCapabilities;
@@ -935,20 +971,20 @@ export async function executeCompiledQuery(
                 }
 
                 if (! (primaryCapabilities.offset || primaryCapabilities.limit)) {
-                    if (typeof query.offset === 'number' && typeof query.limit === 'number') {
-                        primaryRecords = primaryRecords.slice(query.offset, query.offset + query.limit);
-                    } else if (typeof query.offset === 'number') {
-                        primaryRecords = primaryRecords.slice(query.offset);
-                    } else if (typeof query.limit === 'number') {
-                        primaryRecords = primaryRecords.slice(0, query.limit);
+                    if (typeof offset === 'number' && typeof limit === 'number') {
+                        primaryRecords = primaryRecords.slice(offset, offset + limit);
+                    } else if (typeof offset === 'number') {
+                        primaryRecords = primaryRecords.slice(offset);
+                    } else if (typeof limit === 'number') {
+                        primaryRecords = primaryRecords.slice(0, limit);
                     }
                 } else if (! primaryCapabilities.offset) {
-                    if (typeof query.offset === 'number') {
-                        primaryRecords = primaryRecords.slice(query.offset);
+                    if (typeof offset === 'number') {
+                        primaryRecords = primaryRecords.slice(offset);
                     }
                 } else if (! primaryCapabilities.limit) {
-                    if (typeof query.limit === 'number') {
-                        primaryRecords = primaryRecords.slice(0, query.limit);
+                    if (typeof limit === 'number') {
+                        primaryRecords = primaryRecords.slice(0, limit);
                     }
                 }
             }

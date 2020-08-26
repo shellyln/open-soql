@@ -48,6 +48,9 @@ export function callScalarFunction(
                 }
             case 'parameter':
                 {
+                    if (! Object.prototype.hasOwnProperty.call(ctx.params, a.name)) {
+                        throw new Error(`Parameter '${a.name}' is not found.`);
+                    }
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const z = ctx.params![a.name] ?? null;
                     if (z === null) {
@@ -55,6 +58,9 @@ export function callScalarFunction(
                     }
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
+                        if (Array.isArray(z)) {
+                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                        }
                         return new Date(z).getTime();
                     default:
                         return z;
@@ -122,6 +128,9 @@ export function callImmediateScalarFunction(
                 }
             case 'parameter':
                 {
+                    if (! Object.prototype.hasOwnProperty.call(ctx.params, a.name)) {
+                        throw new Error(`Parameter '${a.name}' is not found.`);
+                    }
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const z = ctx.params![a.name] ?? null;
                     if (z === null) {
@@ -129,6 +138,9 @@ export function callImmediateScalarFunction(
                     }
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
+                        if (Array.isArray(z)) {
+                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                        }
                         return new Date(z).getTime();
                     default:
                         return z;
@@ -208,6 +220,9 @@ export function callAggregateFunction(
                 }
             case 'parameter':
                 {
+                    if (! Object.prototype.hasOwnProperty.call(ctx.params, a.name)) {
+                        throw new Error(`Parameter '${a.name}' is not found.`);
+                    }
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const z = ctx.params![a.name] ?? null;
                     if (z === null) {
@@ -215,6 +230,9 @@ export function callAggregateFunction(
                     }
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
+                        if (Array.isArray(z)) {
+                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                        }
                         return new Date(z).getTime();
                     default:
                         return z;

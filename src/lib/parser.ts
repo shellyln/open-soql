@@ -785,7 +785,7 @@ const offsetClause =
         erase(repeat(commentOrSpace), wordBoundary),
         erase(seqI('offset'),
               qty(1)(commentOrSpace), ),
-        decimalIntegerValue, );
+        first(decimalIntegerValue, parameterizedValue), );
 
 
 const limitClause =
@@ -794,7 +794,7 @@ const limitClause =
         erase(repeat(commentOrSpace), wordBoundary),
         erase(seqI('limit'),
               qty(1)(commentOrSpace), ),
-        decimalIntegerValue, );
+        first(decimalIntegerValue, parameterizedValue), );
 
 
 const forViewClause =

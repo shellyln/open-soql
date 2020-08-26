@@ -291,8 +291,18 @@ function getOp2Value(
                     case 'date': case 'datetime':
                         return x.value;
                     case 'parameter':
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-                        return ctx.params![x.name] ?? null;
+                        {
+                            if (! Object.prototype.hasOwnProperty.call(ctx.params, x.name)) {
+                                throw new Error(`Parameter '${x.name}' is not found.`);
+                            }
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            const z = ctx.params![x.name] ?? null;
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${x.name}' items should be atom.`);
+                            }
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+                            return z;
+                        }
                     }
                 default:
                     return x;
@@ -320,6 +330,9 @@ function getOp2Value(
                     v = new Date(op.value).getTime();
                     break;
                 case 'parameter':
+                    if (! Object.prototype.hasOwnProperty.call(ctx.params, op.name)) {
+                        throw new Error(`Parameter '${op.name}' is not found.`);
+                    }
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
                     v = ctx.params![op.name] ?? null;
                     break;

@@ -44,6 +44,12 @@ const commands1 = build({
         fn: (ctx, args) => {
             return args[0];
         },
+    }, {
+        type: 'aggregate',
+        name: 'testspec_agg_pass_thru',
+        fn: (ctx, args) => {
+            return args[0];
+        },
     }],
     relationships: {
         Account: {
@@ -182,7 +188,7 @@ describe("compiled-query-1", function() {
         }
     });
 
-    it("Compiled query (1)", async function() {
+    it("Compiled query (2)", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
@@ -243,6 +249,227 @@ describe("compiled-query-1", function() {
                     expect(result).toEqual(expects);
                 }
             });
+        }
+    });
+
+    it("Compiled query (3)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { compile } = commands1;
+
+            {
+                const query = compile`
+                    select
+                        id, name,
+                        testspec_string_concat(name,:p1) expr_a,
+                        testspec_pass_thru(:p2) expr_b,
+                        (select id, name, amount from opportunities)
+                    from account
+                    where id = :aid`;
+
+                for (let i = 0; i < 5; i++) {
+                    postfix = i;
+                    const result = await query.execute<{ Id: string }>({ aid: 'Account/z2', p1: `qwerty${i}`, p2: `asdfgh${i}` });
+                    const expects = [
+                        { Id: 'Account/z2', Name: `fff/z2-${postfix}`, expr_a: `fff/z2-${postfix}qwerty${i}`, expr_b: `asdfgh${i}`,
+                        Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 },
+                                        { Id: 'Opportunity/z5', Name:       '', Amount:    0 }] },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+            }
+            {
+                const query = compile`
+                    select
+                        id, name,
+                        testspec_string_concat(name,:p1) expr_a,
+                        testspec_pass_thru(:p2) expr_b,
+                        (select id, name, amount from opportunities)
+                    from account
+                    where id = :aid and Name>''`;
+
+                for (let i = 0; i < 5; i++) {
+                    postfix = i;
+                    const result = await query.execute<{ Id: string }>({ aid: 'Account/z2', p1: `qwerty${i}`, p2: `asdfgh${i}` });
+                    const expects = [
+                        { Id: 'Account/z2', Name: `fff/z2-${postfix}`, expr_a: `fff/z2-${postfix}qwerty${i}`, expr_b: `asdfgh${i}`,
+                        Opportunities: [{ Id: 'Opportunity/z3', Name: 'hhh/z3', Amount: 3000 },
+                                        { Id: 'Opportunity/z5', Name:       '', Amount:    0 }] },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+            }
+
+            {
+                const query = compile`
+                    select
+                        id, foo
+                    from contact
+                    where id = :cid`;
+
+                for (let i = 1; i < 4; i++) {
+                    postfix = i;
+                    const result = await query.execute<{ Id: string }>({ cid: `Contact/z${i}` });
+                    const expects = [
+                        { Id: `Contact/z${i}`, Foo: `aaa/z${i}` },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+            }
+
+            {
+                const query = compile`
+                    select
+                        id, foo
+                    from contact
+                    limit :limit offset :offset`;
+
+                for (let i = 1; i < 4; i++) {
+                    postfix = i;
+                    const result = await query.execute<{ Id: string }>({ limit: 1, offset: i - 1 });
+                    const expects = [
+                        { Id: `Contact/z${i}`, Foo: `aaa/z${i}` },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+
+                for (let i = 1; i < 3; i++) {
+                    postfix = i;
+                    const result = await query.execute<{ Id: string }>({ limit: 2, offset: i - 1 });
+                    const expects = [
+                        { Id: `Contact/z${i}`, Foo: `aaa/z${i}` },
+                        { Id: `Contact/z${i + 1}`, Foo: `aaa/z${i + 1}` },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+            }
+        }
+    });
+
+    it("Compiled query (3)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { compile } = commands1;
+
+            const query = compile`
+                select
+                    accountid, max(foo) Foo, count() expr_b,
+                    testspec_agg_pass_thru(:qwerty) expr_c
+                from contact
+                group by accountid
+                having count() = :cnt`;
+
+            {
+                const result = await query.execute({ cnt: 1, qwerty: 'yyy' });
+                const expects = [
+                    { AccountId: `Account/z2`, Foo: `aaa/z3`, expr_b: 1, expr_c: 'yyy' },
+                    { AccountId: null        , Foo: null    , expr_b: 1, expr_c: 'yyy' },
+                    { AccountId: null        , Foo: ``      , expr_b: 1, expr_c: 'yyy' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await query.execute({ cnt: 2, qwerty: 'zzz' });
+                const expects = [
+                    { AccountId: `Account/z1`, Foo: `aaa/z2`, expr_b: 2, expr_c: 'zzz' },
+                ];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
+
+    it("Compiled query (4)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { compile } = commands1;
+
+            {
+                const query = compile`
+                    select
+                        id, name,
+                        testspec_string_concat(name,:p1) expr_a,
+                        testspec_pass_thru(:p2) expr_b,
+                        (select id, name, amount from opportunities)
+                    from account
+                    where id = :aid and Name>''`;
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ aidd: 'Account/z2', p1: `qwerty${0}`, p2: `asdfgh${0}` });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'aid' is not found.");
+                }
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ aid: 'Account/z2', p1z: `qwerty${1}`, p2: `asdfgh${1}` });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'p1' is not found.");
+                }
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ aid: 'Account/z2', p1: `qwerty${2}`, p2z: `asdfgh${2}` });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'p2' is not found.");
+                }
+            }
+
+            {
+                const query = compile`
+                    select
+                        id, foo
+                    from contact
+                    limit :limit offset :offset`;
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ limitt: 1, offset: 2 });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'limit' is not found.");
+                }
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ limit: 1, offsett: 2 });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'offset' is not found.");
+                }
+            }
+
+            {
+                const query = compile`
+                    select
+                        accountid, max(foo) Foo, count() expr_b,
+                        testspec_agg_pass_thru(:qwerty) expr_c
+                    from contact
+                    group by accountid
+                    having count() = :cnt`;
+
+                try {
+                    const result = await query.execute({ cntt: 1, qwerty: 'yyy' });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'cnt' is not found.");
+                }
+
+                try {
+                    const result = await query.execute({ cnt: 1, qwertyy: 'yyy' });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'qwerty' is not found.");
+                }
+            }
         }
     });
 });

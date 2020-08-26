@@ -135,8 +135,8 @@ export interface ParsedQueryBase {
     having?: PreparedCondition[];
     groupBy?: string[];
     orderBy?: PreparedOrderByField[];
-    limit?: number | null;
-    offset?: number | null;
+    limit?: number | PreparedParameterizedValue | null;
+    offset?: number | PreparedParameterizedValue | null;
     for?: string[];
 }
 
@@ -198,7 +198,7 @@ export interface ResolverCapabilities {
 }
 
 
-export type QueryParams = { [paramNames: string]: number | string | null };
+export type QueryParams = { [paramNames: string]: number | string | null | Array<number | string | null> };
 
 
 export interface ResolverContext {
