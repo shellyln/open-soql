@@ -283,6 +283,27 @@ describe("query-2", function() {
                 ];
                 expect(result).toEqual(expects);
             }
+            {
+                const result = await soql`
+                    select
+                        id, foo, bar, baz,
+                        account.id, account.name,
+                        (select id, name, amount from account.opportunities where name='hhh/z2' or name='')
+                    from contact, account
+                    where (foo=${'aaa/z1'} or foo=${'aaa/z2'} or foo=${'aaa/z3'} or foo=${''}) and (account.name=${'fff/z2'})`;
+                const expects = [
+                    { Id: 'Contact/z1', Foo: 'aaa/z1', Bar: 'bbb/z1', Baz: 'ccc/z1',
+                    Account: null },
+                    { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2',
+                    Account: null },
+                    { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3',
+                    Account: { Id: 'Account/z2', Name: 'fff/z2',
+                    Opportunities: [{ Id: 'Opportunity/z5', Name:       '', Amount:    0 }] }},
+                    { Id: 'Contact/z5', Foo:       '', Bar:       '', Baz:      ' ',
+                    Account: null },
+                ];
+                expect(result).toEqual(expects);
+            }
 
             {
                 const result = await soql`

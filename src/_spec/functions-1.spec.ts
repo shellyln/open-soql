@@ -917,6 +917,26 @@ describe("functions-1", function() {
                 ];
                 expect(result).toEqual(expects);
             }
+
+            {
+                const result = await soql`
+                    select
+                        mod(foo, ${100})    expr_foo,
+                        mod(quux, ${100})   expr_quux,
+                        mod(corge, ${100})  expr_corge,
+                        mod(grault, ${100}) expr_grault,
+                        mod(garply, ${100}) expr_garply
+                    from contact
+                    `;
+                const expects = [
+                    { expr_foo:  NaN, expr_quux:    0, expr_corge:    -1, expr_grault:  NaN, expr_garply:  NaN },
+                    { expr_foo:  NaN, expr_quux:    1, expr_corge:     0, expr_grault:  NaN, expr_garply:  NaN },
+                    { expr_foo:  NaN, expr_quux: null, expr_corge:     1, expr_grault:  NaN, expr_garply:  NaN },
+                    { expr_foo: null, expr_quux: null, expr_corge:  null, expr_grault: null, expr_garply: null },
+                    { expr_foo:    0, expr_quux: null, expr_corge:  null, expr_grault: null, expr_garply: null }, // TODO: expr_foo
+                ];
+                expect(result).toEqual(expects);
+            }
         }
     });
 });

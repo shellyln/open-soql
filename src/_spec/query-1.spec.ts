@@ -483,6 +483,15 @@ describe("query-1", function() {
                 ];
                 expect(result).toEqual(expects);
             }
+
+            {
+                const result = await soql`select id, foo, bar, baz from contact offset ${1} limit ${2}`;
+                const expects = [
+                    { Id: 'Contact/z2', Foo: 'aaa/z2', Bar: 'bbb/z2', Baz: 'ccc/z2' },
+                    { Id: 'Contact/z3', Foo: 'aaa/z3', Bar: 'bbb/z3', Baz: 'ccc/z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
         }
     });
 
