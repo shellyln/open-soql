@@ -4,6 +4,7 @@
 
 * ✨`[NEW]` Pre-compiled query.
 * ✨`[NEW]` Named parameterized query.
+* Update README.
 
 
 ## v0.2.0

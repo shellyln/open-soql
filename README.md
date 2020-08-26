@@ -227,6 +227,8 @@ const query = compile`Select id from account where id > :idGreaterThan`;
 const result = await query.execute<Partial<Account>>({ idGreaterThan: '100' });
 ```
 
+> You can use parameters on the right side of the conditional expression, function arguments, limit, and offset.
+
 ### Aggregate
 ```ts
 const aggregationResult = await soql<ContactAgg>`
