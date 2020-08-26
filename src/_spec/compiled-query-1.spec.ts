@@ -389,6 +389,50 @@ describe("compiled-query-1", function() {
             {
                 const query = compile`
                     select
+                        id, foo
+                    from contact
+                    where id in (:cid1,:cid2)`;
+
+                for (let i = 1; i < 3; i++) {
+                    postfix = i;
+                    const result = await query.execute<{ Id: string }>({ cid1: `Contact/z${i}`, cid2: `Contact/z${i + 1}` });
+                    const expects = [
+                        { Id: `Contact/z${i}`, Foo: `aaa/z${i}` },
+                        { Id: `Contact/z${i + 1}`, Foo: `aaa/z${i + 1}` },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+            }
+
+            {
+                const query = compile`
+                    select
+                        id, foo
+                    from contact
+                    where id in :cid`;
+
+                for (let i = 1; i < 3; i++) {
+                    postfix = i;
+                    const result = await query.execute<{ Id: string }>({ cid: [`Contact/z${i}`, `Contact/z${i + 1}`] });
+                    const expects = [
+                        { Id: `Contact/z${i}`, Foo: `aaa/z${i}` },
+                        { Id: `Contact/z${i + 1}`, Foo: `aaa/z${i + 1}` },
+                    ];
+                    expect(result).toEqual(expects);
+                }
+            }
+        }
+    });
+
+    it("Compiled query (5)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { compile } = commands1;
+
+            {
+                const query = compile`
+                    select
                         id, name,
                         testspec_string_concat(name,:p1) expr_a,
                         testspec_pass_thru(:p2) expr_b,
@@ -468,6 +512,54 @@ describe("compiled-query-1", function() {
                 } catch (e) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     expect(e.message).toEqual("Parameter 'qwerty' is not found.");
+                }
+            }
+
+            {
+                const query = compile`
+                    select
+                        id, foo
+                    from contact
+                    where id in (:cid1,:cid2)`;
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ cid1z: `Contact/z${0}`, cid2: `Contact/z${1}` });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'cid1' is not found.");
+                }
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ cid1: `Contact/z${0}`, cid2z: `Contact/z${1}` });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'cid2' is not found.");
+                }
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ cid1: [`Contact/z${0}`], cid2: `Contact/z${1}` });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'cid1' items should be atom.");
+                }
+            }
+
+            {
+                const query = compile`
+                    select
+                        id, foo
+                    from contact
+                    where id in :cid`;
+
+                try {
+                    const result = await query.execute<{ Id: string }>({ cidd: [`Contact/z${0}`, `Contact/z${1}`] });
+                    expect(1).toEqual(0);
+                } catch (e) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    expect(e.message).toEqual("Parameter 'cid' is not found.");
                 }
             }
         }
