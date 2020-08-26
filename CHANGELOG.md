@@ -4,15 +4,17 @@
 
 * ✨`[NEW]` Pre-compiled query.
 * ✨`[NEW]` Named parameterized query.
+* 🐞`[FIX]` The values ​​for `limit` and `offset` must be settable in the template string literal parameters.
 * Update README.
+* Update dependencies.
 
 
 ## v0.2.0
 
 * ✨`[NEW]` Nested scalar/aggregate function calls.
-* Improve `select` query performance.
 * 🐞`[FIX]` Nested function on relational query result is broken.
-* Improve typings.
+* 📈 Improve `select` query performance.
+* 📈 Improve typings.
 * Update README.
 * Update dependencies.
 
