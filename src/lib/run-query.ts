@@ -9,8 +9,11 @@ import { PreparedQuery,
          PreparedSubQuery,
          PreparedFieldListItem,
          PreparedCondition,
+         PreparedParameterizedValue,
          ResolverCapabilities,
          ResolverContext,
+         ResolverEvent,
+         QueryParams,
          AggregateQueryFuncInfo,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
@@ -198,6 +201,7 @@ function collectSubQueriesFromCondition(
 
 async function execCondSubQueries(
         builder: QueryBuilderInfoInternal,
+        params: QueryParams,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
         trOptions: any | undefined,
@@ -212,7 +216,7 @@ async function execCondSubQueries(
         condSubQueries
             .map(x =>
                 executeCompiledQuery(
-                    builder, tr, trOptions,
+                    builder, params, tr, trOptions,
                     x.subQuery.query, null, null, null, resolverData)
                 .then(r => ({ cond: x.cond, index: x.index, subQuery: x.subQuery, result: r })));
 
@@ -602,8 +606,42 @@ function getResolversInfo(builder: QueryBuilderInfoInternal, resolverNames: Map<
 }
 
 
+function normalizeLimitAndOffset(
+        params: QueryParams,
+        limit: number | PreparedParameterizedValue | null | undefined,
+        offset: number | PreparedParameterizedValue | null | undefined) {
+
+    limit = limit ?? null;
+    offset = offset ?? null;
+
+    if (limit !== null && typeof limit === 'object') {
+        if (! Object.prototype.hasOwnProperty.call(params, limit.name)) {
+            throw new Error(`Parameter '${limit.name}' is not found.`);
+        }
+        const w = params[limit.name] ?? null;
+        if (typeof w !== 'number') {
+            throw new Error(`Parameter '${limit.name}' should be number.`);
+        }
+        limit = w;
+    }
+    if (offset !== null && typeof offset === 'object') {
+        if (! Object.prototype.hasOwnProperty.call(params, offset.name)) {
+            throw new Error(`Parameter '${offset.name}' is not found.`);
+        }
+        const w = params[offset.name] ?? null;
+        if (typeof w !== 'number') {
+            throw new Error(`Parameter '${offset.name}' should be number.`);
+        }
+        offset = w;
+    }
+
+    return { limit, offset };
+}
+
+
 export async function executeCompiledQuery(
         builder: QueryBuilderInfoInternal,
+        params: QueryParams,
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         tr: any,
         trOptions: any | undefined,
@@ -622,6 +660,8 @@ export async function executeCompiledQuery(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const resolverData = parentResolverData ?? {};
 
+    const { limit, offset } = normalizeLimitAndOffset(params, query.limit, query.offset);
+
     if (!parent && builder.events.beginExecute) {
         await builder.events.beginExecute({
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -639,8 +679,8 @@ export async function executeCompiledQuery(
         const condHavingTemplate = query.having ?
             deepCloneObject(query.having) : [];
 
-        await execCondSubQueries(builder, tr, trOptions, condWhereTemplate, resolverData);
-        await execCondSubQueries(builder, tr, trOptions, condHavingTemplate, resolverData);
+        await execCondSubQueries(builder, params, tr, trOptions, condWhereTemplate, resolverData);
+        await execCondSubQueries(builder, params, tr, trOptions, condHavingTemplate, resolverData);
 
         const removingFieldsAndRecords: Array<[Set<string>, any[]]> = [];
         const removingFieldsMap = new Map<string, Set<string>>();
@@ -703,6 +743,7 @@ export async function executeCompiledQuery(
             const ctxGen: Omit<ResolverContext, 'resolverCapabilities'> = {
                 functions: builder.functions,
                 query,
+                params,
                 graphPath: x.name,
                 resolverName,
                 parentResolverName,
@@ -736,8 +777,8 @@ export async function executeCompiledQuery(
                 records = await x.resolver(
                     resolvingFields,
                     hasAliasNameCond ? [] : condWhere,
-                    (isAggregation || hasAliasNameCond) ? null : (query.limit ?? null),
-                    (isAggregation || hasAliasNameCond) ? null : (query.offset ?? null),
+                    (isAggregation || hasAliasNameCond) ? null : limit,
+                    (isAggregation || hasAliasNameCond) ? null : offset,
                     ctx,
                 );
                 primaryCapabilities = ctx.resolverCapabilities;
@@ -863,31 +904,36 @@ export async function executeCompiledQuery(
                         currentIdFieldName,
                     } = getResolversInfo(builder, resolverNames, x.query.from[0], 0);
 
+                    const evtGen: ResolverEvent = {
+                        functions: builder.functions,
+                        query: x.query,
+                        params,
+                        graphPath: subQueryName,
+                        resolverName,
+                        parentResolverName,
+                        parentType,
+                        foreignIdField,
+                        masterIdField: parentIdFieldName,
+                        detailIdField: currentIdFieldName,
+                        parentRecords,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        resolverData,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionData: tr,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        transactionOptions: trOptions,
+                    };
+
                     if (builder.events.beforeDetailSubQueries) {
                         await builder.events.beforeDetailSubQueries({
-                            functions: builder.functions,
-                            query: x.query,
-                            graphPath: subQueryName,
-                            resolverName,
-                            parentResolverName,
-                            parentType,
-                            foreignIdField,
-                            masterIdField: parentIdFieldName,
-                            detailIdField: currentIdFieldName,
-                            parentRecords,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            resolverData,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionData: tr,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionOptions: trOptions,
+                            ...evtGen,
                         });
                     }
 
                     for (const p of parentRecords) {
                         promises.push(
                             executeCompiledQuery(
-                                builder, tr, trOptions,
+                                builder, params, tr, trOptions,
                                 x.query, p, queriedRecords, resolverNames, resolverData)
                             .then(q => ({
                                 name: subQueryName,
@@ -900,16 +946,7 @@ export async function executeCompiledQuery(
 
                     if (builder.events.afterDetailSubQueries) {
                         await builder.events.afterDetailSubQueries({
-                            functions: builder.functions,
-                            query: x.query,
-                            graphPath: subQueryName,
-                            parentRecords,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            resolverData,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionData: tr,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            transactionOptions: trOptions,
+                            ...evtGen,
                         });
                     }
                 }
@@ -934,20 +971,20 @@ export async function executeCompiledQuery(
                 }
 
                 if (! (primaryCapabilities.offset || primaryCapabilities.limit)) {
-                    if (typeof query.offset === 'number' && typeof query.limit === 'number') {
-                        primaryRecords = primaryRecords.slice(query.offset, query.offset + query.limit);
-                    } else if (typeof query.offset === 'number') {
-                        primaryRecords = primaryRecords.slice(query.offset);
-                    } else if (typeof query.limit === 'number') {
-                        primaryRecords = primaryRecords.slice(0, query.limit);
+                    if (typeof offset === 'number' && typeof limit === 'number') {
+                        primaryRecords = primaryRecords.slice(offset, offset + limit);
+                    } else if (typeof offset === 'number') {
+                        primaryRecords = primaryRecords.slice(offset);
+                    } else if (typeof limit === 'number') {
+                        primaryRecords = primaryRecords.slice(0, limit);
                     }
                 } else if (! primaryCapabilities.offset) {
-                    if (typeof query.offset === 'number') {
-                        primaryRecords = primaryRecords.slice(query.offset);
+                    if (typeof offset === 'number') {
+                        primaryRecords = primaryRecords.slice(offset);
                     }
                 } else if (! primaryCapabilities.limit) {
-                    if (typeof query.limit === 'number') {
-                        primaryRecords = primaryRecords.slice(0, query.limit);
+                    if (typeof limit === 'number') {
+                        primaryRecords = primaryRecords.slice(0, limit);
                     }
                 }
             }

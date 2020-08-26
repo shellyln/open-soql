@@ -232,6 +232,22 @@ describe("aggregate-1", function() {
                 ];
                 expect(result).toEqual(expects);
             }
+            {
+                const result = await soql`
+                    select
+                        accountid accid,
+                        count() cnt, count(accountid) cntacc, count_distinct(accountid) cntdacc,
+                        count(foo) cntfoo, count_distinct(foo) cntdfoo,
+                        min(foo) minfoo, max(bar) maxbar, avg(baz) avgbaz, sum(qux) sumqux,
+                        min(corge) minc, max(corge) maxc, avg(corge) avgc
+                    from contact
+                    group by accountid
+                    having count() >= ${3}`;
+                const expects = [
+                    { accid: 'Account/z3', cnt: 3, cntacc: 3, cntdacc: 1, cntfoo: 3, cntdfoo: 3, minfoo: 'aaa/z5', maxbar: 'bbb/z7', avgbaz: null, sumqux: null, minc:    5, maxc:   11, avgc: 7.666666666666667 },
+                ];
+                expect(result).toEqual(expects);
+            }
 
             {
                 const result = await soql`

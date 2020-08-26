@@ -4,6 +4,7 @@
 
 
 import { QueryBuilderInfo,
+         QueryParams,
          PreparedQuery }        from './types';
 import { prepareQuery,
          prepareBuilderInfo }   from './lib/prepare';
@@ -15,13 +16,14 @@ import { executeInsertDML,
 
 
 class Query {
-    constructor(private query: PreparedQuery, private runCompiledQuery: (q: PreparedQuery) => Promise<any[]>) {
+    constructor(private query: PreparedQuery, private runCompiledQuery:
+            (q: PreparedQuery, p?: QueryParams) => Promise<any[]>) {
         // nothing to do.
     }
 
-    public execute<R>(): Promise<R[]> {
+    public execute<R>(params?: QueryParams): Promise<R[]> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.runCompiledQuery(this.query);
+        return this.runCompiledQuery(this.query, params);
     }
 }
 
@@ -75,9 +77,9 @@ export function build(builder: QueryBuilderInfo) {
             }
         }
 
-        async function runCompiledQuery<R>(query: PreparedQuery): Promise<R[]> {
+        async function runCompiledQuery<R>(query: PreparedQuery, params?: QueryParams): Promise<R[]> {
             const run = async (tr: any, trOptions: any | undefined) => {
-                const ret = await executeCompiledQuery(preparedBI, tr, trOptions, query, null, null, null, null);
+                const ret = await executeCompiledQuery(preparedBI, params ?? {}, tr, trOptions, query, null, null, null, null);
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return ret;
@@ -99,7 +101,7 @@ export function build(builder: QueryBuilderInfo) {
         async function runQuery<R>(strings: TemplateStringsArray | string, ...values: any[]): Promise<R[]> {
             const run = async (tr: any, trOptions: any | undefined) => {
                 const query = prepareQuery(preparedBI, strings, ...values);
-                const ret = await executeCompiledQuery(preparedBI, tr, trOptions, query, null, null, null, null);
+                const ret = await executeCompiledQuery(preparedBI, {}, tr, trOptions, query, null, null, null, null);
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return ret;

@@ -213,9 +213,18 @@ const result = await soql<Partial<Contact>>`
 ```
 
 ### Pre-compiled query
+
+* Non-parameterized query.  
+  (Template literal parameters will be interpreted before compiling.)
 ```ts
 const query = compile`Select id from account where id > ${'100'}`;
 const result = await query.execute<Partial<Account>>();
+```
+
+* Named parameterized query.
+```ts
+const query = compile`Select id from account where id > :idGreaterThan`;
+const result = await query.execute<Partial<Account>>({ idGreaterThan: '100' });
 ```
 
 ### Aggregate
@@ -435,7 +444,7 @@ See also usage example repo.
 
 ### Other features
 * [x] prepared query (pre-compiled query)
-  * [ ] (named) parameterized query
+  * [x] named parameterized query
 * standard query resolvers
   * [x] JSON string
   * [x] CSV string
@@ -511,7 +520,7 @@ export function build(builder: QueryBuilderInfo): {
 };
 
 class Query {
-    public execute<R>(): Promise<R[]>;
+    public execute<R>(params?: { [paramNames: string]: number | string | null }): Promise<R[]>;
 }
 ```
 
