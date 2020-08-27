@@ -294,8 +294,9 @@ await transaction(async (commands, tr) => {
 });
 ```
 
-See also usage example repo.  
-[https://github.com/shellyln/open-soql-usage-example](https://github.com/shellyln/open-soql-usage-example)
+See also the following usage example repositories:  
+* [https://github.com/shellyln/open-soql-usage-example](https://github.com/shellyln/open-soql-usage-example)
+* [Open SOQL example app with React hooks](https://github.com/shellyln/open-soql-react-hooks-example-app)
 
 
 ## 💎 Features
