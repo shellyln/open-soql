@@ -5,6 +5,7 @@
 
 import { QueryBuilderInfo,
          QueryParams,
+         IQuery,
          PreparedQuery }        from './types';
 import { prepareQuery,
          prepareBuilderInfo }   from './lib/prepare';
@@ -15,7 +16,7 @@ import { executeInsertDML,
 
 
 
-class Query {
+class Query implements IQuery {
     constructor(private query: PreparedQuery, private runCompiledQuery:
             (q: PreparedQuery, p?: QueryParams) => Promise<any[]>) {
         // nothing to do.
@@ -93,7 +94,7 @@ export function build(builder: QueryBuilderInfo) {
             }
         }
 
-        function compileQuery(strings: TemplateStringsArray | string, ...values: any[]): Query {
+        function compileQuery(strings: TemplateStringsArray | string, ...values: any[]): IQuery {
             const query = prepareQuery(preparedBI, strings, ...values);
             return new Query(query, runCompiledQuery);
         }

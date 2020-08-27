@@ -201,6 +201,11 @@ export interface ResolverCapabilities {
 export type QueryParams = { [paramNames: string]: number | string | null | Array<number | string | null> };
 
 
+export interface IQuery {
+    execute<R>(params?: QueryParams): Promise<R[]>;
+}
+
+
 export interface ResolverContext {
     functions: QueryFuncInfo[];
     query?: PreparedQuery;   // DON'T CHANGE any properties from the resolver!

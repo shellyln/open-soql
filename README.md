@@ -507,8 +507,17 @@ export interface QueryBuilderInfo {
     };
 }
 
+export interface IQuery {
+    public execute<R>(
+        params?: {
+            [paramNames: string]:
+                number | string | null |
+                Array<number | string | null>
+        }): Promise<R[]>;
+}
+
 export function build(builder: QueryBuilderInfo): {
-    compile: (strings: TemplateStringsArray | string, ...values: any[]) => Query;
+    compile: (strings: TemplateStringsArray | string, ...values: any[]) => IQuery;
     soql: (strings: TemplateStringsArray | string, ...values: any[]) => Promise<R[]>;
     insert: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     update: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
@@ -520,10 +529,6 @@ export function build(builder: QueryBuilderInfo): {
             trOptions?: any,
         ) => Primise<void>;
 };
-
-class Query {
-    public execute<R>(params?: { [paramNames: string]: number | string | null }): Promise<R[]>;
-}
 ```
 
 * Set up the resolvers.

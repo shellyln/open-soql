@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.2
+
+* 📈 Improve typings.
+* Update README.
+
+
 ## v0.2.1
 
 * ✨`[NEW]` Pre-compiled query.
