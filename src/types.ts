@@ -393,3 +393,12 @@ export type QueryBuilderInfoInternal =
         rules: Required<QueryBuilderInfoRulesSection>;
         resolvers: Required<QueryBuilderInfoResolversSection>;
     };
+
+
+export interface SubscriberEventCallbackParam {
+    on: string;
+    resolver: string;
+    id: any | null;
+}
+
+export type SubscriberEventCallback = (params: SubscriberEventCallbackParam) => void;

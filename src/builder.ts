@@ -6,13 +6,15 @@
 import { QueryBuilderInfo,
          QueryParams,
          IQuery,
-         PreparedQuery }        from './types';
+         PreparedQuery,
+         SubscriberEventCallbackParam,
+         SubscriberEventCallback } from './types';
 import { prepareQuery,
-         prepareBuilderInfo }   from './lib/prepare';
-import { executeCompiledQuery } from './lib/run-query';
+         prepareBuilderInfo }      from './lib/prepare';
+import { executeCompiledQuery }    from './lib/run-query';
 import { executeInsertDML,
          executeUpdateDML,
-         executeRemoveDML }     from './lib/run-dml';
+         executeRemoveDML }        from './lib/run-dml';
 
 
 
@@ -29,11 +31,82 @@ class Query implements IQuery {
 }
 
 
+
+interface Subscribers {
+    [resolverNames: string]: Map<any, Set<SubscriberEventCallback>>;
+}
+
+interface SubscribersEvtQueueItem extends SubscriberEventCallbackParam {
+    fn: SubscriberEventCallback;
+}
+
+
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function build(builder: QueryBuilderInfo) {
     const preparedBI = prepareBuilderInfo(builder);
 
+    const subscribers: Subscribers = {};
+
     function createTransactionScope(scopeTr: any, scopeTrOptions: any | undefined, isIsolated: boolean) {
+
+        let subscribersEvtQueue: SubscribersEvtQueueItem[] = []; // TODO:
+
+        function queueSubscribersEvents(resolver: string, on: string, data: any[]) {
+            const map = subscribers[resolver];
+            if (map && map.size) {
+                {
+                    const set = map.get(null);
+                    if (set) {
+                        for (const fn of set.values()) {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            subscribersEvtQueue.push({ on, resolver, id: null, fn });
+                        }
+                    }
+                }
+                const idFieldName = preparedBI.rules.idFieldName(resolver);
+                for (const rec of data) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    const id = rec[idFieldName];
+                    const set = map.get(id);
+                    if (set) {
+                        for (const fn of set.values()) {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            subscribersEvtQueue.push({ on, resolver, id, fn });
+                        }
+                    }
+                }
+            }
+        }
+
+        function subscribe(resolver: string, id: any | null, fn: SubscriberEventCallback) {
+            if (! subscribers[resolver]) {
+                subscribers[resolver] = new Map<any, Set<SubscriberEventCallback>>();
+            }
+
+            const map = subscribers[resolver];
+            if (! map.has(id)) {
+                map.set(id, new Set<SubscriberEventCallback>());
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const set = map.get(id)!;
+            set.add(fn);
+        }
+
+        function unsubscribe(resolver: string, id: any | null, fn: SubscriberEventCallback) {
+            if (! subscribers[resolver]) {
+                return;
+            }
+
+            const map = subscribers[resolver];
+            if (! map.has(id)) {
+                return;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const set = map.get(id)!;
+            set.delete(fn);
+        }
 
         async function withTransactionEvents<R>(
                 tr: any, trOptions: any | undefined, run: (tx: any, txOpts: any | undefined) => Promise<R>) {
@@ -60,6 +133,21 @@ export function build(builder: QueryBuilderInfo) {
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         transactionOptions: trOptions,
                     }, null);
+                }
+
+                if (subscribersEvtQueue.length) {
+                    const queue = subscribersEvtQueue;
+                    subscribersEvtQueue = [];
+                    setTimeout(() => {
+                        for (const q of queue) {
+                            try {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                                q.fn({ on: q.on, resolver: q.resolver, id: q.id });
+                            } catch (e) {
+                                // nothing to do.
+                            }
+                        }
+                    }, 0);
                 }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -121,6 +209,9 @@ export function build(builder: QueryBuilderInfo) {
                 const isArray = Array.isArray(obj);
     
                 const ret = await executeInsertDML(preparedBI, tr, trOptions, resolver, isArray ? obj as any : [obj]);
+
+                queueSubscribersEvents(resolver, 'insert', ret);
+
                 if (isArray) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return ret as any;
@@ -142,8 +233,11 @@ export function build(builder: QueryBuilderInfo) {
         async function runUpdate<T>(resolver: string, obj: T): Promise<T extends (infer R)[] ? R[] : T> {
             const run = async (tr: any, trOptions: any | undefined) => {
                 const isArray = Array.isArray(obj);
-    
+
                 const ret = await executeUpdateDML(preparedBI, tr, trOptions, resolver, isArray ? obj as any : [obj]);
+
+                queueSubscribersEvents(resolver, 'update', ret);
+
                 if (isArray) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return ret as any;
@@ -164,8 +258,15 @@ export function build(builder: QueryBuilderInfo) {
 
         async function runRemove<T>(resolver: string, obj: T) {
             const run = async (tr: any, trOptions: any | undefined) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const data: any[] = Array.isArray(obj) ? obj : [obj];
+
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await executeRemoveDML(preparedBI, tr, trOptions, resolver, Array.isArray(obj) ? obj : [obj]);
+                await executeRemoveDML(preparedBI, tr, trOptions, resolver, data);
+
+                queueSubscribersEvents(resolver, 'remove', data);
+
+                return;
             };
 
             if (isIsolated) {
@@ -209,6 +310,8 @@ export function build(builder: QueryBuilderInfo) {
             insert: runInsert,
             update: runUpdate,
             remove: runRemove,
+            subscribe,
+            unsubscribe,
             transaction,
         });
     }
