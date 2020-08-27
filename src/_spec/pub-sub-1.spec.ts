@@ -3,14 +3,14 @@
 // https://github.com/shellyln
 
 
-import { parse }                    from '../lib/parser';
+import { parse }                      from '../lib/parser';
 import { prepareQuery,
-         prepareBuilderInfo }       from '../lib/prepare';
-import { getObjectValue }           from '../lib/util';
+         prepareBuilderInfo }         from '../lib/prepare';
+import { getObjectValue }             from '../lib/util';
 import { QueryBuilderInfoInternal,
-         SubscriberEventCallbackParam,
-         SubscriberEventCallback }  from '../types';
-import { build }                    from '../builder';
+         SubscriberParams,
+         Subscriber }                 from '../types';
+import { build }                      from '../builder';
 import { setDefaultStaticResolverConfig,
          staticJsonResolverBuilder,
          staticCsvResolverBuilder,
@@ -82,8 +82,8 @@ describe("pub-sub-1", function() {
                 Select Foo, Bar, Baz, Qux, Quux, Corge, Grault, Garply, Count
                 from Contact`;
 
-            const callbackResults: SubscriberEventCallbackParam[] = [];
-            const fnSubContactWildcard1: SubscriberEventCallback = (param) => {
+            const callbackResults: SubscriberParams[] = [];
+            const fnSubContactWildcard1: Subscriber = (param) => {
                 callbackResults.push(param);
             };
 

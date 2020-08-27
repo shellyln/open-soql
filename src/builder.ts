@@ -7,14 +7,14 @@ import { QueryBuilderInfo,
          QueryParams,
          IQuery,
          PreparedQuery,
-         SubscriberEventCallbackParam,
-         SubscriberEventCallback } from './types';
+         SubscriberParams,
+         Subscriber }      from './types';
 import { prepareQuery,
-         prepareBuilderInfo }      from './lib/prepare';
-import { executeCompiledQuery }    from './lib/run-query';
+         prepareBuilderInfo }   from './lib/prepare';
+import { executeCompiledQuery } from './lib/run-query';
 import { executeInsertDML,
          executeUpdateDML,
-         executeRemoveDML }        from './lib/run-dml';
+         executeRemoveDML }     from './lib/run-dml';
 
 
 
@@ -31,27 +31,27 @@ class Query implements IQuery {
 }
 
 
-
 interface Subscribers {
-    [resolverNames: string]: Map<any, Set<SubscriberEventCallback>>;
+    [resolverNames: string]: Map<any, Set<Subscriber>>;
 }
 
-interface SubscribersEvtQueueItem extends SubscriberEventCallbackParam {
-    fn: SubscriberEventCallback;
+interface PublishedEvtQueueItem extends SubscriberParams {
+    fn: Subscriber;
 }
+
+type PublishFn = (resolver: string, on: string, data: any[]) => void;
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function build(builder: QueryBuilderInfo) {
     const preparedBI = prepareBuilderInfo(builder);
-
     const subscribers: Subscribers = {};
 
-    function createTransactionScope(scopeTr: any, scopeTrOptions: any | undefined, isIsolated: boolean) {
 
-        let subscribersEvtQueue: SubscribersEvtQueueItem[] = []; // TODO:
+    class Publisher {
+        private eventQueue: PublishedEvtQueueItem[] = [];
 
-        function queueSubscribersEvents(resolver: string, on: string, data: any[]) {
+        public publish(resolver: string, on: string, data: any[]) {
             const map = subscribers[resolver];
             if (map && map.size) {
                 {
@@ -59,7 +59,7 @@ export function build(builder: QueryBuilderInfo) {
                     if (set) {
                         for (const fn of set.values()) {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            subscribersEvtQueue.push({ on, resolver, id: null, fn });
+                            this.eventQueue.push({ on, resolver, id: null, fn });
                         }
                     }
                 }
@@ -71,45 +71,78 @@ export function build(builder: QueryBuilderInfo) {
                     if (set) {
                         for (const fn of set.values()) {
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                            subscribersEvtQueue.push({ on, resolver, id, fn });
+                            this.eventQueue.push({ on, resolver, id, fn });
                         }
                     }
                 }
             }
         }
 
-        function subscribe(resolver: string, id: any | null, fn: SubscriberEventCallback) {
-            if (! subscribers[resolver]) {
-                subscribers[resolver] = new Map<any, Set<SubscriberEventCallback>>();
-            }
-
-            const map = subscribers[resolver];
-            if (! map.has(id)) {
-                map.set(id, new Set<SubscriberEventCallback>());
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const set = map.get(id)!;
-            set.add(fn);
+        public toPublishFn() {
+            return (resolver: string, on: string, data: any[]) => this.publish(resolver, on, data);
         }
 
-        function unsubscribe(resolver: string, id: any | null, fn: SubscriberEventCallback) {
-            if (! subscribers[resolver]) {
-                return;
-            }
+        public fire() {
+            if (this.eventQueue.length) {
+                const queue = this.eventQueue;
+                this.eventQueue = [];
 
-            const map = subscribers[resolver];
-            if (! map.has(id)) {
-                return;
+                setTimeout(() => {
+                    for (const q of queue) {
+                        try {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            q.fn({ on: q.on, resolver: q.resolver, id: q.id });
+                        } catch (e) {
+                            // nothing to do.
+                        }
+                    }
+                }, 0);
             }
-
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const set = map.get(id)!;
-            set.delete(fn);
         }
+    }
+
+
+    function subscribe(resolver: string, id: any | null, fn: Subscriber) {
+        if (! subscribers[resolver]) {
+            subscribers[resolver] = new Map<any, Set<Subscriber>>();
+        }
+
+        const map = subscribers[resolver];
+        if (! map.has(id)) {
+            map.set(id, new Set<Subscriber>());
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const set = map.get(id)!;
+        set.add(fn);
+    }
+
+
+    function unsubscribe(resolver: string, id: any | null, fn: Subscriber) {
+        if (! subscribers[resolver]) {
+            return;
+        }
+
+        const map = subscribers[resolver];
+        if (! map.has(id)) {
+            return;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const set = map.get(id)!;
+        set.delete(fn);
+    }
+
+
+    function createTransactionScope(
+            scopeTr: any, scopeTrOptions: any | undefined, scopePublisher: Publisher | undefined, isIsolated: boolean) {
+
+        const scopePub = scopePublisher?.toPublishFn();
+
 
         async function withTransactionEvents<R>(
-                tr: any, trOptions: any | undefined, run: (tx: any, txOpts: any | undefined) => Promise<R>) {
+                tr: any, trOptions: any | undefined, publisher: Publisher,
+                run: (tx: any, txOpts: any | undefined, publish: PublishFn) => Promise<R>) {
 
             try {
                 if (preparedBI.events.beginTransaction) {
@@ -123,7 +156,7 @@ export function build(builder: QueryBuilderInfo) {
                 }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const ret =  await run(tr, trOptions);
+                const ret =  await run(tr, trOptions, publisher.toPublishFn());
 
                 if (preparedBI.events.endTransaction) {
                     await preparedBI.events.endTransaction({
@@ -135,82 +168,87 @@ export function build(builder: QueryBuilderInfo) {
                     }, null);
                 }
 
-                if (subscribersEvtQueue.length) {
-                    const queue = subscribersEvtQueue;
-                    subscribersEvtQueue = [];
-                    setTimeout(() => {
-                        for (const q of queue) {
-                            try {
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                                q.fn({ on: q.on, resolver: q.resolver, id: q.id });
-                            } catch (e) {
-                                // nothing to do.
-                            }
-                        }
-                    }, 0);
-                }
+                publisher.fire();
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return ret;
             } catch (e) {
-                if (preparedBI.events.endTransaction) {
-                    await preparedBI.events.endTransaction({
-                        resolverData: {},
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        transactionData: tr,
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        transactionOptions: trOptions,
-                    }, e);
+                try {
+                    if (preparedBI.events.endTransaction) {
+                        await preparedBI.events.endTransaction({
+                            resolverData: {},
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionData: tr,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            transactionOptions: trOptions,
+                        }, e);
+                    }
+                } catch (e2) {
+                    // nothing to do.
                 }
                 throw e;
             }
         }
 
+
         async function runCompiledQuery<R>(query: PreparedQuery, params?: QueryParams): Promise<R[]> {
-            const run = async (tr: any, trOptions: any | undefined) => {
+            const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 const ret = await executeCompiledQuery(preparedBI, params ?? {}, tr, trOptions, query, null, null, null, null);
+
+                if (query.for && (query.for.includes('view') || query.for.includes('reference'))) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    publish(query.from[0].resolverName![query.from[0].resolverName!.length - 1], 'update', ret);
+                }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return ret;
             };
 
             if (isIsolated) {
-                return await withTransactionEvents<R[]>({}, void 0, run);
+                return await withTransactionEvents<R[]>({}, void 0, new Publisher(), run);
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr, scopeTrOptions);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+                return await run(scopeTr, scopeTrOptions, scopePub!);
             }
         }
+
 
         function compileQuery(strings: TemplateStringsArray | string, ...values: any[]): IQuery {
             const query = prepareQuery(preparedBI, strings, ...values);
             return new Query(query, runCompiledQuery);
         }
 
+
         async function runQuery<R>(strings: TemplateStringsArray | string, ...values: any[]): Promise<R[]> {
-            const run = async (tr: any, trOptions: any | undefined) => {
+            const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 const query = prepareQuery(preparedBI, strings, ...values);
                 const ret = await executeCompiledQuery(preparedBI, {}, tr, trOptions, query, null, null, null, null);
+
+                if (query.for && (query.for.includes('view') || query.for.includes('reference'))) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    publish(query.from[0].resolverName![query.from[0].resolverName!.length - 1], 'update', ret);
+                }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return ret;
             };
 
             if (isIsolated) {
-                return await withTransactionEvents<R[]>({}, void 0, run);
+                return await withTransactionEvents<R[]>({}, void 0, new Publisher(), run);
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr, scopeTrOptions);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+                return await run(scopeTr, scopeTrOptions, scopePub!);
             }
         }
 
+
         async function runInsert<T>(resolver: string, obj: T): Promise<T extends (infer R)[] ? R[] : T> {
-            const run = async (tr: any, trOptions: any | undefined) => {
+            const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 const isArray = Array.isArray(obj);
     
                 const ret = await executeInsertDML(preparedBI, tr, trOptions, resolver, isArray ? obj as any : [obj]);
 
-                queueSubscribersEvents(resolver, 'insert', ret);
+                publish(resolver, 'insert', ret);
 
                 if (isArray) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -223,20 +261,21 @@ export function build(builder: QueryBuilderInfo) {
 
             if (isIsolated) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await withTransactionEvents({}, void 0, run);
+                return await withTransactionEvents({}, void 0, new Publisher(), run);
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr, scopeTrOptions);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+                return await run(scopeTr, scopeTrOptions, scopePub!);
             }
         }
 
+
         async function runUpdate<T>(resolver: string, obj: T): Promise<T extends (infer R)[] ? R[] : T> {
-            const run = async (tr: any, trOptions: any | undefined) => {
+            const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 const isArray = Array.isArray(obj);
 
                 const ret = await executeUpdateDML(preparedBI, tr, trOptions, resolver, isArray ? obj as any : [obj]);
 
-                queueSubscribersEvents(resolver, 'update', ret);
+                publish(resolver, 'update', ret);
 
                 if (isArray) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -249,33 +288,35 @@ export function build(builder: QueryBuilderInfo) {
 
             if (isIsolated) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await withTransactionEvents({}, void 0, run);
+                return await withTransactionEvents({}, void 0, new Publisher(), run);
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr, scopeTrOptions);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+                return await run(scopeTr, scopeTrOptions, scopePub!);
             }
         }
 
-        async function runRemove<T>(resolver: string, obj: T) {
-            const run = async (tr: any, trOptions: any | undefined) => {
+
+        async function runRemove<T>(resolver: string, obj: T): Promise<void> {
+            const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const data: any[] = Array.isArray(obj) ? obj : [obj];
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 await executeRemoveDML(preparedBI, tr, trOptions, resolver, data);
 
-                queueSubscribersEvents(resolver, 'remove', data);
+                publish(resolver, 'remove', data);
 
                 return;
             };
 
             if (isIsolated) {
-                return await withTransactionEvents({}, void 0, run);
+                return await withTransactionEvents({}, void 0, new Publisher(), run);
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return await run(scopeTr, scopeTrOptions);
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+                return await run(scopeTr, scopeTrOptions, scopePub!);
             }
         }
+
 
         async function transaction(
                 callback: (commands: {
@@ -289,9 +330,11 @@ export function build(builder: QueryBuilderInfo) {
                 ) {
 
             const tr = {};
-            const commands = createTransactionScope(tr, trOptions, false);
 
-            const run = async (_tr: any) => {
+            const publisher = new Publisher();
+            const commands = createTransactionScope(tr, trOptions, publisher, false);
+
+            const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 await callback({
                     compile: commands.compile,
                     soql: commands.soql,
@@ -301,7 +344,7 @@ export function build(builder: QueryBuilderInfo) {
                 }, tr);
             };
 
-            return await withTransactionEvents(tr, trOptions, run);
+            return await withTransactionEvents(tr, trOptions, publisher, run);
         }
 
         return ({
@@ -316,5 +359,6 @@ export function build(builder: QueryBuilderInfo) {
         });
     }
 
-    return createTransactionScope({}, void 0, true);
+
+    return createTransactionScope({}, void 0, void 0, true);
 }

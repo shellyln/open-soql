@@ -395,10 +395,10 @@ export type QueryBuilderInfoInternal =
     };
 
 
-export interface SubscriberEventCallbackParam {
+export interface SubscriberParams {
     on: string;
     resolver: string;
     id: any | null;
 }
 
-export type SubscriberEventCallback = (params: SubscriberEventCallbackParam) => void;
+export type Subscriber = (params: SubscriberParams) => void;
