@@ -318,6 +318,25 @@ export function build(builder: QueryBuilderInfo) {
         }
 
 
+        async function runTouch<T>(resolver: string, obj: T): Promise<void> {
+            const run = (tr: any, trOptions: any | undefined, publish: PublishFn) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const data: any[] = Array.isArray(obj) ? obj : [obj];
+
+                publish(resolver, 'update', data);
+
+                return Promise.resolve();
+            };
+
+            if (isIsolated) {
+                return await withTransactionEvents({}, void 0, new Publisher(), run);
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+                return await run(scopeTr, scopeTrOptions, scopePub!);
+            }
+        }
+
+
         async function transaction(
                 callback: (commands: {
                         compile: typeof compileQuery,
@@ -325,6 +344,7 @@ export function build(builder: QueryBuilderInfo) {
                         insert: typeof runInsert,
                         update: typeof runUpdate,
                         remove: typeof runRemove,
+                        touch: typeof runTouch,
                     }, tr: any) => Promise<void>,
                 trOptions?: any,
                 ) {
@@ -341,6 +361,7 @@ export function build(builder: QueryBuilderInfo) {
                     insert: commands.insert,
                     update: commands.update,
                     remove: commands.remove,
+                    touch: commands.touch,
                 }, tr);
             };
 
@@ -353,6 +374,7 @@ export function build(builder: QueryBuilderInfo) {
             insert: runInsert,
             update: runUpdate,
             remove: runRemove,
+            touch: runTouch,
             subscribe,
             unsubscribe,
             transaction,
