@@ -4,6 +4,7 @@
 
 * ✨`[NEW]` Publish / Subscribe (Subscribe to DML events)
 * Update README.
+* Update dependencies.
 
 
 ---
