@@ -298,7 +298,7 @@ await transaction(async (commands, tr) => {
 ```
 
 
-### Publish / Subscribe
+### Publish / Subscribe messaging
 
 #### Without a transaction
 ```ts
@@ -527,7 +527,7 @@ See also the following usage example repositories:
   * [x] `insert`
   * [x] `update`
   * [x] `remove`
-* [x] Pub / Sub (subscribe to DML events)
+* [x] Publish / Subscribe messaging
 * [x] transaction scope
 * [x] template string
 

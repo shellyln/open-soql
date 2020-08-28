@@ -2,7 +2,7 @@
 
 ## v0.3.0
 
-* ✨`[NEW]` Publish / Subscribe (Subscribe to DML events)
+* ✨`[NEW]` Publish / Subscribe messaging. (Subscribe to DML events)
 * Update README.
 * Update dependencies.
 
