@@ -523,7 +523,7 @@ See also the following usage example repositories:
   * [x] `insert`
   * [x] `update`
   * [x] `remove`
-* [x] Pub / Sub (subscribe to DML events with filtering conditions)
+* [x] Pub / Sub (subscribe to DML events)
 * [x] transaction scope
 * [x] template string
 
