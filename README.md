@@ -322,13 +322,15 @@ subscribe('Contact', null, subscriber);
 subscribe('Contact', 'Contact/z2', subscriber);
 
 await update('Contact', [ ... ]); // or insert(), remove(), touch()
-// (Fire events.)
+// (Fire events on next event loop.)
 
 await update('Contact', [ ... ]);
-// (Fire events.)
+// (Fire events on next event loop.)
 
 await update('Contact', [ ... ]);
-// (Fire events.)
+// (Fire events on next event loop.)
+
+...
 
 // Unsubscribe to all changes of the resolver `Contact`.
 unsubscribe('Contact', null, subscriber);
@@ -352,7 +354,9 @@ await transaction(async (commands, tr) => {
     await update('Contact', [ ... ]);
     await update('Contact', [ ... ]);
 });
-// (Fire events.)
+// (Fire events on next event loop.)
+
+...
 
 // Unsubscribe to all changes of the resolver `Contact`.
 unsubscribe('Contact', null, subscriber);
