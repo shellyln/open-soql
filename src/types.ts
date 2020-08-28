@@ -396,7 +396,7 @@ export type QueryBuilderInfoInternal =
 
 
 export interface SubscriberParams {
-    on: string;
+    on: 'insert' | 'update' | 'remove';
     resolver: string;
     id: any | null;
 }

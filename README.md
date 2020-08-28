@@ -42,8 +42,11 @@ import { staticJsonResolverBuilder,
          staticCsvResolverBuilder,
          passThroughResolverBuilder } from 'open-soql/modules/resolvers';
 
-const { compile, soql, insert, update, remove, transaction } = build({
-    // See `src/types.ts` > `QueryBuilderInfo`
+// See `src/types.ts` > `QueryBuilderInfo`
+const { compile, soql,
+        insert, update, remove, touch,
+        transaction, subscribe, unsubscribe } = build({
+
     functions: [{ // optional: For defining custom functions.
         type: 'scalar',
         name: 'string',
@@ -280,7 +283,7 @@ await remove('Contact', updated);
 ### Execute commands within a transaction
 ```ts
 await transaction(async (commands, tr) => {
-    const { compile, soql, insert, update, remove } = commands;
+    const { compile, soql, insert, update, remove, touch } = commands;
 
     const inserted = await insert('Contact', [{
         Name: 'foo',
@@ -293,6 +296,70 @@ await transaction(async (commands, tr) => {
     const selectedAccounts = await query.execute<Partial<Account>>();
 });
 ```
+
+
+### Publish / Subscribe
+
+#### Without a transaction
+```ts
+const subscriber: Subscriber = ({on, resolver, id}) => {
+    switch (on) {
+    case 'insert':
+        ...
+        break;
+    case 'update':
+        ...
+        break;
+    case 'remove':
+        ...
+        break;
+    }
+};
+
+// Subscribe to all changes of the resolver `Contact`.
+subscribe('Contact', null, subscriber);
+// Subscribe to all changes of the record `Contact(id='Contact/z2')`.
+subscribe('Contact', 'Contact/z2', subscriber);
+
+await update('Contact', [ ... ]); // or insert(), remove(), touch()
+// (Fire events.)
+
+await update('Contact', [ ... ]);
+// (Fire events.)
+
+await update('Contact', [ ... ]);
+// (Fire events.)
+
+// Unsubscribe to all changes of the resolver `Contact`.
+unsubscribe('Contact', null, subscriber);
+// Unsubscribe to all changes of the record `Contact(id='Contact/z2')`.
+unsubscribe('Contact', 'Contact/z2', subscriber);
+```
+
+#### Within a transaction
+```ts
+const subscriber: Subscriber = ({on, resolver, id}) => { ... };
+
+// Subscribe to all changes of the resolver `Contact`.
+subscribe('Contact', null, subscriber);
+// Subscribe to all changes of the record `Contact(id='Contact/z2')`.
+subscribe('Contact', 'Contact/z2', subscriber);
+
+await transaction(async (commands, tr) => {
+    const { compile, soql, insert, update, remove, touch } = commands;
+
+    await update('Contact', [ ... ]); // or insert(), remove(), touch()
+    await update('Contact', [ ... ]);
+    await update('Contact', [ ... ]);
+});
+// (Fire events.)
+
+// Unsubscribe to all changes of the resolver `Contact`.
+unsubscribe('Contact', null, subscriber);
+// Unsubscribe to all changes of the record `Contact(id='Contact/z2')`.
+unsubscribe('Contact', 'Contact/z2', subscriber);
+```
+
 
 See also the following usage example repositories:  
 * [https://github.com/shellyln/open-soql-usage-example](https://github.com/shellyln/open-soql-usage-example)
@@ -456,7 +523,7 @@ See also the following usage example repositories:
   * [x] `insert`
   * [x] `update`
   * [x] `remove`
-* [ ] Pub / Sub (subscribe to DML events with filtering conditions)
+* [x] Pub / Sub (subscribe to DML events with filtering conditions)
 * [x] transaction scope
 * [x] template string
 
@@ -517,15 +584,26 @@ export interface IQuery {
         }): Promise<R[]>;
 }
 
+export interface SubscriberParams {
+    on: 'insert' | 'update' | 'remove';
+    resolver: string;
+    id: any | null;
+}
+
+export type Subscriber = (params: SubscriberParams) => void;
+
 export function build(builder: QueryBuilderInfo): {
     compile: (strings: TemplateStringsArray | string, ...values: any[]) => IQuery;
     soql: (strings: TemplateStringsArray | string, ...values: any[]) => Promise<R[]>;
     insert: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     update: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     remove: (resolver: string, obj: T) => Promise<void>;
+    touch: (resolver: string, obj: T) => Promise<void>;
+    subscribe: (resolver: string, id: any, fn: Subscriber) => void,
+    unsubscribe: (resolver: string, id: any, fn: Subscriber) => void,
     transaction: (
             callback: (commands: {
-                compile, soql, insert, update, remove
+                compile, soql, insert, update, remove, touch
             }, tr: any) => Primise<void>,
             trOptions?: any,
         ) => Primise<void>;
@@ -546,6 +624,9 @@ export function build(builder: QueryBuilderInfo): {
   * `insert`: Insert record(s).
   * `update`: Update record(s).
   * `remove`: Remove record(s).
+  * `touch`: Queues `update` events for subscribers.
+  * `subscribe`: Subscribe to publishing events.
+  * `unsubscribe`: Unsubscribe to publishing events.
   * `transaction`: Execute commands within a transaction.
 
 

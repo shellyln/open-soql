@@ -51,7 +51,7 @@ export function build(builder: QueryBuilderInfo) {
     class Publisher {
         private eventQueue: PublishedEvtQueueItem[] = [];
 
-        public publish(resolver: string, on: string, data: any[]) {
+        public publish(resolver: string, on: SubscriberParams['on'], data: any[]) {
             const map = subscribers[resolver];
             if (map && map.size) {
                 {
@@ -79,7 +79,7 @@ export function build(builder: QueryBuilderInfo) {
         }
 
         public toPublishFn() {
-            return (resolver: string, on: string, data: any[]) => this.publish(resolver, on, data);
+            return (resolver: string, on: SubscriberParams['on'], data: any[]) => this.publish(resolver, on, data);
         }
 
         public fire() {
@@ -354,7 +354,7 @@ export function build(builder: QueryBuilderInfo) {
             const publisher = new Publisher();
             const commands = createTransactionScope(tr, trOptions, publisher, false);
 
-            const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
+            const run = async (tr: any, _trOptions: any | undefined, _publish: PublishFn) => {
                 await callback({
                     compile: commands.compile,
                     soql: commands.soql,
