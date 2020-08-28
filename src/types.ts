@@ -393,3 +393,12 @@ export type QueryBuilderInfoInternal =
         rules: Required<QueryBuilderInfoRulesSection>;
         resolvers: Required<QueryBuilderInfoResolversSection>;
     };
+
+
+export interface SubscriberParams {
+    on: 'insert' | 'update' | 'remove';
+    resolver: string;
+    id: any | null;
+}
+
+export type Subscriber = (params: SubscriberParams) => void;

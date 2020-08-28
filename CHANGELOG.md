@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0
+
+* ✨`[NEW]` Publish / Subscribe (Subscribe to DML events)
+* Update README.
+
+
+---
+
 ## v0.2.2
 
 * 📈 Improve typings.
