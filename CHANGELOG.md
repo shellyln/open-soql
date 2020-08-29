@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.2
+
+* 📈 Memoize the `immediate-scalar` function calls.
+* Update README.
+
+
 ## v0.3.1
 
 * ✨`[NEW]` Add `notifyRemoved()` function that publish DML `remove` event. (to notify remote changes)

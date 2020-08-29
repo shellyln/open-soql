@@ -10,7 +10,8 @@ import { FieldResultType,
          ImmediateScalarQueryFuncInfo,
          AggregateQueryFuncInfo } from '../types';
 import { getObjectValue }         from './util';
-import { nestedFnInfoCache }      from './cache';
+import { nestedFnInfoCache,
+         memoizedFnCache }        from './cache';
 
 
 
@@ -110,6 +111,13 @@ export function callImmediateScalarFunction(
         field: PreparedFnCall, fnInfo: ImmediateScalarQueryFuncInfo, fieldResultType: FieldResultType,
         record: any | null, groupedRecs: any[] | null): any {
 
+    const cached = memoizedFnCache.get(field.args);
+    if (cached) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return cached.value;
+    }
+
+    let hasNonImmediate = false;
     const args = field.args.map(a => {
         switch (typeof a) {
         case 'object':
@@ -128,6 +136,8 @@ export function callImmediateScalarFunction(
                 }
             case 'parameter':
                 {
+                    hasNonImmediate = true;
+
                     if (! Object.prototype.hasOwnProperty.call(ctx.params, a.name)) {
                         throw new Error(`Parameter '${a.name}' is not found.`);
                     }
@@ -148,6 +158,10 @@ export function callImmediateScalarFunction(
                 }
             case 'fncall':
                 {
+                    if (groupedRecs !== null || record !== null) {
+                        hasNonImmediate = true;
+                    }
+
                     let argFnInfoTmp = nestedFnInfoCache.get(a);
                     if (! argFnInfoTmp) {
                         const argFnNameI = a.fn.toLowerCase();
@@ -183,8 +197,16 @@ export function callImmediateScalarFunction(
         }
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const ret = fnInfo.fn(ctx, args);
+
+    if (! hasNonImmediate) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        memoizedFnCache.set(field.args, { value: ret });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fnInfo.fn(ctx, args);
+    return ret;
 }
 
 

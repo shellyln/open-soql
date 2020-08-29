@@ -22,13 +22,15 @@ export interface CondOp1CacheValue {
         cache: CondOp1CacheValue, record: any) => any,
 }
 
-export interface CondOp2CacheValue {
+export interface MemoizedValue {
     value: any,
 }
 
 
 export const condOp1FnCache = new WeakMap<PreparedCondition, CondOp1CacheValue>();
 
-export const condOp2ValueCache = new WeakMap<PreparedCondition, CondOp2CacheValue>();
+export const condOp2ValueCache = new WeakMap<PreparedCondition, MemoizedValue>();
 
 export const nestedFnInfoCache = new WeakMap<PreparedFnCall, QueryFuncInfo>();
+
+export const memoizedFnCache = new WeakMap<PreparedFnCall['args'], MemoizedValue>();
