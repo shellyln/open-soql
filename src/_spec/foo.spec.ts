@@ -575,6 +575,7 @@ describe("foo", function() {
                     , acc.id, acc.name
                     , testspec_string_twice(testspec_string_concat(foo, bar))
                     , testspec_string_twice(testspec_string_concat(acc.id, acc.name))
+                    , testspec_pass_thru(testspec_pass_thru('qwerty'))
                     -- , (Select Id, quux from acc.contacts)
                 from
                       contact
