@@ -265,7 +265,7 @@ function getOp1Value(
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any):
-        string | number | PreparedAtomValue[] | null {
+        string | number | RegExp | PreparedAtomValue[] | null {
 
     const cached = condOp2ValueCache.get(cond);
     if (cached) {
@@ -344,7 +344,18 @@ function getOp2Value(
         }
         break;
     default:
-        v = op; // string or number
+        // string or number
+        switch (cond.op) {
+        case 'like': case 'not_like':
+            if (typeof op !== 'string') {
+                throw new Error(`Operator "like": operand(2) should be string.`);
+            }
+            v = new RegExp(convertPattern(op), 'i');
+            break;
+        default:
+            v = op;
+            break;
+        }
         break;
     }
 
@@ -535,14 +546,8 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (typeof v2 !== 'string') {
-                    throw new Error(`Operator "like": operand(2) should be string.`);
-                }
-                {
-                    const re = new RegExp(convertPattern(v2), 'i');
-                    if (! re.test(v1)) {
-                        ret = false;
-                    }
+                if (! (v2 as RegExp).test(v1)) {
+                    ret = false;
                 }
                 break;
             case 'not_like':
@@ -550,14 +555,8 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (typeof v2 !== 'string') {
-                    throw new Error(`Operator "not_like": operand(2) should be string.`);
-                }
-                {
-                    const re = new RegExp(convertPattern(v2), 'i');
-                    if (re.test(v1)) {
-                        ret = false;
-                    }
+                if ((v2 as RegExp).test(v1)) {
+                    ret = false;
                 }
                 break;
             case 'in':
