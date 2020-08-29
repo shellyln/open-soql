@@ -544,6 +544,7 @@ See also the following usage example repositories:
 ```ts
 export interface QueryBuilderInfo {
     functions?: QueryFuncInfo[];
+                // QueryFuncInfo[i].type is 'aggregate' | 'scalar' | 'immediate-scalar'
     rules?: {
         idFieldName?: (resolverName: string) => string;
         foreignIdFieldName?: (masterResolverName: string | undefined) => string | undefined;
@@ -622,6 +623,9 @@ export function build(builder: QueryBuilderInfo): {
 ##### parameters:
 
 * `builder`: Resolvers and configurations.
+
+> NOTICE: The `immediate-scalar` function does not refer to the fields of a record and
+>       must be referentially transparent.
 
 ##### returns:
 
