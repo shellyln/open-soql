@@ -29,14 +29,14 @@ function yieldFn() {
 }
 
 
-describe("pub-sub-1", function() {
-    it("Pub / Sub (1)", async function() {
+describe("pub-sub-2", function() {
+    it("Pub / Sub (3); unsubscribeAllBySubscriber", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
             let removed: any = null;
 
-            const { soql, insert, update, remove, touch, notifyRemoved, subscribe, unsubscribe } = build({
+            const { soql, insert, update, remove, touch, notifyRemoved, subscribe, unsubscribe, unsubscribeAllBySubscriber } = build({
                 resolvers: {
                     query: {
                         Contact: staticCsvResolverBuilder(
@@ -115,11 +115,8 @@ describe("pub-sub-1", function() {
                 { on: 'insert', resolver: 'Contact', id: 'Contact/z2' },
                 { on: 'insert', resolver: 'Contact', id: 'Contact/z4' },
             ]);
-            unsubscribe('Contact', null, fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-            unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
             callbackResults.length = 0;
@@ -146,11 +143,8 @@ describe("pub-sub-1", function() {
                 { on: 'update', resolver: 'Contact', id: 'Contact/z2' },
                 { on: 'update', resolver: 'Contact', id: 'Contact/z4' },
             ]);
-            unsubscribe('Contact', null, fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-            unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
             callbackResults.length = 0;
@@ -177,11 +171,8 @@ describe("pub-sub-1", function() {
                 { on: 'update', resolver: 'Contact', id: 'Contact/z2' },
                 { on: 'update', resolver: 'Contact', id: 'Contact/z4' },
             ]);
-            unsubscribe('Contact', null, fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-            unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
             callbackResults.length = 0;
@@ -208,11 +199,8 @@ describe("pub-sub-1", function() {
                 { on: 'remove', resolver: 'Contact', id: 'Contact/z2' },
                 { on: 'remove', resolver: 'Contact', id: 'Contact/z4' },
             ]);
-            unsubscribe('Contact', null, fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-            unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
             callbackResults.length = 0;
@@ -239,21 +227,18 @@ describe("pub-sub-1", function() {
                 { on: 'remove', resolver: 'Contact', id: 'Contact/z2' },
                 { on: 'remove', resolver: 'Contact', id: 'Contact/z4' },
             ]);
-            unsubscribe('Contact', null, fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-            unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-            unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+            unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
         }
     });
 
-    it("Pub / Sub (2); + transaction", async function() {
+    it("Pub / Sub (4); unsubscribeAllBySubscriber + transaction", async function() {
         for (const cf of resolverConfigs) {
             setDefaultStaticResolverConfig(cf);
 
             let removed: any = null;
 
-            const { transaction, subscribe, unsubscribe } = build({
+            const { transaction, subscribe, unsubscribe, unsubscribeAllBySubscriber } = build({
                 resolvers: {
                     query: {
                         Contact: staticCsvResolverBuilder(
@@ -328,11 +313,8 @@ describe("pub-sub-1", function() {
                 await yieldFn();
                 expect(callbackResults).toEqual([
                 ]);
-                unsubscribe('Contact', null, fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-                unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
                 subscribe('Contact', null, fnSubContactWildcard1);
@@ -354,11 +336,8 @@ describe("pub-sub-1", function() {
                 await yieldFn();
                 expect(callbackResults).toEqual([
                 ]);
-                unsubscribe('Contact', null, fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-                unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
                 subscribe('Contact', null, fnSubContactWildcard1);
@@ -380,11 +359,8 @@ describe("pub-sub-1", function() {
                 await yieldFn();
                 expect(callbackResults).toEqual([
                 ]);
-                unsubscribe('Contact', null, fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-                unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
                 subscribe('Contact', null, fnSubContactWildcard1);
@@ -406,11 +382,8 @@ describe("pub-sub-1", function() {
                 await yieldFn();
                 expect(callbackResults).toEqual([
                 ]);
-                unsubscribe('Contact', null, fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-                unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
 
 
                 subscribe('Contact', null, fnSubContactWildcard1);
@@ -432,11 +405,8 @@ describe("pub-sub-1", function() {
                 await yieldFn();
                 expect(callbackResults).toEqual([
                 ]);
-                unsubscribe('Contact', null, fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard1);
-                unsubscribe('Contact', 'Contact/z2', fnSubContactWildcard2);
-                unsubscribe('Contact', 'Contact/z4', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard1);
+                unsubscribeAllBySubscriber('Contact', fnSubContactWildcard2);
             });
             await yieldFn();
             expect(callbackResults).toEqual([

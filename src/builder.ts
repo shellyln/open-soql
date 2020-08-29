@@ -39,7 +39,7 @@ interface PublishedEvtQueueItem extends SubscriberParams {
     fn: Subscriber;
 }
 
-type PublishFn = (resolver: string, on: string, data: any[]) => void;
+type PublishFn = (resolver: string, on: SubscriberParams['on'], data: any[]) => void;
 
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -131,6 +131,18 @@ export function build(builder: QueryBuilderInfo) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const set = map.get(id)!;
         set.delete(fn);
+    }
+
+
+    function unsubscribeAllBySubscriber(resolver: string, fn: Subscriber) {
+        if (! subscribers[resolver]) {
+            return;
+        }
+
+        const map = subscribers[resolver];
+        for (const [, set] of map.entries()) {
+            set.delete(fn);
+        }
     }
 
 
@@ -318,12 +330,12 @@ export function build(builder: QueryBuilderInfo) {
         }
 
 
-        async function runTouch<T>(resolver: string, obj: T): Promise<void> {
+        async function runNotifyGen<T>(resolver: string, on: SubscriberParams['on'], obj: T): Promise<void> {
             const run = (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const data: any[] = Array.isArray(obj) ? obj : [obj];
 
-                publish(resolver, 'update', data);
+                publish(resolver, on, data);
 
                 return Promise.resolve();
             };
@@ -337,6 +349,16 @@ export function build(builder: QueryBuilderInfo) {
         }
 
 
+        async function runTouch<T>(resolver: string, obj: T): Promise<void> {
+            return runNotifyGen<T>(resolver, 'update', obj);
+        }
+
+
+        async function runNotifyRemoved<T>(resolver: string, obj: T): Promise<void> {
+            return runNotifyGen<T>(resolver, 'remove', obj);
+        }
+
+
         async function transaction(
                 callback: (commands: {
                         compile: typeof compileQuery,
@@ -345,6 +367,7 @@ export function build(builder: QueryBuilderInfo) {
                         update: typeof runUpdate,
                         remove: typeof runRemove,
                         touch: typeof runTouch,
+                        notifyRemoved: typeof runNotifyRemoved,
                     }, tr: any) => Promise<void>,
                 trOptions?: any,
                 ) {
@@ -362,6 +385,7 @@ export function build(builder: QueryBuilderInfo) {
                     update: commands.update,
                     remove: commands.remove,
                     touch: commands.touch,
+                    notifyRemoved: commands.notifyRemoved,
                 }, tr);
             };
 
@@ -375,8 +399,10 @@ export function build(builder: QueryBuilderInfo) {
             update: runUpdate,
             remove: runRemove,
             touch: runTouch,
+            notifyRemoved: runNotifyRemoved,
             subscribe,
             unsubscribe,
+            unsubscribeAllBySubscriber,
             transaction,
         });
     }

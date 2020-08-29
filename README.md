@@ -44,8 +44,9 @@ import { staticJsonResolverBuilder,
 
 // See `src/types.ts` > `QueryBuilderInfo`
 const { compile, soql,
-        insert, update, remove, touch,
-        transaction, subscribe, unsubscribe } = build({
+        insert, update, remove, touch, notifyRemoved,
+        transaction,
+        subscribe, unsubscribe, unsubscribeAllBySubscriber } = build({
 
     functions: [{ // optional: For defining custom functions.
         type: 'scalar',
@@ -283,7 +284,7 @@ await remove('Contact', updated);
 ### Execute commands within a transaction
 ```ts
 await transaction(async (commands, tr) => {
-    const { compile, soql, insert, update, remove, touch } = commands;
+    const { compile, soql, insert, update, remove, touch, notifyRemoved } = commands;
 
     const inserted = await insert('Contact', [{
         Name: 'foo',
@@ -605,6 +606,7 @@ export function build(builder: QueryBuilderInfo): {
     touch: (resolver: string, obj: T) => Promise<void>;
     subscribe: (resolver: string, id: any, fn: Subscriber) => void,
     unsubscribe: (resolver: string, id: any, fn: Subscriber) => void,
+    unsubscribeAllBySubscriber: (resolver: string, fn: Subscriber) => void,
     transaction: (
             callback: (commands: {
                 compile, soql, insert, update, remove, touch
@@ -628,9 +630,11 @@ export function build(builder: QueryBuilderInfo): {
   * `insert`: Insert record(s).
   * `update`: Update record(s).
   * `remove`: Remove record(s).
-  * `touch`: Queues `update` events for subscribers.
+  * `touch`: Queues `update` events for subscribers. (to notify remote changes)
+  * `notifyRemoved`: Queues `remove` events for subscribers. (to notify remote changes)
   * `subscribe`: Subscribe to publishing events.
   * `unsubscribe`: Unsubscribe to publishing events.
+  * `unsubscribeAllBySubscriber`: Unsubscribe to publishing events.
   * `transaction`: Execute commands within a transaction.
 
 
