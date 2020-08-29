@@ -604,6 +604,7 @@ export function build(builder: QueryBuilderInfo): {
     update: (resolver: string, obj: T) => Promise<T extends (infer R)[] ? R[] : T>;
     remove: (resolver: string, obj: T) => Promise<void>;
     touch: (resolver: string, obj: T) => Promise<void>;
+    notifyRemoved: (resolver: string, obj: T) => Promise<void>;
     subscribe: (resolver: string, id: any, fn: Subscriber) => void,
     unsubscribe: (resolver: string, id: any, fn: Subscriber) => void,
     unsubscribeAllBySubscriber: (resolver: string, fn: Subscriber) => void,
