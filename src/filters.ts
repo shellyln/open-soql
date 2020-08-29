@@ -360,30 +360,33 @@ function evalRecursiveCondition(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         w: PreparedConditionOperand, record: any): boolean {
 
-    let ret = true;
+    // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
+    return evalCondition(fieldNameMap, groupFields, isAggregation, ctx, w as any, record);
 
-    switch (typeof w) {
-    case 'object':
-        if (Array.isArray(w)) {
-            throw new Error(`Array is not allowed in the condition.`);
-        } else {
-            if (w === null) {
-                throw new Error(`Unexpected type appears in the condition.`);
-            }
-            switch (w.type) {
-            case 'condition':
-                ret = evalCondition(fieldNameMap, groupFields, isAggregation, ctx, w, record);
-                break;
-            default:
-                throw new Error(`Unexpected type appears in the condition.`);
-            }
-        }
-        break;
-    default:
-        throw new Error(`Unexpected type appears in the condition.`);
-    }
-
-    return ret;
+    // let ret = true;
+    //
+    // switch (typeof w) {
+    // case 'object':
+    //     if (Array.isArray(w)) {
+    //         throw new Error(`Array is not allowed in the condition.`);
+    //     } else {
+    //         if (w === null) {
+    //             throw new Error(`Unexpected type appears in the condition.`);
+    //         }
+    //         switch (w.type) {
+    //         case 'condition':
+    //             ret = evalCondition(fieldNameMap, groupFields, isAggregation, ctx, w, record);
+    //             break;
+    //         default:
+    //             throw new Error(`Unexpected type appears in the condition.`);
+    //         }
+    //     }
+    //     break;
+    // default:
+    //     throw new Error(`Unexpected type appears in the condition.`);
+    // }
+    //
+    // return ret;
 }
 
 

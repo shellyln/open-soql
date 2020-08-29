@@ -6,6 +6,7 @@
 * 📈 Memoize the `immediate-scalar` function calls.
 * 📈 Improves the performance of the standard resolvers.
 * 📈 Improves the performance of sorting.
+* 📈 Improves the performance of filtering.
 * Update README.
 
 
