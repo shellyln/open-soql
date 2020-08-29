@@ -13,22 +13,25 @@ import { getTrueCasePathName,
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function sortRecords(query: PreparedQuery, records: any[]) {
-    if (query.orderBy) {
+    if (query.orderBy && records.length) {
         const primaryPathLen = query.from[0].name.length;
         const orderFields = query.orderBy;
 
+        const direction =
+            (f: PreparedOrderByField, r: number) =>
+                f.direction === 'desc' ? -r : r;
+
+        const fieldAndFNames = orderFields.map(f => ({
+            f,
+            fName: getTrueCasePathName(records[0], f.name.slice(primaryPathLen)),
+        }));
+
         records = records.sort((a, b) => {
-            const direction =
-                (f: PreparedOrderByField, r: number) =>
-                    f.direction === 'desc' ? -r : r;
 
-            const fieldAndFNames = orderFields.map(f => ({
-                f,
-                fName: getTrueCasePathName(records[0], f.name.slice(primaryPathLen)),
-            }));
+            LOOP: for (let i = 0; i < fieldAndFNames.length; i++) {
+                // eslint-disable-next-line prefer-const
+                let {f, fName} = fieldAndFNames[i];
 
-            // eslint-disable-next-line prefer-const
-            LOOP: for (let {f, fName} of fieldAndFNames) {
                 let va = null;
                 let vb = null;
 
@@ -43,7 +46,8 @@ export function sortRecords(query: PreparedQuery, records: any[]) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     va = getObjectPathValue(a, f.name.slice(primaryPathLen));
 
-                    fName = getTrueCasePathName(b, f.name.slice(primaryPathLen));
+                    fieldAndFNames[i].fName = fName = getTrueCasePathName(b, f.name.slice(primaryPathLen));
+
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     vb = fName !== null ? getObjectTrueCasePathValue(b, fName) : null;
                 }
