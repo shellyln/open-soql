@@ -404,7 +404,7 @@ See also the following usage example repositories:
         * [x] `div(field | literal | function call, ...)`
         * [x] `mod(field | literal | function call, ...)`
       * Date and datetime functions (UTC)
-        * [ ] `convertTimezone(field | literal | function call)`
+        * [x] `convertTimezone(field | literal | function call)`
         * [x] `calendar_month(field | literal | convertTimezone(field) | function call)`
         * [x] `calendar_quarter(field | literal | convertTimezone(field) | function call)`
         * [x] `calendar_year(field | literal | convertTimezone(field) | function call)`

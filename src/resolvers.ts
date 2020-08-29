@@ -89,6 +89,7 @@ function passThroughParser(src: any[]) {
 
 
 function filterAndSliceRecords(
+        fromCache: boolean,
         records: any[], fields: string[], conditions: PreparedCondition[],
         limit: number | null, offset: number | null, ctx: ResolverContext,
         config: StaticResolverConfig) {
@@ -106,11 +107,6 @@ function filterAndSliceRecords(
         if (! recordFields.has(field)) {
             throw new Error(`Field "${field}" is not supplied from resolver "${ctx.resolverName}".`);
         }
-    }
-
-    if (! config.noFiltering) {
-        records = applyWhereConditions(ctx, conditions, records);
-        ctx.resolverCapabilities.filtering = true;
     }
 
     if (records.length && ctx.parent) {
@@ -138,6 +134,14 @@ function filterAndSliceRecords(
         }
     }
 
+    if (! config.noFiltering) {
+        records = applyWhereConditions(ctx, conditions, records);
+        ctx.resolverCapabilities.filtering = true;
+    }
+    if (fromCache) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        records = records.map(x => ({...x}))
+    }
     if (config.noFiltering) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return records;
@@ -209,6 +213,7 @@ function staticResolverBuilderGen<T>(parser: (s: T) => any[]):
                 }
             }
 
+            let fromCache = false;
             let records: any[] | null = null;
             if (cachedRecords === null) {
                 const fetched = await fetcher();
@@ -216,12 +221,12 @@ function staticResolverBuilderGen<T>(parser: (s: T) => any[]):
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
                 cache!.set(resolverName, records.map(x => ({...x})));
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                records = cachedRecords.map(x => ({...x}));
+                fromCache = true;
+                records = cachedRecords;
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return filterAndSliceRecords(records, fields, conditions, limit, offset, ctx, config);
+            return filterAndSliceRecords(fromCache, records, fields, conditions, limit, offset, ctx, config);
         };
     }
 }

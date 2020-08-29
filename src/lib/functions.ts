@@ -298,6 +298,17 @@ function dateScalarFunctionGen(fnName: string, fn: (dateStr: string) => any): Sc
 }
 
 
+export const fnInfo_convertTimezone: QueryFuncInfo = {
+    type: 'scalar',
+    name: 'convertTimezone',
+    fn: dateScalarFunctionGen('convertTimezone', (dateStr) => {
+        const d = new Date(dateStr);
+        const offset = d.getTimezoneOffset() * 60 * 1000;
+        return new Date(d.getTime() - offset).toISOString();
+    }),
+};
+
+
 export const fnInfo_calendar_month: QueryFuncInfo = {
     type: 'scalar',
     name: 'calendar_month',
