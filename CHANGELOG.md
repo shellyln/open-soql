@@ -5,6 +5,7 @@
 * ✨`[NEW]` Add SOQL scalar function `convertTimezone()`.
 * 📈 Memoize the `immediate-scalar` function calls.
 * 📈 Improves the performance of the standard resolvers.
+* 📈 Improves the performance of sorting.
 * Update README.
 
 
