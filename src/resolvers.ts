@@ -108,11 +108,6 @@ function filterAndSliceRecords(
         }
     }
 
-    if (! config.noFiltering) {
-        records = applyWhereConditions(ctx, conditions, records);
-        ctx.resolverCapabilities.filtering = true;
-    }
-
     if (records.length && ctx.parent) {
         switch (ctx.parentType) {
         case 'master':
@@ -141,6 +136,9 @@ function filterAndSliceRecords(
     if (config.noFiltering) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return records;
+    } else {
+        records = applyWhereConditions(ctx, conditions, records);
+        ctx.resolverCapabilities.filtering = true;
     }
 
     if (!config.noSorting && ctx.query && ctx.query.orderBy) {
