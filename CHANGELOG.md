@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.1
+
+* ✨`[NEW]` Add `notifyRemoved()` function that publish DML `remove` event. (to notify remote changes)
+* ✨`[NEW]` Add `unsubscribeAllBySubscriber()` function.
+* Update README.
+
+
 ## v0.3.0
 
 * ✨`[NEW]` Publish / Subscribe messaging. (Subscribe to DML events)
