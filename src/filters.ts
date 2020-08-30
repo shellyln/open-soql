@@ -265,7 +265,10 @@ function getOp1Value(
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any):
-        string | number | PreparedAtomValue[] | null {
+        string | number | PreparedAtomValue[] | null |
+        RegExp |    // for `like`, `not_like`
+        string[][]  // for `include`, `exclude`
+        {
 
     const cached = condOp2ValueCache.get(cond);
     if (cached) {
@@ -348,6 +351,31 @@ function getOp2Value(
         break;
     }
 
+    switch (cond.op) {
+    case 'like': case 'not_like':
+        if (typeof v !== 'string') {
+            throw new Error(`Operator "${cond.op}": operand(2) should be string.`);
+        }
+        v = new RegExp(convertPattern(v), 'i');
+        break;
+    case 'in': case 'not_in':
+        if (! Array.isArray(v)) {
+            throw new Error(`Operator "${cond.op}": operand(2) should be array.`);
+        }
+        break;
+    case 'includes': case 'excludes':
+        if (! Array.isArray(v)) {
+            throw new Error(`Operator "${cond.op}": operand(2) should be array.`);
+        }
+        v = v.map(x => {
+            if (typeof x !== 'string') {
+                throw new Error(`Operator "${cond.op}": operand(2) array items should be string.`);
+            }
+            return x.split(';');
+        })
+        break;
+    }
+
     condOp2ValueCache.set(cond, { value: v });
     return v;
 }
@@ -360,30 +388,33 @@ function evalRecursiveCondition(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         w: PreparedConditionOperand, record: any): boolean {
 
-    let ret = true;
+    // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
+    return evalCondition(fieldNameMap, groupFields, isAggregation, ctx, w as any, record);
 
-    switch (typeof w) {
-    case 'object':
-        if (Array.isArray(w)) {
-            throw new Error(`Array is not allowed in the condition.`);
-        } else {
-            if (w === null) {
-                throw new Error(`Unexpected type appears in the condition.`);
-            }
-            switch (w.type) {
-            case 'condition':
-                ret = evalCondition(fieldNameMap, groupFields, isAggregation, ctx, w, record);
-                break;
-            default:
-                throw new Error(`Unexpected type appears in the condition.`);
-            }
-        }
-        break;
-    default:
-        throw new Error(`Unexpected type appears in the condition.`);
-    }
-
-    return ret;
+    // let ret = true;
+    //
+    // switch (typeof w) {
+    // case 'object':
+    //     if (Array.isArray(w)) {
+    //         throw new Error(`Array is not allowed in the condition.`);
+    //     } else {
+    //         if (w === null) {
+    //             throw new Error(`Unexpected type appears in the condition.`);
+    //         }
+    //         switch (w.type) {
+    //         case 'condition':
+    //             ret = evalCondition(fieldNameMap, groupFields, isAggregation, ctx, w, record);
+    //             break;
+    //         default:
+    //             throw new Error(`Unexpected type appears in the condition.`);
+    //         }
+    //     }
+    //     break;
+    // default:
+    //     throw new Error(`Unexpected type appears in the condition.`);
+    // }
+    //
+    // return ret;
 }
 
 
@@ -532,14 +563,8 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (typeof v2 !== 'string') {
-                    throw new Error(`Operator "like": operand(2) should be string.`);
-                }
-                {
-                    const re = new RegExp(convertPattern(v2), 'i');
-                    if (! re.test(v1)) {
-                        ret = false;
-                    }
+                if (! (v2 as RegExp).test(v1)) {
+                    ret = false;
                 }
                 break;
             case 'not_like':
@@ -547,39 +572,27 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (typeof v2 !== 'string') {
-                    throw new Error(`Operator "not_like": operand(2) should be string.`);
-                }
-                {
-                    const re = new RegExp(convertPattern(v2), 'i');
-                    if (re.test(v1)) {
-                        ret = false;
-                    }
+                if ((v2 as RegExp).test(v1)) {
+                    ret = false;
                 }
                 break;
             case 'in':
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "in": operand(2) should be array.`);
-                }
-                if (! v2.filter(w => w !== null).includes(v1)) {
+                if (! (v2 as PreparedAtomValue[]).filter(w => w !== null).includes(v1)) {
                     // NOTE: `(null = ?)`, `(? = null)` and `(null = null)` always FALSE.
                     ret = false;
                 }
                 break;
             case 'not_in':
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "not_in": operand(2) should be array.`);
-                }
                 if (v1 === null) {
                     // NOTE: Emulate SQL's 'not in'; `(null <> null)` always FALSE.
                     ret = false;
                     break;
                 }
-                if (v2.includes(null)) {
+                if ((v2 as PreparedAtomValue[]).includes(null)) {
                     ret = false;
                     break;
                 }
-                if (v2.includes(v1)) {
+                if ((v2 as PreparedAtomValue[]).includes(v1)) {
                     ret = false;
                 }
                 break;
@@ -588,16 +601,9 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "includes": operand(2) should be array.`);
-                }
                 ret = false;
-                OUTER: for (const p of v2) {
-                    if (typeof p !== 'string') {
-                        throw new Error(`Operator "includes": operand(2) array items should be string.`);
-                    }
+                OUTER: for (const v2Items of (v2 as string[][])) {
                     const v1Items = v1.split(';');
-                    const v2Items = p.split(';');
                     for (const q of v2Items) {
                         if (! v1Items.includes(q)) {
                             continue OUTER;
@@ -613,16 +619,9 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "excludes": operand(2) should be array.`);
-                }
                 {
                     const v1Items = v1.split(';');
-                    for (const p of v2) {
-                        if (typeof p !== 'string') {
-                            throw new Error(`Operator "excludes": operand(2) array items should be string.`);
-                        }
-                        const v2Items = p.split(';');
+                    for (const v2Items of (v2 as string[][])) {
                         let matched = true;
                         for (const q of v2Items) {
                             if (! v1Items.includes(q)) {

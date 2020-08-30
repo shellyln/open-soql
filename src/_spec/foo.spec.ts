@@ -582,9 +582,12 @@ describe("foo", function() {
                     , account acc
                 where
                         foo > ''
+                    and foo like '%'
+                    and foo not like '_'
                     and quux>=0
                     and testspec_string_twice(testspec_string_concat(foo, bar)) > ''
                     and testspec_pass_thru(testspec_string_twice(acc.name)) > ''
+                order by id desc, foo desc, bar desc
             `;
             expect(1).toEqual(1);
         }
