@@ -298,4 +298,79 @@ describe("field-cond-1", function() {
             }, ''],
         }]);
     });
+
+    it("Id field condition (6)", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' and testspec_pass_thru(foo)>'')
+                and (id>'' and bar>'')
+                and (baz>'' and qux>'')
+                and (quux > '' and (id>'' and bar>'' and corge>''))
+            `, []);
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(condWhere, ['Id', 'Corge']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['corge'],
+            }, ''],
+        }]);
+    });
+
+    it("Id field condition (7)", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
+                and (id>'' or bar>'')
+                and (baz>'' or qux>'')
+                and (quux > '' or id>'' or bar>'')
+            `, []);
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }]);
+    });
 });
