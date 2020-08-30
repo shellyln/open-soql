@@ -147,7 +147,11 @@ export function flatConditions(
         const c: PreparedCondition[] = [];
         flatConditions(c, op, x);
         x.operands = c;
-        dest.push(x);
+        if ((op === 'and' || op === 'or') && c.length === 1) {
+            dest.push(c[0]);
+        } else {
+            dest.push(x);
+        }
     };
 
     const pushOperands = () => {
@@ -236,48 +240,44 @@ function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNameI: 
 
 
 export function pruneNonIndexFieldConditions(cond: PreparedCondition, indexFieldNameI: string): PreparedCondition {
-    switch (cond.op) {
-    case 'not': case 'and': case 'or':
-        {
-            const x = cond.operands[0];
+    if (cond.operands.length) {
+        const x = cond.operands[0];
 
-            switch (typeof x) {
-            case 'object':
-                if (x === null || Array.isArray(x)) {
-                    return ({
-                        type: 'condition',
-                        op: 'true',
-                        operands: [],
-                    });
-                } else {
-                    switch (x.type) {
-                    case 'field':
-                        if (x.name[x.name.length - 1].toLowerCase() !== indexFieldNameI) {
-                            return ({
-                                type: 'condition',
-                                op: 'true',
-                                operands: [],
-                            });
-                        }
-                        break;
-                    case 'fncall':
+        switch (typeof x) {
+        case 'object':
+            if (x === null || Array.isArray(x)) {
+                return ({
+                    type: 'condition',
+                    op: 'true',
+                    operands: [],
+                });
+            } else {
+                switch (x.type) {
+                case 'field':
+                    if (x.name[x.name.length - 1].toLowerCase() !== indexFieldNameI) {
                         return ({
                             type: 'condition',
                             op: 'true',
                             operands: [],
                         });
                     }
+                    break;
+                case 'fncall':
+                    return ({
+                        type: 'condition',
+                        op: 'true',
+                        operands: [],
+                    });
                 }
-                break;
-            default:
-                return ({
-                    type: 'condition',
-                    op: 'true',
-                    operands: [],
-                });
             }
+            break;
+        default:
+            return ({
+                type: 'condition',
+                op: 'true',
+                operands: [],
+            });
         }
-        break;
     }
 
     return filterIndexFieldCondOperands(cond, indexFieldNameI);
