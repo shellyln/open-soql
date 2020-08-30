@@ -136,3 +136,149 @@ export function pruneCondition(name: string[], cond: PreparedCondition): Prepare
 
     return filterCondOperands(name, cond);
 }
+
+
+export function flatConditions(
+        dest: PreparedCondition[],
+        parentOp: 'and' | 'or' | 'not',
+        cond: PreparedCondition): void {
+
+    const recurse = (op: typeof parentOp, x: PreparedCondition) => {
+        const c: PreparedCondition[] = [];
+        flatConditions(c, op, x);
+        x.operands = c;
+        dest.push(x);
+    };
+
+    const pushOperands = () => {
+        for (const x of cond.operands) {
+            switch (typeof x) {
+            case 'object':
+                if (x === null || Array.isArray(x)) {
+                    throw new Error(`Unexpected AST is found.`);
+                } else {
+                    switch (x.type) {
+                    case 'condition':
+                        switch (x.op) {
+                        case 'and': case 'or': case 'not':
+                            if (x.op !== 'not' && x.op === parentOp) {
+                                flatConditions(dest, x.op, x);
+                            } else {
+                                recurse(x.op, x);
+                            }
+                            break;
+                        default:
+                            dest.push(x);
+                            break;
+                        }
+                        break;
+                    default:
+                        throw new Error(`Unexpected AST ${x.type} is found.`);
+                    }
+                }
+                break;
+            default:
+                throw new Error(`Unexpected AST is found.`);
+            }
+        }
+    };
+
+    switch (cond.op) {
+    case 'and': case 'or': case 'not':
+        if (cond.op === parentOp) {
+            pushOperands();
+        } else {
+            recurse(cond.op, cond);
+        }
+        break;
+    default:
+        dest.push(cond);
+        break;
+    }
+}
+
+
+function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNameI: string) {
+    cond.operands = cond.operands
+    .map(x => {
+        switch (typeof x) {
+        case 'object':
+            if (Array.isArray(x)) {
+                return x;
+            } else {
+                if (x === null) {
+                    // NOTE: never reach here.
+                    return x;
+                }
+                switch (x.type) {
+                case 'condition':
+                    return pruneNonIndexFieldConditions(x, indexFieldNameI);
+                default:
+                    return x;
+                }
+            }
+        default:
+            return x;
+        }
+    })
+    .filter(x => {
+        switch (typeof x) {
+        case 'object':
+            if (x !== null && !Array.isArray(x) && x.type === 'condition') {
+                return filterZeroLengthCondFn(x);
+            }
+        }
+        return true;
+    });
+
+    return cond;
+}
+
+
+export function pruneNonIndexFieldConditions(cond: PreparedCondition, indexFieldNameI: string): PreparedCondition {
+    switch (cond.op) {
+    case 'not': case 'and': case 'or':
+        {
+            const x = cond.operands[0];
+
+            switch (typeof x) {
+            case 'object':
+                if (x === null || Array.isArray(x)) {
+                    return ({
+                        type: 'condition',
+                        op: 'true',
+                        operands: [],
+                    });
+                } else {
+                    switch (x.type) {
+                    case 'field':
+                        if (x.name[x.name.length - 1].toLowerCase() !== indexFieldNameI) {
+                            return ({
+                                type: 'condition',
+                                op: 'true',
+                                operands: [],
+                            });
+                        }
+                        break;
+                    case 'fncall':
+                        return ({
+                            type: 'condition',
+                            op: 'true',
+                            operands: [],
+                        });
+                    }
+                }
+                break;
+            default:
+                return ({
+                    type: 'condition',
+                    op: 'true',
+                    operands: [],
+                });
+            }
+        }
+        break;
+    }
+
+    return filterIndexFieldCondOperands(cond, indexFieldNameI);
+}

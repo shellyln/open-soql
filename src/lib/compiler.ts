@@ -17,6 +17,7 @@ import { ParsedQuery,
 import { isEqualComplexName,
          getFullQualifiedName,
          getTrueCaseFieldName }     from './util';
+import { flatConditions }           from './condition';
 
 
 
@@ -98,66 +99,6 @@ function registerFields(
     const resolver = findResolver(query, x) ?? defaultResolver;
     if (resolver) {
         fn(resolver).add(x.name[x.name.length - 1]);
-    }
-}
-
-
-function flatConditions(
-        dest: PreparedCondition[],
-        parentOp: 'and' | 'or' | 'not',
-        cond: PreparedCondition) {
-
-    const recurse = (op: typeof parentOp, x: PreparedCondition) => {
-        const c: PreparedCondition[] = [];
-        flatConditions(c, op, x);
-        x.operands = c;
-        dest.push(x);
-    };
-
-    const pushOperands = () => {
-        for (const x of cond.operands) {
-            switch (typeof x) {
-            case 'object':
-                if (x === null || Array.isArray(x)) {
-                    throw new Error(`Unexpected AST is found.`);
-                } else {
-                    switch (x.type) {
-                    case 'condition':
-                        switch (x.op) {
-                        case 'and': case 'or': case 'not':
-                            if (x.op !== 'not' && x.op === parentOp) {
-                                flatConditions(dest, x.op, x);
-                            } else {
-                                recurse(x.op, x);
-                            }
-                            break;
-                        default:
-                            dest.push(x);
-                            break;
-                        }
-                        break;
-                    default:
-                        throw new Error(`Unexpected AST ${x.type} is found.`);
-                    }
-                }
-                break;
-            default:
-                throw new Error(`Unexpected AST is found.`);
-            }
-        }
-    };
-
-    switch (cond.op) {
-    case 'and': case 'or': case 'not':
-        if (cond.op === parentOp) {
-            pushOperands();
-        } else {
-            recurse(cond.op, cond);
-        }
-        break;
-    default:
-        dest.push(cond);
-        break;
     }
 }
 
