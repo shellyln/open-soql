@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.1
+
+* ✨`[NEW]` Add `getIndexFieldConditions()` function that gets the transformed conditions that include only the fields you specified.
+* Update README.
+* Update CI configurations (GitHub Actions: remove node 13).
+
+
 ## v0.4.0
 
 * ✨`[NEW]` Add SOQL scalar function `convertTimezone()`.

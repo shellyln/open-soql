@@ -13,8 +13,11 @@ import { ResolverContext,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
          AggregateQueryFuncInfo }         from './types';
-import { getTrueCaseFieldName,
+import { deepCloneObject,
+         getTrueCaseFieldName,
          getObjectValueWithFieldNameMap } from './lib/util';
+import { flatConditions,
+         pruneNonIndexFieldConditions }   from './lib/condition';
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction,
@@ -700,5 +703,21 @@ export function applyHavingConditions(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return ret;
+}
+
+
+export function getIndexFieldConditions(conds: PreparedCondition[], indexFieldNames: string[]): PreparedCondition[] {
+    const indexFieldNamesI = indexFieldNames.map(x => x.toLowerCase());
+
+    const tmp: PreparedCondition = pruneNonIndexFieldConditions({
+        type: 'condition',
+        op: 'and',
+        operands: deepCloneObject(conds),
+    }, indexFieldNamesI);
+
+    const ret: PreparedCondition[] = [];
+    flatConditions(ret, 'and', tmp);
+
     return ret;
 }
