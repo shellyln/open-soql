@@ -224,7 +224,10 @@ export interface ResolverContext {
     detailIdField?: string;  // Record id field of detail.
 
     parentRecords?: any[];            // For before/after sub-query events.
-    conditions?: PreparedCondition[], // For before/after sub-query events. Same object ref is passed to the resolver function's parameter.
+    conditions?: PreparedCondition[], // For before/after sub-query events.
+                                      // If conditions have NO computed fields, same object ref is passed to the resolver function's parameter.
+                                      // If conditions have computed fields, the resolver function's parameter will be `[]`.
+                                      //  (`ctx.conditions` always has full conditions.)
 
     resolverCapabilities: ResolverCapabilities;
     resolverData: any;       // Resolver's user defined data.
