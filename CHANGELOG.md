@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.2
+## v0.4.0
 
 * ✨`[NEW]` Add SOQL scalar function `convertTimezone()`.
 * 📈 Memoize the `immediate-scalar` function calls.
@@ -8,7 +8,10 @@
 * 📈 Improves the performance of sorting.
 * 📈 Improves the performance of filtering.
 * Update README.
+* Update dependencies.
 
+
+---
 
 ## v0.3.1
 
