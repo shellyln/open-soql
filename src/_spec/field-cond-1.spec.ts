@@ -191,6 +191,44 @@ describe("field-cond-1", function() {
             from contact
             where
                 (testspec_pass_thru(id)>'' and testspec_pass_thru(foo)>'')
+                or (id>'' and bar>'')
+                or (baz>'' and qux>'')
+                or (quux > '' and id>'' and bar>'')
+            `, []);
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, ''],
+            }, {
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, ''],
+            }]
+        }]);
+    });
+
+    it("Id field condition (4)", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' and testspec_pass_thru(foo)>'')
                 or not (id>'' and bar>'')
                 or (baz>'' and qux>'')
                 or (quux > '' and id>'' and bar>'')
@@ -224,6 +262,40 @@ describe("field-cond-1", function() {
                     name: ['id'],
                 }, ''],
             }],
+        }]);
+    });
+
+    it("Id field condition (5)", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' and testspec_pass_thru(foo)>'')
+                and (id>'' and bar>'')
+                and (baz>'' and qux>'')
+                and (quux > '' and id>'' and bar>'')
+            `, []);
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
         }]);
     });
 });

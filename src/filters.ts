@@ -708,14 +708,13 @@ export function applyHavingConditions(
 
 
 export function getIndexFieldConditions(conds: PreparedCondition[], indexFieldNames: string[]): PreparedCondition[] {
-    const newConds = deepCloneObject(conds);
     const indexFieldNamesI = indexFieldNames.map(x => x.toLowerCase());
 
-    const tmp: PreparedCondition = {
+    const tmp: PreparedCondition = pruneNonIndexFieldConditions({
         type: 'condition',
         op: 'and',
-        operands: newConds.map(cond => pruneNonIndexFieldConditions(cond, indexFieldNamesI)),
-    };
+        operands: deepCloneObject(conds),
+    }, indexFieldNamesI);
 
     const ret: PreparedCondition[] = [];
     flatConditions(ret, 'and', tmp);
