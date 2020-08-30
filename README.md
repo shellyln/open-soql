@@ -624,8 +624,16 @@ export function build(builder: QueryBuilderInfo): {
 
 * `builder`: Resolvers and configurations.
 
-> NOTICE: The `immediate-scalar` function does not refer to the fields of a record and
->       must be referentially transparent.
+> **NOTICE**:  
+> The `immediate-scalar` function does not refer to the fields of a record and
+> must be referentially transparent.
+
+> **NOTICE**:  
+> If query conditions includes computed fields,
+> `QueryResolverFn`'s parameter `conditions` will be `[]`.  
+> To get complete conditions, use parameter `ctx.conditions`.  
+> You can get transformed conditions that include only the fields you specified
+> by using `getIndexFieldConditions()`.
 
 ##### returns:
 
