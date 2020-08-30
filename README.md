@@ -709,6 +709,26 @@ export function applyHavingConditions(
 
 
 
+#### 🟢 `getIndexFieldConditions()`
+
+```ts
+export function getIndexFieldConditions(
+    conds: PreparedCondition[], indexFieldNames: string[]): PreparedCondition[];
+```
+
+* Gets the transformed conditions that include only the fields specified in `indexFieldNames`.
+
+##### parameters:
+
+* `conds`: Original conditions.
+* `indexFieldNames`: Index fields.
+
+##### returns:
+
+* Transformed conditions.
+
+
+
 ### 📦 Module `open-soql/modules/resolvers`
 
 #### 🟢 `staticJsonResolverBuilder()`

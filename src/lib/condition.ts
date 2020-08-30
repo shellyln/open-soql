@@ -202,7 +202,7 @@ export function flatConditions(
 }
 
 
-function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNameI: string) {
+function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNamesI: string[]) {
     cond.operands = cond.operands
     .map(x => {
         switch (typeof x) {
@@ -216,7 +216,7 @@ function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNameI: 
                 }
                 switch (x.type) {
                 case 'condition':
-                    return pruneNonIndexFieldConditions(x, indexFieldNameI);
+                    return pruneNonIndexFieldConditions(x, indexFieldNamesI);
                 default:
                     return x;
                 }
@@ -239,7 +239,7 @@ function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNameI: 
 }
 
 
-export function pruneNonIndexFieldConditions(cond: PreparedCondition, indexFieldNameI: string): PreparedCondition {
+export function pruneNonIndexFieldConditions(cond: PreparedCondition, indexFieldNamesI: string[]): PreparedCondition {
     if (cond.operands.length) {
         const x = cond.operands[0];
 
@@ -254,7 +254,7 @@ export function pruneNonIndexFieldConditions(cond: PreparedCondition, indexField
             } else {
                 switch (x.type) {
                 case 'field':
-                    if (x.name[x.name.length - 1].toLowerCase() !== indexFieldNameI) {
+                    if (! indexFieldNamesI.includes(x.name[x.name.length - 1].toLowerCase())) {
                         return ({
                             type: 'condition',
                             op: 'true',
@@ -280,5 +280,5 @@ export function pruneNonIndexFieldConditions(cond: PreparedCondition, indexField
         }
     }
 
-    return filterIndexFieldCondOperands(cond, indexFieldNameI);
+    return filterIndexFieldCondOperands(cond, indexFieldNamesI);
 }

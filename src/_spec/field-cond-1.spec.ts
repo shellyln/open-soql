@@ -128,8 +128,64 @@ const builder = prepareBuilderInfo({
 });
 
 
-describe("foo", function() {
-    it("foo-1", function() {
+describe("field-cond-1", function() {
+    it("Id field condition (1)", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' and testspec_pass_thru(foo)>'')
+                or (id>'' and bar>'')
+                or (baz>'' and qux>'')
+            `, []);
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }]);
+    });
+
+    it("Id field condition (2)", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' and testspec_pass_thru(foo)>'')
+                or not (id>'' and bar>'')
+                or (baz>'' and qux>'')
+            `, []);
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: 'not',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, ''],
+            }]
+        }]);
+    });
+
+    it("Id field condition (3)", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
@@ -145,10 +201,29 @@ describe("foo", function() {
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        // console.log(JSON.stringify(condWhere, null, 2));
-
-        const condId = getIndexFieldConditions(condWhere, 'Id');
-
-        // console.log(JSON.stringify(condId, null, 2));
+        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: 'not',
+                operands: [{
+                    type: 'condition',
+                    op: '>',
+                    operands: [{
+                        type: 'field',
+                        name: ['id'],
+                    }, ''],
+                }]
+            }, {
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, ''],
+            }],
+        }]);
     });
 });
