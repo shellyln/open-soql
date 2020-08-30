@@ -265,7 +265,10 @@ function getOp1Value(
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any):
-        string | number | RegExp | PreparedAtomValue[] | string[][] | null {
+        string | number | PreparedAtomValue[] | null |
+        RegExp |    // for `like`, `not_like`
+        string[][]  // for `include`, `exclude`
+        {
 
     const cached = condOp2ValueCache.get(cond);
     if (cached) {
@@ -308,17 +311,6 @@ function getOp2Value(
                     return x;
                 }
             });
-
-            switch (cond.op) {
-            case 'includes': case 'excludes':
-                v = v.map(x => {
-                    if (typeof x !== 'string') {
-                        throw new Error(`Operator "${cond.op}": operand(2) array items should be string.`);
-                    }
-                    return x.split(';');
-                })
-                break;
-            }
         } else {
             switch (op.type) {
             case 'fncall':
@@ -355,18 +347,32 @@ function getOp2Value(
         }
         break;
     default:
-        // string or number
-        switch (cond.op) {
-        case 'like': case 'not_like':
-            if (typeof op !== 'string') {
-                throw new Error(`Operator "like": operand(2) should be string.`);
-            }
-            v = new RegExp(convertPattern(op), 'i');
-            break;
-        default:
-            v = op;
-            break;
+        v = op; // string or number
+        break;
+    }
+
+    switch (cond.op) {
+    case 'like': case 'not_like':
+        if (typeof v !== 'string') {
+            throw new Error(`Operator "${cond.op}": operand(2) should be string.`);
         }
+        v = new RegExp(convertPattern(v), 'i');
+        break;
+    case 'in': case 'not_in':
+        if (! Array.isArray(v)) {
+            throw new Error(`Operator "${cond.op}": operand(2) should be array.`);
+        }
+        break;
+    case 'includes': case 'excludes':
+        if (! Array.isArray(v)) {
+            throw new Error(`Operator "${cond.op}": operand(2) should be array.`);
+        }
+        v = v.map(x => {
+            if (typeof x !== 'string') {
+                throw new Error(`Operator "${cond.op}": operand(2) array items should be string.`);
+            }
+            return x.split(';');
+        })
         break;
     }
 
@@ -557,10 +563,7 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (! (v2 instanceof RegExp)) {
-                    throw new Error(`Operator "like": operand(2) should be string.`);
-                }
-                if (! v2.test(v1)) {
+                if (! (v2 as RegExp).test(v1)) {
                     ret = false;
                 }
                 break;
@@ -569,26 +572,17 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (! (v2 instanceof RegExp)) {
-                    throw new Error(`Operator "not_like": operand(2) should be string.`);
-                }
-                if (v2.test(v1)) {
+                if ((v2 as RegExp).test(v1)) {
                     ret = false;
                 }
                 break;
             case 'in':
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "in": operand(2) should be array.`);
-                }
                 if (! (v2 as PreparedAtomValue[]).filter(w => w !== null).includes(v1)) {
                     // NOTE: `(null = ?)`, `(? = null)` and `(null = null)` always FALSE.
                     ret = false;
                 }
                 break;
             case 'not_in':
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "not_in": operand(2) should be array.`);
-                }
                 if (v1 === null) {
                     // NOTE: Emulate SQL's 'not in'; `(null <> null)` always FALSE.
                     ret = false;
@@ -598,7 +592,7 @@ function evalCondition(
                     ret = false;
                     break;
                 }
-                if (v2.includes(v1)) {
+                if ((v2 as PreparedAtomValue[]).includes(v1)) {
                     ret = false;
                 }
                 break;
@@ -606,9 +600,6 @@ function evalCondition(
                 if (typeof v1 !== 'string') {
                     ret = false;
                     break;
-                }
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "includes": operand(2) should be array.`);
                 }
                 ret = false;
                 OUTER: for (const v2Items of (v2 as string[][])) {
@@ -627,9 +618,6 @@ function evalCondition(
                     // NOTE: Emulate SQL's 'not in'; `(null <> null)` always FALSE.
                     ret = false;
                     break;
-                }
-                if (! Array.isArray(v2)) {
-                    throw new Error(`Operator "excludes": operand(2) should be array.`);
                 }
                 {
                     const v1Items = v1.split(';');
