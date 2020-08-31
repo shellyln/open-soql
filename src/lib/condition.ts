@@ -467,6 +467,17 @@ export function getSqlConditionStringImpl(
     if (notSupported) {
         return '(1=1)';
     } else {
-        return `${String(operands[0])} ${cond.op} ${String(operands[1])}`;
+        let op: string = cond.op;
+        if (operands[1] === 'null') {
+            switch (cond.op) {
+            case '=':
+                op = 'is';
+                break;
+            case '!=':
+                op = 'is not';
+                break;
+            }
+        }
+        return `${String(operands[0])} ${op} ${String(operands[1])}`;
     }
 }
