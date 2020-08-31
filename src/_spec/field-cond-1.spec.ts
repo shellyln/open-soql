@@ -466,4 +466,186 @@ describe("field-cond-1", function() {
             }],
         }]);
     });
+
+    it("Id field condition (9): parameters", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
+                and (id>'' or bar>'')
+                and (baz>'' or qux>'')
+                and (quux > '' or id>:qwerty or bar>'')
+            `, []);
+
+        const ctx = {
+            params: {
+                qwerty: 'a'
+            },
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['quux'],
+                }, ''],
+            }, {
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, 'a'],
+            }],
+        }]);
+    });
+
+    it("Id field condition (10): fncall", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
+                and (id>'' or bar>'')
+                and (baz>'' or qux>'')
+                and (quux > '' or id>testspec_pass_thru('a') or bar>'')
+            `, []);
+
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['quux'],
+            }, ''],
+        }]);
+    });
+
+    it("Id field condition (10): in", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
+                and (id>'' or bar>'')
+                and (baz>'' or qux>'')
+                and (quux > '' or id in ('a','s','d','f') or bar>'')
+            `, []);
+
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['quux'],
+                }, ''],
+            }, {
+                type: 'condition',
+                op: 'in',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, ['a', 's', 'd', 'f']],
+            }],
+        }]);
+    });
+
+    it("Id field condition (10): in subquery", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
+                and (id>'' or bar>'')
+                and (baz>'' or qux>'')
+                and (quux > '' or id in (select whatid from event) or bar>'')
+            `, []);
+
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['quux'],
+            }, ''],
+        }]);
+    });
 });
