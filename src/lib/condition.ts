@@ -212,7 +212,21 @@ function filterIndexFieldCondOperands(
         switch (typeof x) {
         case 'object':
             if (Array.isArray(x)) {
-                return x;
+                return x.map(w => {
+                    if (w !== null && typeof w === 'object' && w.type === 'parameter') {
+                        if (! Object.prototype.hasOwnProperty.call(ctx.params, w.name)) {
+                            throw new Error(`Parameter '${w.name}' is not found.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        const z = ctx.params![w.name] ?? null;
+                        if (Array.isArray(z)) {
+                            throw new Error(`Parameter '${w.name}' items should be atom.`);
+                        }
+                        return z;
+                    } else {
+                        return w;
+                    }
+                });
             } else {
                 if (x === null) {
                     // NOTE: never reach here.
@@ -292,7 +306,7 @@ export function pruneNonIndexFieldConditions(
             switch (typeof y) {
             case 'object':
                 if (y === null || Array.isArray(y)) {
-                    // NOTE: Notihing to do.
+                    // NOTE: Nothing to do.
                 } else {
                     switch (y.type) {
                     case 'fncall': case 'subquery':

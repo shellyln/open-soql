@@ -772,7 +772,12 @@ function getSqlConditionStringImpl(
                                         if (Array.isArray(z)) {
                                             throw new Error(`Parameter '${w.name}' items should be atom.`);
                                         }
-                                        return z;
+                                        switch (typeof z) {
+                                        case 'string':
+                                            return `'${z}'`;
+                                        default:
+                                            return z;
+                                        }
                                     }
                                 default:
                                     notSupported = true;

@@ -577,12 +577,12 @@ describe("field-cond-1", function() {
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
                 and (id>'' or bar>'')
                 and (baz>'' or qux>'')
-                and (quux > '' or id in ('a','s','d','f') or bar>'')
+                and (quux > '' or id in ('a','s','d','f', -100, true, false, null, :qwerty, 2020-12-31, 2020-12-31T00:00:01Z) or bar>'')
             `, []);
 
         const ctx = {
             params: {
-                //
+                qwerty: 'zzzz'
             },
         };
 
@@ -615,10 +615,15 @@ describe("field-cond-1", function() {
                 operands: [{
                     type: 'field',
                     name: ['id'],
-                }, ['a', 's', 'd', 'f']],
+                }, [
+                    'a', 's', 'd', 'f',
+                    -100, true, false, null, 'zzzz',
+                    {type: 'date', value: '2020-12-31'}, {type: 'datetime', value: '2020-12-31T00:00:01Z'},
+                ]],
             }],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and (quux > '' or id in ('a','s','d','f'))");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual(
+            "id > '' and (quux > '' or id in ('a','s','d','f',-100,true,false,null,'zzzz','2020-12-31','2020-12-31T00:00:01Z'))");
     });
 
     it("Id field condition (12): in subquery", function() {
