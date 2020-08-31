@@ -5,7 +5,11 @@
 
 import { PreparedFnCall,
          PreparedCondition,
-         ResolverContext }    from '../types';
+         ResolverContext,
+         PreparedAtomValue,
+         PreparedValue,
+         PreparedParameterizedValue,
+         SqlDialect }         from '../types';
 import { isEqualComplexName } from './util';
 
 
@@ -203,6 +207,38 @@ export function flatConditions(
 }
 
 
+function getParameterValueDenyArray(
+        ctx: Pick<ResolverContext, 'params'>, x: PreparedParameterizedValue):
+        PreparedAtomValue {
+
+    if (! Object.prototype.hasOwnProperty.call(ctx.params, x.name)) {
+        throw new Error(`Parameter '${x.name}' is not found.`);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const z = ctx.params![x.name] ?? null;
+    if (Array.isArray(z)) {
+        throw new Error(`Parameter '${x.name}' items should be atom.`);
+    }
+    return z;
+}
+
+
+function getParameterValueAllowArray(
+        ctx: Pick<ResolverContext, 'params'>, x: PreparedParameterizedValue):
+        PreparedAtomValue | PreparedAtomValue[] {
+
+    if (! Object.prototype.hasOwnProperty.call(ctx.params, x.name)) {
+        throw new Error(`Parameter '${x.name}' is not found.`);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const z = ctx.params![x.name] ?? null;
+    if (Array.isArray(z)) {
+        return z;
+    }
+    return z;
+}
+
+
 function filterIndexFieldCondOperands(
         ctx: Pick<ResolverContext, 'params'>,
         cond: PreparedCondition, indexFieldNamesI: string[]) {
@@ -214,15 +250,7 @@ function filterIndexFieldCondOperands(
             if (Array.isArray(x)) {
                 return x.map(w => {
                     if (w !== null && typeof w === 'object' && w.type === 'parameter') {
-                        if (! Object.prototype.hasOwnProperty.call(ctx.params, w.name)) {
-                            throw new Error(`Parameter '${w.name}' is not found.`);
-                        }
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        const z = ctx.params![w.name] ?? null;
-                        if (Array.isArray(z)) {
-                            throw new Error(`Parameter '${w.name}' items should be atom.`);
-                        }
-                        return z;
+                        return getParameterValueDenyArray(ctx, w);
                     } else {
                         return w;
                     }
@@ -316,25 +344,15 @@ export function pruneNonIndexFieldConditions(
                             operands: [],
                         });
                     case 'parameter':
-                        {
-                            if (! Object.prototype.hasOwnProperty.call(ctx.params, y.name)) {
-                                throw new Error(`Parameter '${y.name}' is not found.`);
-                            }
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            const z = ctx.params![y.name] ?? null;
-                            if (Array.isArray(z)) {
-                                throw new Error(`Parameter '${y.name}' items should be atom.`);
-                            }
-                            return filterIndexFieldCondOperands(ctx, {
-                                type: 'condition',
-                                op: cond.op,
-                                operands: [
-                                    cond.operands[0],
-                                    z,
-                                    ...cond.operands.slice(2),
-                                ],
-                            }, indexFieldNamesI);
-                        }
+                        return filterIndexFieldCondOperands(ctx, {
+                            type: 'condition',
+                            op: cond.op,
+                            operands: [
+                                cond.operands[0],
+                                getParameterValueAllowArray(ctx, y),
+                                ...cond.operands.slice(2),
+                            ],
+                        }, indexFieldNamesI);
                     }
                 }
                 break;
@@ -343,4 +361,98 @@ export function pruneNonIndexFieldConditions(
     }
 
     return filterIndexFieldCondOperands(ctx, cond, indexFieldNamesI);
+}
+
+
+export function getSqlConditionStringImpl(
+        ctx: Pick<ResolverContext, 'params'>,
+        cond: PreparedCondition, dialect: SqlDialect): string {
+
+    switch (cond.op) {
+    case 'not':
+        return (
+            // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
+            //       `x` should be `PreparedCondition`.
+            `(not ${getSqlConditionStringImpl(ctx, cond.operands[0] as PreparedCondition, dialect)})`
+        );
+    case 'and': case 'or':
+        return (
+            `(${cond.operands
+                // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
+                //       `x` should be `PreparedCondition`.
+                .map(x => getSqlConditionStringImpl(ctx, x as PreparedCondition, dialect))
+                .join(` ${cond.op} `)})`
+        );
+    case 'true': case 'includes': case 'excludes':
+        return '(1=1)';
+    }
+
+    const getEscapedParamValue = (x: PreparedParameterizedValue, allowArray: boolean) => {
+        const z = (allowArray ? getParameterValueAllowArray : getParameterValueDenyArray)(ctx, x);
+        switch (typeof z) {
+        case 'string':
+            return `'${dialect.escapeString(z)}'`;
+        default:
+            return z;
+        }
+    };
+
+    let notSupported = false;
+    const operands = cond.operands.map(x => {
+        switch (typeof x) {
+        case 'object':
+            if (Array.isArray(x)) {
+                return `(${(
+                    x.map(w => {
+                        if (w === null) {
+                            return 'null';
+                        } else {
+                            switch (typeof w) {
+                            case 'object':
+                                switch (w.type) {
+                                case 'date': case 'datetime':
+                                    return `'${w.value}'`;
+                                case 'parameter':
+                                    return getEscapedParamValue(w, false);
+                                default:
+                                    notSupported = true;
+                                    return '';
+                                }
+                            case 'string':
+                                return `'${dialect.escapeString(w)}'`;
+                            default:
+                                return w.toString();
+                            }
+                        }
+                    }).join(',')
+                )})`;
+            } else {
+                if (x === null) {
+                    return 'null';
+                } else {
+                    switch (x.type) {
+                    case 'field':
+                        return dialect.fieldName(x.name[x.name.length - 1]);
+                    case 'date': case 'datetime':
+                        return `'${x.value}'`;
+                    case 'parameter':
+                        return getEscapedParamValue(x, true);
+                    default:
+                        notSupported = true;
+                        return '';
+                    }
+                }
+            }
+        case 'string':
+            return `'${dialect.escapeString(x)}'`;
+        default:
+            return x.toString();
+        }
+    });
+
+    if (notSupported) {
+        return '(1=1)';
+    } else {
+        return `${String(operands[0])} ${cond.op} ${String(operands[1])}`;
+    }
 }

@@ -5,19 +5,24 @@
 
 import { ResolverContext,
          FieldResultType,
+         PreparedParameterizedValue,
          PreparedConditionOperand,
          PreparedCondition,
+         PreparedPrimitiveAtomValue,
          PreparedAtomValue,
          PreparedField,
          PreparedFnCall,
          ScalarQueryFuncInfo,
          ImmediateScalarQueryFuncInfo,
-         AggregateQueryFuncInfo }         from './types';
+         AggregateQueryFuncInfo,
+         SqlDialect }                     from './types';
 import { deepCloneObject,
          getTrueCaseFieldName,
-         getObjectValueWithFieldNameMap } from './lib/util';
+         getObjectValueWithFieldNameMap,
+         convertPattern }                 from './lib/util';
 import { flatConditions,
-         pruneNonIndexFieldConditions }   from './lib/condition';
+         pruneNonIndexFieldConditions,
+         getSqlConditionStringImpl }      from './lib/condition';
 import { callAggregateFunction,
          callScalarFunction,
          callImmediateScalarFunction,
@@ -268,9 +273,10 @@ function getOp1Value(
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any):
-        string | number | boolean | PreparedAtomValue[] | null |
-        RegExp |    // for `like`, `not_like`
-        string[][]  // for `include`, `exclude`
+            PreparedPrimitiveAtomValue |
+            Array<PreparedPrimitiveAtomValue> |
+            RegExp |    // for `like`, `not_like`
+            string[][]  // for `include`, `exclude`
         {
 
     const cached = condOp2ValueCache.get(cond);
@@ -278,6 +284,47 @@ function getOp2Value(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return cached.value;
     }
+
+    const mapArrayItem = (x: PreparedAtomValue | PreparedParameterizedValue) =>{
+        if (x === null) {
+            return null;
+        }
+        switch (typeof x) {
+        case 'object':
+            switch (x.type) {
+            case 'date': case 'datetime':
+                return x.value;
+            case 'parameter':
+                {
+                    if (! Object.prototype.hasOwnProperty.call(ctx.params, x.name)) {
+                        throw new Error(`Parameter '${x.name}' is not found.`);
+                    }
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const z = ctx.params![x.name] ?? null;
+                    if (Array.isArray(z)) {
+                        throw new Error(`Parameter '${x.name}' items should be atom.`);
+                    }
+                    if (z === null) {
+                        return null;
+                    }
+                    switch (typeof z) {
+                    case 'object':
+                        switch (z.type) {
+                        case 'date': case 'datetime':
+                            return z.value;
+                        default:
+                            return z;
+                        }
+                    default:
+                        return z;
+                    }
+                }
+            }
+            break;
+        default:
+            return x;
+        }
+    };
 
     let v = null;
     const op = cond.operands[1];
@@ -287,33 +334,7 @@ function getOp2Value(
         if (op === null) {
             // nothing to do (v is null)
         } else if (Array.isArray(op)) {
-            v = op.map(x => {
-                if (x === null) {
-                    return null;
-                }
-                switch (typeof x) {
-                case 'object':
-                    switch (x.type) {
-                    case 'date': case 'datetime':
-                        return x.value;
-                    case 'parameter':
-                        {
-                            if (! Object.prototype.hasOwnProperty.call(ctx.params, x.name)) {
-                                throw new Error(`Parameter '${x.name}' is not found.`);
-                            }
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            const z = ctx.params![x.name] ?? null;
-                            if (Array.isArray(z)) {
-                                throw new Error(`Parameter '${x.name}' items should be atom.`);
-                            }
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-                            return z;
-                        }
-                    }
-                default:
-                    return x;
-                }
-            });
+            v = op.map(x => mapArrayItem(x));
         } else {
             switch (op.type) {
             case 'fncall':
@@ -336,11 +357,21 @@ function getOp2Value(
                     v = new Date(op.value).getTime();
                     break;
                 case 'parameter':
-                    if (! Object.prototype.hasOwnProperty.call(ctx.params, op.name)) {
-                        throw new Error(`Parameter '${op.name}' is not found.`);
+                    {
+                        if (! Object.prototype.hasOwnProperty.call(ctx.params, op.name)) {
+                            throw new Error(`Parameter '${op.name}' is not found.`);
+                        }
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+                        const z = ctx.params![op.name] ?? null;
+                        if (Array.isArray(z)) {
+                            v = z.map(w => mapArrayItem(w));
+                        } else if (z !== null && typeof z === 'object' && (z.type === 'date' || z.type === 'datetime')) {
+                            v = z.value;
+                        } else {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+                            v = z;
+                        }
                     }
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
-                    v = ctx.params![op.name] ?? null;
                     break;
                 default:
                     throw new Error(`Unexpected type appears in the operand(2).`);
@@ -375,7 +406,7 @@ function getOp2Value(
                 throw new Error(`Operator "${cond.op}": operand(2) array items should be string.`);
             }
             return x.split(';');
-        })
+        });
         break;
     }
 
@@ -418,47 +449,6 @@ function evalRecursiveCondition(
     // }
     //
     // return ret;
-}
-
-
-function convertPattern(v: string) {
-    // NOTE: wildcards are '%' (= /.*/) and '_' (= /./)
-    //       wildcard escape sequences are '\%' and '\_'
-
-    const pat0 = v.replace(/[.*+?^=!:${}()|[\]\/]/g, '\\$&');
-    let pattern = '';
-    let prev: string | undefined = void 0;
-
-    for (const c of pat0) {
-        switch (c) {
-        case '%':
-            if (prev === '\\') {
-                pattern += '%';
-            } else {
-                pattern += '.*';
-            }
-            break;
-        case '_':
-            if (prev === '\\') {
-                pattern += '_';
-            } else {
-                pattern += '.';
-            }
-            break;
-        case '\\':
-            break;
-        default:
-            if (prev === '\\') {
-                pattern += '\\';
-            }
-            pattern += c;
-        }
-        prev = c;
-    }
-    if (prev === '\\') {
-        pattern += '\\';
-    }
-    return `^${pattern}$`;
 }
 
 
@@ -726,104 +716,22 @@ export function getIndexFieldConditions(
 }
 
 
-function getSqlConditionStringImpl(
+export function getSqlConditionString(
         ctx: Pick<ResolverContext, 'params'>,
-        cond: PreparedCondition, fieldNameMapper: (name: string) => string): string {
+        conds: PreparedCondition[], dialect: SqlDialect): string {
 
-    switch (cond.op) {
-    case 'not':
-        return (
-            // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
-            `(not ${getSqlConditionStringImpl(ctx, cond.operands[0] as PreparedCondition, fieldNameMapper)})`
-        );
-    case 'and': case 'or':
-        return (
-            `(${cond.operands
-                // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
-                .map(x => getSqlConditionStringImpl(ctx, x as PreparedCondition, fieldNameMapper))
-                .join(` ${cond.op} `)})`
-        );
-    case 'true': case 'includes': case 'excludes':
-        return '(1=1)';
-    }
-
-    let notSupported = false;
-    const operands = cond.operands.map(x => {
-        switch (typeof x) {
-        case 'object':
-            if (Array.isArray(x)) {
-                return `(${(
-                    x.map(w => {
-                        if (w === null) {
-                            return 'null';
-                        } else {
-                            switch (typeof w) {
-                            case 'object':
-                                switch (w.type) {
-                                case 'date': case 'datetime':
-                                    return `'${w.value}'`;
-                                case 'parameter':
-                                    {
-                                        if (! Object.prototype.hasOwnProperty.call(ctx.params, w.name)) {
-                                            throw new Error(`Parameter '${w.name}' is not found.`);
-                                        }
-                                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                        const z = ctx.params![w.name] ?? null;
-                                        if (Array.isArray(z)) {
-                                            throw new Error(`Parameter '${w.name}' items should be atom.`);
-                                        }
-                                        switch (typeof z) {
-                                        case 'string':
-                                            return `'${z}'`;
-                                        default:
-                                            return z;
-                                        }
-                                    }
-                                default:
-                                    notSupported = true;
-                                    return '';
-                                }
-                            case 'string':
-                                return `'${w}'`;
-                            default:
-                                return w.toString();
-                            }
-                        }
-                    }).join(',')
-                )})`;
-            } else {
-                if (x === null) {
-                    return 'null';
-                } else {
-                    switch (x.type) {
-                    case 'field':
-                        return fieldNameMapper(x.name[x.name.length - 1]);
-                    case 'date': case 'datetime':
-                        return `'${x.value}'`;
-                    default:
-                        notSupported = true;
-                        return '';
-                    }
-                }
-            }
-        case 'string':
-            return `'${x}'`;
-        default:
-            return x.toString();
-        }
-    });
-
-    if (notSupported) {
-        return '(1=1)';
-    } else {
-        return `${operands[0]} ${cond.op} ${operands[1]}`;
-    }
+    return conds.map(x => getSqlConditionStringImpl(ctx, x, dialect)).join(' and ');
 }
 
 
-export function getSqlConditionString(
-        ctx: Pick<ResolverContext, 'params'>,
-        conds: PreparedCondition[], fieldNameMapper: (name: string) => string): string {
+export function escapeSqlStringLiteral_Std(s: string): string {
+    return s.replace(/'/g, "''");
+}
 
-    return conds.map(x => getSqlConditionStringImpl(ctx, x, fieldNameMapper)).join(' and ');
+
+export function escapeSqlStringLiteral_MySql(s: string): string {
+    return (s
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+    );
 }

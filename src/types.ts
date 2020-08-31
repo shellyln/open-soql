@@ -37,13 +37,18 @@ export interface PreparedParameterizedValue {
 }
 
 
+export type PreparedPrimitiveAtomValue =
+    number | string | boolean | null;
+
+
 export type PreparedAtomValue =
-    number | string | boolean | null |
-    PreparedDateValue | PreparedDateTimeValue | PreparedParameterizedValue;
+    PreparedPrimitiveAtomValue |
+    PreparedDateValue | PreparedDateTimeValue /*| PreparedParameterizedValue*/; // TODO: PreparedParameterizedValue is NOT atom!
 
 
 export type PreparedValue =
-    PreparedAtomValue | Array<PreparedAtomValue>;
+    PreparedAtomValue | PreparedParameterizedValue |
+    Array<PreparedAtomValue | PreparedParameterizedValue>;
 
 
 export interface PreparedFieldBase {
@@ -68,6 +73,7 @@ export interface PreparedFnCall extends PreparedFieldBaseForFnCall {
     args: Array<
             Omit<PreparedField, 'aliasName'> |
             PreparedAtomValue |
+            PreparedParameterizedValue |
             PreparedFnCall>;
 }
 
@@ -199,7 +205,9 @@ export interface ResolverCapabilities {
 }
 
 
-export type QueryParams = { [paramNames: string]: number | string | boolean | null | Array<number | string | boolean | null> };
+export type QueryParams = { [paramNames: string]:
+    PreparedAtomValue |
+    Array<PreparedAtomValue> };
 
 
 export interface IQuery {
@@ -406,3 +414,9 @@ export interface SubscriberParams {
 }
 
 export type Subscriber = (params: SubscriberParams) => void;
+
+
+export interface SqlDialect {
+    fieldName: (name: string) => string;
+    escapeString: (s: string) => string;
+}

@@ -254,3 +254,44 @@ export function getObjectPathValue(record: any, name: string[]) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return r;
 }
+
+
+export function convertPattern(v: string): string {
+    // NOTE: wildcards are '%' (= /.*/) and '_' (= /./)
+    //       wildcard escape sequences are '\%' and '\_'
+
+    const pat0 = v.replace(/[.*+?^=!:${}()|[\]\/]/g, '\\$&');
+    let pattern = '';
+    let prev: string | undefined = void 0;
+
+    for (const c of pat0) {
+        switch (c) {
+        case '%':
+            if (prev === '\\') {
+                pattern += '%';
+            } else {
+                pattern += '.*';
+            }
+            break;
+        case '_':
+            if (prev === '\\') {
+                pattern += '_';
+            } else {
+                pattern += '.';
+            }
+            break;
+        case '\\':
+            break;
+        default:
+            if (prev === '\\') {
+                pattern += '\\';
+            }
+            pattern += c;
+        }
+        prev = c;
+    }
+    if (prev === '\\') {
+        pattern += '\\';
+    }
+    return `^${pattern}$`;
+}

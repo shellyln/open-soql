@@ -9,7 +9,9 @@ import { prepareQuery,
 import { deepCloneObject,
          getObjectValue }           from '../lib/util';
 import { QueryBuilderInfoInternal,
-         QueryBuilderInfo }         from '../types';
+         QueryBuilderInfo,
+         ResolverContext,
+         SqlDialect }               from '../types';
 import { build }                    from '../builder';
 import { setDefaultStaticResolverConfig,
          staticJsonResolverBuilder,
@@ -19,7 +21,9 @@ import { resolverConfigs }            from './helpers/config';
 import { filterZeroLengthCondFn,
          pruneCondition }             from '../lib/condition';
 import { getIndexFieldConditions,
-         getSqlConditionString }      from '../filters';
+         getSqlConditionString,
+         escapeSqlStringLiteral_Std,
+         escapeSqlStringLiteral_MySql } from '../filters';
 
 
 
@@ -160,7 +164,12 @@ describe("field-cond-1", function() {
                 name: ['id'],
             }, ''],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > ''");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > ''");
     });
 
     it("Id field condition (2)", function() {
@@ -197,7 +206,12 @@ describe("field-cond-1", function() {
                 }, ''],
             }]
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("(not id > '')");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("(not id > '')");
     });
 
     it("Id field condition (3)", function() {
@@ -242,7 +256,12 @@ describe("field-cond-1", function() {
                 }, ''],
             }]
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("(id > '' or id > '')");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("(id > '' or id > '')");
     });
 
     it("Id field condition (4)", function() {
@@ -291,7 +310,12 @@ describe("field-cond-1", function() {
                 }, ''],
             }],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("((not id > '') or id > '')");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("((not id > '') or id > '')");
     });
 
     it("Id field condition (5)", function() {
@@ -332,7 +356,12 @@ describe("field-cond-1", function() {
                 name: ['id'],
             }, ''],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and id > ''");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and id > ''");
     });
 
     it("Id field condition (6)", function() {
@@ -380,7 +409,12 @@ describe("field-cond-1", function() {
                 name: ['corge'],
             }, ''],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and id > '' and corge > ''");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and id > '' and corge > ''");
     });
 
     it("Id field condition (7)", function() {
@@ -421,7 +455,12 @@ describe("field-cond-1", function() {
                 name: ['id'],
             }, ''],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and id > ''");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and id > ''");
     });
 
     it("Id field condition (8)", function() {
@@ -473,7 +512,12 @@ describe("field-cond-1", function() {
                 }, ''],
             }],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and (quux > '' or id > '')");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and (quux > '' or id > '')");
     });
 
     it("Id field condition (9): parameters", function() {
@@ -525,7 +569,12 @@ describe("field-cond-1", function() {
                 }, 'a'],
             }],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and (quux > '' or id > 'a')");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and (quux > '' or id > 'a')");
     });
 
     it("Id field condition (10): fncall", function() {
@@ -566,7 +615,12 @@ describe("field-cond-1", function() {
                 name: ['quux'],
             }, ''],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and quux > ''");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and quux > ''");
     });
 
     it("Id field condition (11): in", function() {
@@ -622,7 +676,78 @@ describe("field-cond-1", function() {
                 ]],
             }],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual(
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual(
+            "id > '' and (quux > '' or id in ('a','s','d','f',-100,true,false,null,'zzzz','2020-12-31','2020-12-31T00:00:01Z'))");
+    });
+
+    it("Id field condition (11b): in", function() {
+        const query = prepareQuery(builder, `
+            Select id
+            from contact
+            where
+                (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
+                and (id>'' or bar>'')
+                and (baz>'' or qux>'')
+                and (quux > '' or id in :qwerty or bar>'')
+            `, []);
+
+        const ctx: Pick<ResolverContext, 'params'> = {
+            params: {
+                qwerty: [
+                    'a', 's', 'd', 'f',
+                    -100, true, false, null, 'zzzz',
+                    {type: 'date', value: '2020-12-31'}, {type: 'datetime', value: '2020-12-31T00:00:01Z'},
+                ]
+            },
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const condWhere = deepCloneObject(query.where!)
+            .map(cond => pruneCondition(query.from[0].name, cond))
+            .filter(filterZeroLengthCondFn);
+
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
+        expect(condId).toEqual([{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['quux'],
+                }, ''],
+            }, {
+                type: 'condition',
+                op: 'in',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, [
+                    'a', 's', 'd', 'f',
+                    -100, true, false, null, 'zzzz',
+                    {type: 'date', value: '2020-12-31'}, {type: 'datetime', value: '2020-12-31T00:00:01Z'},
+                ]],
+            }],
+        }]);
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual(
             "id > '' and (quux > '' or id in ('a','s','d','f',-100,true,false,null,'zzzz','2020-12-31','2020-12-31T00:00:01Z'))");
     });
 
@@ -664,6 +789,11 @@ describe("field-cond-1", function() {
                 name: ['quux'],
             }, ''],
         }]);
-        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and quux > ''");
+
+        const dialect: SqlDialect = {
+            escapeString: escapeSqlStringLiteral_Std,
+            fieldName: s => s,
+        };
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and quux > ''");
     });
 });
