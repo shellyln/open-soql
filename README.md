@@ -679,7 +679,8 @@ export function sortRecords(query: PreparedQuery, records: any[]): any[];
 
 ```ts
 export function applyWhereConditions(
-    ctx: ResolverContext, conds: PreparedCondition[], records: any[]): any[];
+    Omit<ResolverContext, 'resolverCapabilities'>,
+    conds: PreparedCondition[], records: any[]): any[];
 ```
 
 * Filter records by `where` conditions.
@@ -700,7 +701,8 @@ export function applyWhereConditions(
 
 ```ts
 export function applyHavingConditions(
-    ctx: ResolverContext, conds: PreparedCondition[], groupedRecsArray: any[][]): any[];
+    Omit<ResolverContext, 'resolverCapabilities'>,
+    conds: PreparedCondition[], groupedRecsArray: any[][]): any[];
 ```
 
 * Filter groups by `having` conditions.
@@ -721,6 +723,7 @@ export function applyHavingConditions(
 
 ```ts
 export function getIndexFieldConditions(
+    ctx: Pick<ResolverContext, 'params'>,
     conds: PreparedCondition[], indexFieldNames: string[]): PreparedCondition[];
 ```
 
