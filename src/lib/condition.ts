@@ -386,45 +386,60 @@ export function getSqlConditionStringImpl(
         return '(1=1)';
     }
 
+    let notSupported = false;
+
+    const getArrayValue: (x: Array<PreparedAtomValue | PreparedParameterizedValue>) => string = (x) => {
+        return (
+            x.map(w => {
+                if (w === null) {
+                    return 'null';
+                } else {
+                    switch (typeof w) {
+                    case 'object':
+                        switch (w.type) {
+                        case 'date': case 'datetime':
+                            return `'${w.value}'`;
+                        case 'parameter':
+                            return getEscapedParamValue(w, false);
+                        default:
+                            notSupported = true;
+                            return '';
+                        }
+                    case 'string':
+                        return `'${dialect.escapeString(w)}'`;
+                    default:
+                        return w.toString();
+                    }
+                }
+            }).join(',')
+        );
+    };
+
     const getEscapedParamValue = (x: PreparedParameterizedValue, allowArray: boolean) => {
         const z = (allowArray ? getParameterValueAllowArray : getParameterValueDenyArray)(ctx, x);
-        switch (typeof z) {
-        case 'string':
-            return `'${dialect.escapeString(z)}'`;
-        default:
-            return z;
+        if (z === null) {
+            return 'null';
+        } else {
+            switch (typeof z) {
+            case 'object':
+                if (Array.isArray(z)) {
+                    return `(${getArrayValue(z)})`;
+                } else {
+                    return `'${z.value}'`;
+                }
+            case 'string':
+                return `'${dialect.escapeString(z)}'`;
+            default:
+                return String(z);
+            }
         }
     };
 
-    let notSupported = false;
     const operands = cond.operands.map(x => {
         switch (typeof x) {
         case 'object':
             if (Array.isArray(x)) {
-                return `(${(
-                    x.map(w => {
-                        if (w === null) {
-                            return 'null';
-                        } else {
-                            switch (typeof w) {
-                            case 'object':
-                                switch (w.type) {
-                                case 'date': case 'datetime':
-                                    return `'${w.value}'`;
-                                case 'parameter':
-                                    return getEscapedParamValue(w, false);
-                                default:
-                                    notSupported = true;
-                                    return '';
-                                }
-                            case 'string':
-                                return `'${dialect.escapeString(w)}'`;
-                            default:
-                                return w.toString();
-                            }
-                        }
-                    }).join(',')
-                )})`;
+                return `(${getArrayValue(x)})`;
             } else {
                 if (x === null) {
                     return 'null';

@@ -3,11 +3,11 @@
 // https://github.com/shellyln
 
 
-import { parse }                    from '../lib/parser';
 import { prepareQuery,
          prepareBuilderInfo }       from '../lib/prepare';
 import { deepCloneObject }          from '../lib/util';
 import { ResolverContext,
+         PreparedCondition,
          SqlDialect }               from '../types';
 import { staticCsvResolverBuilder } from '../resolvers';
 import { filterZeroLengthCondFn,
@@ -567,6 +567,37 @@ describe("field-cond-1", function() {
             fieldName: s => s,
         };
         expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '' and (quux > '' or id > 'a')");
+
+        const condId2: PreparedCondition[] = [{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['quux'],
+                }, ''],
+            }, {
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, {
+                    type: 'parameter',  // <- use parameter
+                    name: 'qwerty',
+                }],
+            }],
+        }];
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id > '' and (quux > '' or id > 'a')");
     });
 
     it("Id field condition (10): fncall", function() {
@@ -675,6 +706,39 @@ describe("field-cond-1", function() {
         };
         expect(getSqlConditionString(ctx, condId, dialect)).toEqual(
             "id > '' and (quux > '' or id in ('a','s','d','f',-100,true,false,null,'zzzz','2020-12-31','2020-12-31T00:00:01Z'))");
+
+        const condId2: PreparedCondition[] = [{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['quux'],
+                }, ''],
+            }, {
+                type: 'condition',
+                op: 'in',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, [
+                    'a', 's', 'd', 'f',
+                    -100, true, false, null, {type: 'parameter', name: 'qwerty'},  // <- use parameter
+                    {type: 'date', value: '2020-12-31'}, {type: 'datetime', value: '2020-12-31T00:00:01Z'},
+                ]],
+            }],
+        }];
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual(
+            "id > '' and (quux > '' or id in ('a','s','d','f',-100,true,false,null,'zzzz','2020-12-31','2020-12-31T00:00:01Z'))");
     });
 
     it("Id field condition (11b): in", function() {
@@ -740,6 +804,35 @@ describe("field-cond-1", function() {
             fieldName: s => s,
         };
         expect(getSqlConditionString(ctx, condId, dialect)).toEqual(
+            "id > '' and (quux > '' or id in ('a','s','d','f',-100,true,false,null,'zzzz','2020-12-31','2020-12-31T00:00:01Z'))");
+
+        const condId2: PreparedCondition[] = [{
+            type: 'condition',
+            op: '>',
+            operands: [{
+                type: 'field',
+                name: ['id'],
+            }, ''],
+        }, {
+            type: 'condition',
+            op: 'or',
+            operands: [{
+                type: 'condition',
+                op: '>',
+                operands: [{
+                    type: 'field',
+                    name: ['quux'],
+                }, ''],
+            }, {
+                type: 'condition',
+                op: 'in',
+                operands: [{
+                    type: 'field',
+                    name: ['id'],
+                }, {type: 'parameter', name: 'qwerty'}],  // <- use parameter
+            }],
+        }];
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual(
             "id > '' and (quux > '' or id in ('a','s','d','f',-100,true,false,null,'zzzz','2020-12-31','2020-12-31T00:00:01Z'))");
     });
 
