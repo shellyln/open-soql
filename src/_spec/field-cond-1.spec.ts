@@ -160,7 +160,7 @@ describe("field-cond-1", function() {
                 name: ['id'],
             }, ''],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > ''");
     });
 
     it("Id field condition (2)", function() {
@@ -197,7 +197,7 @@ describe("field-cond-1", function() {
                 }, ''],
             }]
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("(not id > '')");
     });
 
     it("Id field condition (3)", function() {
@@ -242,7 +242,7 @@ describe("field-cond-1", function() {
                 }, ''],
             }]
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' or id > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("(id > '' or id > '')");
     });
 
     it("Id field condition (4)", function() {
@@ -291,7 +291,7 @@ describe("field-cond-1", function() {
                 }, ''],
             }],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("(not id > '') or id > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("((not id > '') or id > '')");
     });
 
     it("Id field condition (5)", function() {
@@ -332,7 +332,7 @@ describe("field-cond-1", function() {
                 name: ['id'],
             }, ''],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and id > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and id > ''");
     });
 
     it("Id field condition (6)", function() {
@@ -380,7 +380,7 @@ describe("field-cond-1", function() {
                 name: ['corge'],
             }, ''],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and id > '' and corge > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and id > '' and corge > ''");
     });
 
     it("Id field condition (7)", function() {
@@ -421,7 +421,7 @@ describe("field-cond-1", function() {
                 name: ['id'],
             }, ''],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and id > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and id > ''");
     });
 
     it("Id field condition (8)", function() {
@@ -473,7 +473,7 @@ describe("field-cond-1", function() {
                 }, ''],
             }],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and (quux > '' or id > '')");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and (quux > '' or id > '')");
     });
 
     it("Id field condition (9): parameters", function() {
@@ -525,7 +525,7 @@ describe("field-cond-1", function() {
                 }, 'a'],
             }],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and (quux > '' or id > 'a')");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and (quux > '' or id > 'a')");
     });
 
     it("Id field condition (10): fncall", function() {
@@ -566,7 +566,7 @@ describe("field-cond-1", function() {
                 name: ['quux'],
             }, ''],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and quux > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and quux > ''");
     });
 
     it("Id field condition (11): in", function() {
@@ -618,7 +618,7 @@ describe("field-cond-1", function() {
                 }, ['a', 's', 'd', 'f']],
             }],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and (quux > '' or id in ('a','s','d','f'))");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and (quux > '' or id in ('a','s','d','f'))");
     });
 
     it("Id field condition (12): in subquery", function() {
@@ -659,6 +659,6 @@ describe("field-cond-1", function() {
                 name: ['quux'],
             }, ''],
         }]);
-        expect(getSqlConditionString(condId, s => s)).toEqual("id > '' and quux > ''");
+        expect(getSqlConditionString(ctx, condId, s => s)).toEqual("id > '' and quux > ''");
     });
 });

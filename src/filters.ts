@@ -727,17 +727,20 @@ export function getIndexFieldConditions(
 
 
 function getSqlConditionStringImpl(
+        ctx: Pick<ResolverContext, 'params'>,
         cond: PreparedCondition, fieldNameMapper: (name: string) => string): string {
 
     switch (cond.op) {
     case 'not':
         return (
-            `(not ${getSqlConditionStringImpl(cond.operands[0] as PreparedCondition, fieldNameMapper)})`
+            // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
+            `(not ${getSqlConditionStringImpl(ctx, cond.operands[0] as PreparedCondition, fieldNameMapper)})`
         );
     case 'and': case 'or':
         return (
             `(${cond.operands
-                .map(x => getSqlConditionStringImpl(x as PreparedCondition, fieldNameMapper))
+                // NOTE: It is unsafe, but compiler do not generate invalid condition tree.
+                .map(x => getSqlConditionStringImpl(ctx, x as PreparedCondition, fieldNameMapper))
                 .join(` ${cond.op} `)})`
         );
     case 'true': case 'includes': case 'excludes':
@@ -759,6 +762,18 @@ function getSqlConditionStringImpl(
                                 switch (w.type) {
                                 case 'date': case 'datetime':
                                     return `'${w.value}'`;
+                                case 'parameter':
+                                    {
+                                        if (! Object.prototype.hasOwnProperty.call(ctx.params, w.name)) {
+                                            throw new Error(`Parameter '${w.name}' is not found.`);
+                                        }
+                                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                        const z = ctx.params![w.name] ?? null;
+                                        if (Array.isArray(z)) {
+                                            throw new Error(`Parameter '${w.name}' items should be atom.`);
+                                        }
+                                        return z;
+                                    }
                                 default:
                                     notSupported = true;
                                     return '';
@@ -802,7 +817,8 @@ function getSqlConditionStringImpl(
 
 
 export function getSqlConditionString(
+        ctx: Pick<ResolverContext, 'params'>,
         conds: PreparedCondition[], fieldNameMapper: (name: string) => string): string {
 
-    return conds.map(x => getSqlConditionStringImpl(x, fieldNameMapper)).join(' and ');
+    return conds.map(x => getSqlConditionStringImpl(ctx, x, fieldNameMapper)).join(' and ');
 }

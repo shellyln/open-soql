@@ -62,7 +62,8 @@ export function callScalarFunction(
                         if (Array.isArray(z)) {
                             throw new Error(`Parameter '${a.name}' should be string or number.`);
                         }
-                        return new Date(z).getTime();
+                        // NOTE: it is not type safe!
+                        return new Date(z as any).getTime();
                     default:
                         return z;
                     }
@@ -151,7 +152,8 @@ export function callImmediateScalarFunction(
                         if (Array.isArray(z)) {
                             throw new Error(`Parameter '${a.name}' should be string or number.`);
                         }
-                        return new Date(z).getTime();
+                        // NOTE: it is not type safe!
+                        return new Date(z as any).getTime();
                     default:
                         return z;
                     }
@@ -255,7 +257,8 @@ export function callAggregateFunction(
                         if (Array.isArray(z)) {
                             throw new Error(`Parameter '${a.name}' should be string or number.`);
                         }
-                        return new Date(z).getTime();
+                        // NOTE: it is not type safe!
+                        return new Date(z as any).getTime();
                     default:
                         return z;
                     }

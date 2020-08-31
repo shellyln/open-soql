@@ -199,7 +199,7 @@ export interface ResolverCapabilities {
 }
 
 
-export type QueryParams = { [paramNames: string]: number | string | null | Array<number | string | null> };
+export type QueryParams = { [paramNames: string]: number | string | boolean | null | Array<number | string | boolean | null> };
 
 
 export interface IQuery {

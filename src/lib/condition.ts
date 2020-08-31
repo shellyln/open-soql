@@ -292,7 +292,7 @@ export function pruneNonIndexFieldConditions(
             switch (typeof y) {
             case 'object':
                 if (y === null || Array.isArray(y)) {
-                    // notihing to do.
+                    // NOTE: Notihing to do.
                 } else {
                     switch (y.type) {
                     case 'fncall': case 'subquery':
