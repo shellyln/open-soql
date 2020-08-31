@@ -38,7 +38,8 @@ export interface PreparedParameterizedValue {
 
 
 export type PreparedAtomValue =
-    number | string | null | PreparedDateValue | PreparedDateTimeValue | PreparedParameterizedValue;
+    number | string | boolean | null |
+    PreparedDateValue | PreparedDateTimeValue | PreparedParameterizedValue;
 
 
 export type PreparedValue =

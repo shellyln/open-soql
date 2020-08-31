@@ -268,7 +268,7 @@ function getOp1Value(
 function getOp2Value(
         ctx: Omit<ResolverContext, 'resolverCapabilities'>,
         cond: PreparedCondition, record: any):
-        string | number | PreparedAtomValue[] | null |
+        string | number | boolean | PreparedAtomValue[] | null |
         RegExp |    // for `like`, `not_like`
         string[][]  // for `include`, `exclude`
         {
@@ -723,4 +723,86 @@ export function getIndexFieldConditions(
     flatConditions(ret, 'and', tmp);
 
     return ret;
+}
+
+
+function getSqlConditionStringImpl(
+        cond: PreparedCondition, fieldNameMapper: (name: string) => string): string {
+
+    switch (cond.op) {
+    case 'not':
+        return (
+            `(not ${getSqlConditionStringImpl(cond.operands[0] as PreparedCondition, fieldNameMapper)})`
+        );
+    case 'and': case 'or':
+        return (
+            `(${cond.operands
+                .map(x => getSqlConditionStringImpl(x as PreparedCondition, fieldNameMapper))
+                .join(` ${cond.op} `)})`
+        );
+    case 'true': case 'includes': case 'excludes':
+        return '(1=1)';
+    }
+
+    let notSupported = false;
+    const operands = cond.operands.map(x => {
+        switch (typeof x) {
+        case 'object':
+            if (Array.isArray(x)) {
+                return `(${(
+                    x.map(w => {
+                        if (w === null) {
+                            return 'null';
+                        } else {
+                            switch (typeof w) {
+                            case 'object':
+                                switch (w.type) {
+                                case 'date': case 'datetime':
+                                    return `'${w.value}'`;
+                                default:
+                                    notSupported = true;
+                                    return '';
+                                }
+                            case 'string':
+                                return `'${w}'`;
+                            default:
+                                return w.toString();
+                            }
+                        }
+                    }).join(',')
+                )})`;
+            } else {
+                if (x === null) {
+                    return 'null';
+                } else {
+                    switch (x.type) {
+                    case 'field':
+                        return fieldNameMapper(x.name[x.name.length - 1]);
+                    case 'date': case 'datetime':
+                        return `'${x.value}'`;
+                    default:
+                        notSupported = true;
+                        return '';
+                    }
+                }
+            }
+        case 'string':
+            return `'${x}'`;
+        default:
+            return x.toString();
+        }
+    });
+
+    if (notSupported) {
+        return '(1=1)';
+    } else {
+        return `${operands[0]} ${cond.op} ${operands[1]}`;
+    }
+}
+
+
+export function getSqlConditionString(
+        conds: PreparedCondition[], fieldNameMapper: (name: string) => string): string {
+
+    return conds.map(x => getSqlConditionStringImpl(x, fieldNameMapper)).join(' and ');
 }
