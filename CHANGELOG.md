@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.4.2
+### ⚠️ Breaking changes
+* 💥 Change `getIndexFieldConditions()` parameters.
+
+### 🟢 Other changes
+* 🩹`[FIX]` Fix `getIndexFieldConditions()`: Check operand 2.
+* Update README.
+
+
 ## v0.4.1
 
 * ✨`[NEW]` Add `getIndexFieldConditions()` function that gets the transformed conditions that include only the fields you specified.

@@ -4,7 +4,8 @@
 
 
 import { PreparedFnCall,
-         PreparedCondition }  from '../types';
+         PreparedCondition,
+         ResolverContext }    from '../types';
 import { isEqualComplexName } from './util';
 
 
@@ -202,7 +203,10 @@ export function flatConditions(
 }
 
 
-function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNamesI: string[]) {
+function filterIndexFieldCondOperands(
+        ctx: Pick<ResolverContext, 'params'>,
+        cond: PreparedCondition, indexFieldNamesI: string[]) {
+
     cond.operands = cond.operands
     .map(x => {
         switch (typeof x) {
@@ -216,7 +220,7 @@ function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNamesI:
                 }
                 switch (x.type) {
                 case 'condition':
-                    return pruneNonIndexFieldConditions(x, indexFieldNamesI);
+                    return pruneNonIndexFieldConditions(ctx, x, indexFieldNamesI);
                 default:
                     return x;
                 }
@@ -239,46 +243,90 @@ function filterIndexFieldCondOperands(cond: PreparedCondition, indexFieldNamesI:
 }
 
 
-export function pruneNonIndexFieldConditions(cond: PreparedCondition, indexFieldNamesI: string[]): PreparedCondition {
-    if (cond.operands.length) {
-        const x = cond.operands[0];
+export function pruneNonIndexFieldConditions(
+        ctx: Pick<ResolverContext, 'params'>,
+        cond: PreparedCondition, indexFieldNamesI: string[]): PreparedCondition {
 
-        switch (typeof x) {
-        case 'object':
-            if (x === null || Array.isArray(x)) {
-                return ({
-                    type: 'condition',
-                    op: 'true',
-                    operands: [],
-                });
-            } else {
-                switch (x.type) {
-                case 'field':
-                    if (! indexFieldNamesI.includes(x.name[x.name.length - 1].toLowerCase())) {
+    if (cond.operands.length) {
+        {
+            const x = cond.operands[0];
+            switch (typeof x) {
+            case 'object':
+                if (x === null || Array.isArray(x)) {
+                    return ({
+                        type: 'condition',
+                        op: 'true',
+                        operands: [],
+                    });
+                } else {
+                    switch (x.type) {
+                    case 'field':
+                        if (! indexFieldNamesI.includes(x.name[x.name.length - 1].toLowerCase())) {
+                            return ({
+                                type: 'condition',
+                                op: 'true',
+                                operands: [],
+                            });
+                        }
+                        break;
+                    case 'fncall':
                         return ({
                             type: 'condition',
                             op: 'true',
                             operands: [],
                         });
                     }
-                    break;
-                case 'fncall':
-                    return ({
-                        type: 'condition',
-                        op: 'true',
-                        operands: [],
-                    });
                 }
+                break;
+            default:
+                return ({
+                    type: 'condition',
+                    op: 'true',
+                    operands: [],
+                });
             }
-            break;
-        default:
-            return ({
-                type: 'condition',
-                op: 'true',
-                operands: [],
-            });
+        }
+
+        {
+            const y = cond.operands[1];
+            switch (typeof y) {
+            case 'object':
+                if (y === null || Array.isArray(y)) {
+                    // notihing to do.
+                } else {
+                    switch (y.type) {
+                    case 'fncall': case 'subquery':
+                        return ({
+                            type: 'condition',
+                            op: 'true',
+                            operands: [],
+                        });
+                    case 'parameter':
+                        {
+                            if (! Object.prototype.hasOwnProperty.call(ctx.params, y.name)) {
+                                throw new Error(`Parameter '${y.name}' is not found.`);
+                            }
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            const z = ctx.params![y.name] ?? null;
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${y.name}' items should be atom.`);
+                            }
+                            return filterIndexFieldCondOperands(ctx, {
+                                type: 'condition',
+                                op: cond.op,
+                                operands: [
+                                    cond.operands[0],
+                                    z,
+                                    ...cond.operands.slice(2),
+                                ],
+                            }, indexFieldNamesI);
+                        }
+                    }
+                }
+                break;
+            }
         }
     }
 
-    return filterIndexFieldCondOperands(cond, indexFieldNamesI);
+    return filterIndexFieldCondOperands(ctx, cond, indexFieldNamesI);
 }

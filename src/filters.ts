@@ -707,10 +707,13 @@ export function applyHavingConditions(
 }
 
 
-export function getIndexFieldConditions(conds: PreparedCondition[], indexFieldNames: string[]): PreparedCondition[] {
+export function getIndexFieldConditions(
+        ctx: Pick<ResolverContext, 'params'>,
+        conds: PreparedCondition[], indexFieldNames: string[]): PreparedCondition[] {
+
     const indexFieldNamesI = indexFieldNames.map(x => x.toLowerCase());
 
-    const tmp: PreparedCondition = pruneNonIndexFieldConditions({
+    const tmp: PreparedCondition = pruneNonIndexFieldConditions(ctx, {
         type: 'condition',
         op: 'and',
         operands: deepCloneObject(conds),

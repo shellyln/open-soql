@@ -139,12 +139,18 @@ describe("field-cond-1", function() {
                 or (baz>'' and qux>'')
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id']);
         expect(condId).toEqual([{
             type: 'condition',
             op: '>',
@@ -165,12 +171,18 @@ describe("field-cond-1", function() {
                 or (baz>'' and qux>'')
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id']);
         expect(condId).toEqual([{
             type: 'condition',
             op: 'not',
@@ -196,12 +208,18 @@ describe("field-cond-1", function() {
                 or (quux > '' and id>'' and bar>'')
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id']);
         expect(condId).toEqual([{
             type: 'condition',
             op: 'or',
@@ -234,12 +252,18 @@ describe("field-cond-1", function() {
                 or (quux > '' and id>'' and bar>'')
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id']);
         expect(condId).toEqual([{
             type: 'condition',
             op: 'or',
@@ -276,12 +300,18 @@ describe("field-cond-1", function() {
                 and (quux > '' and id>'' and bar>'')
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id']);
         expect(condId).toEqual([{
             type: 'condition',
             op: '>',
@@ -310,12 +340,18 @@ describe("field-cond-1", function() {
                 and (quux > '' and (id>'' and bar>'' and corge>''))
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id', 'Corge']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'Corge']);
         expect(condId).toEqual([{
             type: 'condition',
             op: '>',
@@ -351,12 +387,18 @@ describe("field-cond-1", function() {
                 and (quux > '' or id>'' or bar>'')
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id']);
         expect(condId).toEqual([{
             type: 'condition',
             op: '>',
@@ -385,12 +427,18 @@ describe("field-cond-1", function() {
                 and (quux > '' or id>'' or bar>'')
             `, []);
 
+        const ctx = {
+            params: {
+                //
+            },
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const condWhere = deepCloneObject(query.where!)
             .map(cond => pruneCondition(query.from[0].name, cond))
             .filter(filterZeroLengthCondFn);
 
-        const condId = getIndexFieldConditions(condWhere, ['Id', 'QUUX']);
+        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
             op: '>',
