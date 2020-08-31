@@ -6,20 +6,12 @@
 import { parse }                    from '../lib/parser';
 import { prepareQuery,
          prepareBuilderInfo }       from '../lib/prepare';
-import { deepCloneObject,
-         getObjectValue }           from '../lib/util';
-import { QueryBuilderInfoInternal,
-         QueryBuilderInfo,
-         ResolverContext,
+import { deepCloneObject }          from '../lib/util';
+import { ResolverContext,
          SqlDialect }               from '../types';
-import { build }                    from '../builder';
-import { setDefaultStaticResolverConfig,
-         staticJsonResolverBuilder,
-         staticCsvResolverBuilder,
-         passThroughResolverBuilder } from '../resolvers';
-import { resolverConfigs }            from './helpers/config';
+import { staticCsvResolverBuilder } from '../resolvers';
 import { filterZeroLengthCondFn,
-         pruneCondition }             from '../lib/condition';
+         pruneCondition }           from '../lib/condition';
 import { getIndexFieldConditions,
          getSqlConditionString,
          escapeSqlStringLiteral_Std,

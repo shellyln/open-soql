@@ -7,7 +7,6 @@ import { PreparedFnCall,
          PreparedCondition,
          ResolverContext,
          PreparedAtomValue,
-         PreparedValue,
          PreparedParameterizedValue,
          SqlDialect }         from '../types';
 import { isEqualComplexName } from './util';

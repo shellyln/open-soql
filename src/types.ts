@@ -43,7 +43,7 @@ export type PreparedPrimitiveAtomValue =
 
 export type PreparedAtomValue =
     PreparedPrimitiveAtomValue |
-    PreparedDateValue | PreparedDateTimeValue /*| PreparedParameterizedValue*/; // TODO: PreparedParameterizedValue is NOT atom!
+    PreparedDateValue | PreparedDateTimeValue;
 
 
 export type PreparedValue =
