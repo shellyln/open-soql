@@ -125,14 +125,14 @@ const builder = prepareBuilderInfo({
 });
 
 
-describe("field-cond-2", function() {
-    it("Id field condition (13-1): param types (string)", function() {
+describe("field-cond-3", function() {
+    it("Id field condition (14-1): param types (array - string)", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
             where
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id>:qwerty or bar>'')
+                and (id in (:qwerty) or bar>'')
                 and (baz>'' or qux>'')
             `, []);
 
@@ -150,37 +150,37 @@ describe("field-cond-2", function() {
         const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, ''],
+            }, ['']],
         }]);
 
         const dialect: SqlDialect = {
             escapeString: escapeSqlStringLiteral_Std,
             fieldName: s => s,
         };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > ''");
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id in ('')");
 
         const condId2: PreparedCondition[] = [{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
+            }, [{type: 'parameter', name: 'qwerty'}]], // <- use parameter
         }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id > ''");
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id in ('')");
     });
 
-    it("Id field condition (13-2): param types (number)", function() {
+    it("Id field condition (14-2): param types (array - number)", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
             where
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id>:qwerty or bar>'')
+                and (id in (:qwerty) or bar>'')
                 and (baz>'' or qux>'')
             `, []);
 
@@ -198,41 +198,41 @@ describe("field-cond-2", function() {
         const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, -100],
+            }, [-100]],
         }]);
 
         const dialect: SqlDialect = {
             escapeString: escapeSqlStringLiteral_Std,
             fieldName: s => s,
         };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > -100");
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id in (-100)");
 
         const condId2: PreparedCondition[] = [{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
+            }, [{type: 'parameter', name: 'qwerty'}]], // <- use parameter
         }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id > -100");
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id in (-100)");
     });
 
-    it("Id field condition (13-3): param types (boolean)", function() {
+    it("Id field condition (14-3): param types (array - boolean)", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
             where
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id>:qwerty or bar>'')
+                and (id in (:qwerty) or bar>'')
                 and (baz>'' or qux>'')
             `, []);
 
-        const ctx = {
+        const ctx: Pick<ResolverContext, 'params'> = {
             params: {
                 qwerty: false,
             },
@@ -246,37 +246,37 @@ describe("field-cond-2", function() {
         const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, false],
+            }, [false]],
         }]);
 
         const dialect: SqlDialect = {
             escapeString: escapeSqlStringLiteral_Std,
             fieldName: s => s,
         };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > false");
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id in (false)");
 
         const condId2: PreparedCondition[] = [{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
+            }, [{type: 'parameter', name: 'qwerty'}]], // <- use parameter
         }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id > false");
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id in (false)");
     });
 
-    it("Id field condition (13-4): param types (date)", function() {
+    it("Id field condition (14-4): param types (array - date)", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
             where
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id>:qwerty or bar>'')
+                and (id in (:qwerty) or bar>'')
                 and (baz>'' or qux>'')
             `, []);
 
@@ -294,37 +294,37 @@ describe("field-cond-2", function() {
         const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'date', value: '2020-12-31'}],
+            }, [{type: 'date', value: '2020-12-31'}]],
         }]);
 
         const dialect: SqlDialect = {
             escapeString: escapeSqlStringLiteral_Std,
             fieldName: s => s,
         };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '2020-12-31'");
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id in ('2020-12-31')");
 
         const condId2: PreparedCondition[] = [{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
+            }, [{type: 'parameter', name: 'qwerty'}]], // <- use parameter
         }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id > '2020-12-31'");
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id in ('2020-12-31')");
     });
 
-    it("Id field condition (13-5): param types (datetime)", function() {
+    it("Id field condition (14-5): param types (array - datetime)", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
             where
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id>:qwerty or bar>'')
+                and (id in (:qwerty) or bar>'')
                 and (baz>'' or qux>'')
             `, []);
 
@@ -342,37 +342,37 @@ describe("field-cond-2", function() {
         const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'datetime', value: '2020-12-31T01:02:03Z'}],
+            }, [{type: 'datetime', value: '2020-12-31T01:02:03Z'}]],
         }]);
 
         const dialect: SqlDialect = {
             escapeString: escapeSqlStringLiteral_Std,
             fieldName: s => s,
         };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id > '2020-12-31T01:02:03Z'");
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id in ('2020-12-31T01:02:03Z')");
 
         const condId2: PreparedCondition[] = [{
             type: 'condition',
-            op: '>',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
+            }, [{type: 'parameter', name: 'qwerty'}]], // <- use parameter
         }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id > '2020-12-31T01:02:03Z'");
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id in ('2020-12-31T01:02:03Z')");
     });
 
-    it("Id field condition (13-6): param types (null)", function() {
+    it("Id field condition (14-6): param types (array - null)", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
             where
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id=:qwerty or bar>'')
+                and (id in (:qwerty) or bar>'')
                 and (baz>'' or qux>'')
             `, []);
 
@@ -390,85 +390,37 @@ describe("field-cond-2", function() {
         const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
-            op: '=',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, null],
+            }, [null]],
         }]);
 
         const dialect: SqlDialect = {
             escapeString: escapeSqlStringLiteral_Std,
             fieldName: s => s,
         };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id is null");
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id in (null)");
 
         const condId2: PreparedCondition[] = [{
             type: 'condition',
-            op: '=',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
+            }, [{type: 'parameter', name: 'qwerty'}]], // <- use parameter
         }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id is null");
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id in (null)");
     });
 
-    it("Id field condition (13-7): param types (null)", function() {
+    it("Id field condition (14-7): param types (array - 'null')", function() {
         const query = prepareQuery(builder, `
             Select id
             from contact
             where
                 (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id!=:qwerty or bar>'')
-                and (baz>'' or qux>'')
-            `, []);
-
-        const ctx: Pick<ResolverContext, 'params'> = {
-            params: {
-                qwerty: null,
-            },
-        };
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const condWhere = deepCloneObject(query.where!)
-            .map(cond => pruneCondition(query.from[0].name, cond))
-            .filter(filterZeroLengthCondFn);
-
-        const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
-        expect(condId).toEqual([{
-            type: 'condition',
-            op: '!=',
-            operands: [{
-                type: 'field',
-                name: ['id'],
-            }, null],
-        }]);
-
-        const dialect: SqlDialect = {
-            escapeString: escapeSqlStringLiteral_Std,
-            fieldName: s => s,
-        };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id is not null");
-
-        const condId2: PreparedCondition[] = [{
-            type: 'condition',
-            op: '!=',
-            operands: [{
-                type: 'field',
-                name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
-        }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id is not null");
-    });
-
-    it("Id field condition (13-8): param types ('null')", function() {
-        const query = prepareQuery(builder, `
-            Select id
-            from contact
-            where
-                (testspec_pass_thru(id)>'' or testspec_pass_thru(foo)>'')
-                and (id=:qwerty or bar>'')
+                and (id in (:qwerty) or bar>'')
                 and (baz>'' or qux>'')
             `, []);
 
@@ -486,27 +438,27 @@ describe("field-cond-2", function() {
         const condId = getIndexFieldConditions(ctx, condWhere, ['Id', 'QUUX']);
         expect(condId).toEqual([{
             type: 'condition',
-            op: '=',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, 'null'],
+            }, ['null']],
         }]);
 
         const dialect: SqlDialect = {
             escapeString: escapeSqlStringLiteral_Std,
             fieldName: s => s,
         };
-        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id = 'null'");
+        expect(getSqlConditionString(ctx, condId, dialect)).toEqual("id in ('null')");
 
         const condId2: PreparedCondition[] = [{
             type: 'condition',
-            op: '=',
+            op: 'in',
             operands: [{
                 type: 'field',
                 name: ['id'],
-            }, {type: 'parameter', name: 'qwerty'}], // <- use parameter
+            }, [{type: 'parameter', name: 'qwerty'}]], // <- use parameter
         }];
-        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id = 'null'");
+        expect(getSqlConditionString(ctx, condId2, dialect)).toEqual("id in ('null')");
     });
 });
