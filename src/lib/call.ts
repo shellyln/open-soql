@@ -60,7 +60,7 @@ export function callScalarFunction(
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
                         if (Array.isArray(z)) {
-                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                            throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
                         }
                         switch (typeof z) {
                         case 'object':
@@ -71,7 +71,13 @@ export function callScalarFunction(
                             return new Date(z).getTime();
                         }
                     default:
-                        if (z !== null && typeof z === 'object' && !Array.isArray(z)) {
+                        if (z === null) {
+                            return null;
+                        }
+                        if (typeof z === 'object') {
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
+                            }
                             return z.value;
                         } else {
                             return z;
@@ -160,7 +166,7 @@ export function callImmediateScalarFunction(
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
                         if (Array.isArray(z)) {
-                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                            throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
                         }
                         switch (typeof z) {
                         case 'object':
@@ -171,7 +177,13 @@ export function callImmediateScalarFunction(
                             return new Date(z).getTime();
                         }
                     default:
-                        if (z !== null && typeof z === 'object' && !Array.isArray(z)) {
+                        if (z === null) {
+                            return null;
+                        }
+                        if (typeof z === 'object') {
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
+                            }
                             return z.value;
                         } else {
                             return z;
@@ -275,7 +287,7 @@ export function callAggregateFunction(
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
                         if (Array.isArray(z)) {
-                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                            throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
                         }
                         switch (typeof z) {
                         case 'object':
@@ -286,7 +298,13 @@ export function callAggregateFunction(
                             return new Date(z).getTime();
                         }
                     default:
-                        if (z !== null && typeof z === 'object' && !Array.isArray(z)) {
+                        if (z === null) {
+                            return null;
+                        }
+                        if (typeof z === 'object') {
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
+                            }
                             return z.value;
                         } else {
                             return z;
