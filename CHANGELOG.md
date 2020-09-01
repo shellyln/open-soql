@@ -5,7 +5,10 @@
 * 💥 Change `getIndexFieldConditions()` parameters.
 
 ### 🟢 Other changes
-* 🩹`[FIX]` Fix `getIndexFieldConditions()`: Check operand 2.
+* 🩹`[FIX]` Fix `getIndexFieldConditions()`.
+  * Check operand 2.
+  * Fix array expansion.
+* 🩹`[FIX]` Fix `Date` and `Datetime` parameter expansion of SOQL function calls.
 * Update README.
 
 

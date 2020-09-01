@@ -62,10 +62,20 @@ export function callScalarFunction(
                         if (Array.isArray(z)) {
                             throw new Error(`Parameter '${a.name}' should be string or number.`);
                         }
-                        // NOTE: it is not type safe!
-                        return new Date(z as any).getTime();
+                        switch (typeof z) {
+                        case 'object':
+                            return new Date(z.value).getTime();
+                        case 'boolean':
+                            return new Date(Number(z)).getTime();
+                        default:
+                            return new Date(z).getTime();
+                        }
                     default:
-                        return z;
+                        if (z !== null && typeof z === 'object' && !Array.isArray(z)) {
+                            return z.value;
+                        } else {
+                            return z;
+                        }
                     }
                 }
             case 'fncall':
@@ -152,10 +162,20 @@ export function callImmediateScalarFunction(
                         if (Array.isArray(z)) {
                             throw new Error(`Parameter '${a.name}' should be string or number.`);
                         }
-                        // NOTE: it is not type safe!
-                        return new Date(z as any).getTime();
+                        switch (typeof z) {
+                        case 'object':
+                            return new Date(z.value).getTime();
+                        case 'boolean':
+                            return new Date(Number(z)).getTime();
+                        default:
+                            return new Date(z).getTime();
+                        }
                     default:
-                        return z;
+                        if (z !== null && typeof z === 'object' && !Array.isArray(z)) {
+                            return z.value;
+                        } else {
+                            return z;
+                        }
                     }
                 }
             case 'fncall':
@@ -257,10 +277,20 @@ export function callAggregateFunction(
                         if (Array.isArray(z)) {
                             throw new Error(`Parameter '${a.name}' should be string or number.`);
                         }
-                        // NOTE: it is not type safe!
-                        return new Date(z as any).getTime();
+                        switch (typeof z) {
+                        case 'object':
+                            return new Date(z.value).getTime();
+                        case 'boolean':
+                            return new Date(Number(z)).getTime();
+                        default:
+                            return new Date(z).getTime();
+                        }
                     default:
-                        return z;
+                        if (z !== null && typeof z === 'object' && !Array.isArray(z)) {
+                            return z.value;
+                        } else {
+                            return z;
+                        }
                     }
                 }
             case 'fncall':
