@@ -6,6 +6,7 @@
 import { QueryBuilderInfo,
          QueryParams,
          IQuery,
+         PreparedAtomValue,
          PreparedQuery,
          SubscriberParams,
          Subscriber }      from './types';
@@ -225,13 +226,19 @@ export function build(builder: QueryBuilderInfo) {
         }
 
 
-        function compileQuery(strings: TemplateStringsArray | string, ...values: any[]): IQuery {
+        function compileQuery(
+                strings: TemplateStringsArray | string,
+                ...values: Array<PreparedAtomValue | Array<PreparedAtomValue>>): IQuery {
+
             const query = prepareQuery(preparedBI, strings, ...values);
             return new Query(query, runCompiledQuery);
         }
 
 
-        async function runQuery<R>(strings: TemplateStringsArray | string, ...values: any[]): Promise<R[]> {
+        async function runQuery<R>(
+                strings: TemplateStringsArray | string,
+                ...values: Array<PreparedAtomValue | Array<PreparedAtomValue>>): Promise<R[]> {
+
             const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 const query = prepareQuery(preparedBI, strings, ...values);
                 const ret = await executeCompiledQuery(preparedBI, {}, tr, trOptions, query, null, null, null, null);

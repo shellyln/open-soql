@@ -5,10 +5,11 @@
 * 💥 Change `getIndexFieldConditions()` parameters.
 
 ### 🟢 Other changes
-* 🩹`[FIX]` Fix `getIndexFieldConditions()`.
+* 🐞`[FIX]` Fix `getIndexFieldConditions()`.
   * Check operand 2.
   * Fix array expansion.
-* 🩹`[FIX]` Fix `Date` and `Datetime` parameter expansion of SOQL function calls.
+* 🐞`[FIX]` Fix `Date` and `Datetime` parameter expansion of SOQL function calls.
+* 📈 Improve typings; Strictly define the type of template string parameters.
 * Update README.
 
 
