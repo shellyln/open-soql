@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.2
+## v0.5.0
 ### ⚠️ Breaking changes
 * 💥 Change `getIndexFieldConditions()` parameters.
 
@@ -11,7 +11,10 @@
 * 🐞`[FIX]` Fix `Date` and `Datetime` parameter expansion of SOQL function calls.
 * 📈 Improve typings; Strictly define the type of template string parameters.
 * Update README.
+* Update dependencies.
 
+
+---
 
 ## v0.4.1
 
