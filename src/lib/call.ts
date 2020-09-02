@@ -60,11 +60,28 @@ export function callScalarFunction(
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
                         if (Array.isArray(z)) {
-                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                            throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
                         }
-                        return new Date(z).getTime();
+                        switch (typeof z) {
+                        case 'object':
+                            return new Date(z.value).getTime();
+                        case 'boolean':
+                            return new Date(Number(z)).getTime();
+                        default:
+                            return new Date(z).getTime();
+                        }
                     default:
-                        return z;
+                        if (z === null) {
+                            return null;
+                        }
+                        if (typeof z === 'object') {
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
+                            }
+                            return z.value;
+                        } else {
+                            return z;
+                        }
                     }
                 }
             case 'fncall':
@@ -149,11 +166,28 @@ export function callImmediateScalarFunction(
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
                         if (Array.isArray(z)) {
-                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                            throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
                         }
-                        return new Date(z).getTime();
+                        switch (typeof z) {
+                        case 'object':
+                            return new Date(z.value).getTime();
+                        case 'boolean':
+                            return new Date(Number(z)).getTime();
+                        default:
+                            return new Date(z).getTime();
+                        }
                     default:
-                        return z;
+                        if (z === null) {
+                            return null;
+                        }
+                        if (typeof z === 'object') {
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
+                            }
+                            return z.value;
+                        } else {
+                            return z;
+                        }
                     }
                 }
             case 'fncall':
@@ -253,11 +287,28 @@ export function callAggregateFunction(
                     switch (fieldResultType) {
                     case 'date': case 'datetime':
                         if (Array.isArray(z)) {
-                            throw new Error(`Parameter '${a.name}' should be string or number.`);
+                            throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
                         }
-                        return new Date(z).getTime();
+                        switch (typeof z) {
+                        case 'object':
+                            return new Date(z.value).getTime();
+                        case 'boolean':
+                            return new Date(Number(z)).getTime();
+                        default:
+                            return new Date(z).getTime();
+                        }
                     default:
-                        return z;
+                        if (z === null) {
+                            return null;
+                        }
+                        if (typeof z === 'object') {
+                            if (Array.isArray(z)) {
+                                throw new Error(`Parameter '${a.name}' should be string, number, or boolean.`);
+                            }
+                            return z.value;
+                        } else {
+                            return z;
+                        }
                     }
                 }
             case 'fncall':

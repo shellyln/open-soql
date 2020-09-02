@@ -731,6 +731,7 @@ export function getIndexFieldConditions(
 
 ##### parameters:
 
+* `ctx`: Context object.
 * `conds`: Original conditions.
 * `indexFieldNames`: Index fields.
 
