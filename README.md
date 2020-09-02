@@ -743,6 +743,69 @@ export function getIndexFieldConditions(
 
 
 
+#### 🟢 `getSqlConditionString()`
+
+```ts
+export interface SqlDialect {
+    fieldName: (name: string) => string;
+    escapeString: (s: string) => string;
+}
+
+export function getSqlConditionString(
+    ctx: Pick<ResolverContext, 'params'>,
+    conds: PreparedCondition[], dialect: SqlDialect): string;
+```
+
+* Get the SQL condition string.
+
+##### parameters:
+
+* `ctx`: Context object.
+* `conds`: Conditions for converting to SQL conditions.
+* `dialect`: SQL dialect.
+
+##### returns:
+
+* SQL condition string (where clause excludes the `where` keyword).
+
+
+
+#### 🟢 `escapeSqlStringLiteral_Std()`
+
+```ts
+export function escapeSqlStringLiteral_Std(s: string): string;
+```
+
+* Escape the standard SQL string literal. (pass to `SqlDialect`)
+
+##### parameters:
+
+* `s`: string literal.
+
+##### returns:
+
+* Escaped string.
+
+
+
+#### 🟢 `escapeSqlStringLiteral_MySql()`
+
+```ts
+export function escapeSqlStringLiteral_MySql(s: string): string;
+```
+
+* Escape the MySQL string literal. (pass to `SqlDialect`)
+
+##### parameters:
+
+* `s`: string literal.
+
+##### returns:
+
+* Escaped string.
+
+
+
 ### 📦 Module `open-soql/modules/resolvers`
 
 #### 🟢 `staticJsonResolverBuilder()`
