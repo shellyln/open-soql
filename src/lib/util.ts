@@ -282,8 +282,8 @@ export function convertPattern(v: string): string {
             break;
         case '\\':
             if (prev === '\\') {
-                pattern += '\\';
-                prev = '';
+                pattern += '\\\\';
+                prev = void 0;
                 continue;
             }
             break;

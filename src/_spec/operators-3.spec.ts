@@ -69,6 +69,16 @@ const commands1 = build({
                     Contact/z5 ,       "" ,       "" , aaa;bbb;ccc ,       "" ,          ,         ,              ,                        ,
                 `)
             ),
+            Contact2: staticCsvResolverBuilder(
+                'Contact', () => Promise.resolve(`
+                    Id         , Foo           , Bar        , Baz         , Qux      , Quux     ,   Corge , Grault       , Garply                 , AccountId
+                    Contact/z1 , aaa\\z1       , bbb/z1     , _           , %        , false    ,    -1.0 , 2019-12-31   , 2019-12-31T23:59:59Z   , Account/z1
+                    Contact/z2 , aaa\\\\z2     , bbb//z2    , __          , %%       , true     ,     0.0 , 2020-01-01   , 2020-01-01T00:00:00Z   , Account/z1
+                    Contact/z3 , "aaa\\\\\\z3" , "bbb///z3" , ___         , %%%      ,          ,     1   , "2020-01-02" , "2020-01-01T00:00:01Z" , "Account/z2"
+                    Contact/z4 ,               ,            , a           , ddd/z4   ,          ,         ,              ,                        ,
+                    Contact/z5 ,            "" ,         "" , aa          , ddd/z5   ,          ,         ,              ,                        ,
+                `)
+            ),
             Account: staticCsvResolverBuilder(
                 'Account', () => Promise.resolve(`
                     Id         , Name     , Address  , Baz2
@@ -196,6 +206,173 @@ describe("operators-3", function() {
         }
     });
 
+    it("Operator 'like' (2)", async function() {
+        for (const cf of resolverConfigs) {
+            setDefaultStaticResolverConfig(cf);
+
+            const { soql, insert, update, remove, transaction } = commands1;
+
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact2
+                    where baz like '\\\\_'`;
+                const expects = [
+                    { Baz: '_' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact2
+                    where baz like '\\\\_\\\\_'`;
+                const expects = [
+                    { Baz: '__' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        baz
+                    from contact2
+                    where baz like '\\\\_\\\\_\\\\_'`;
+                const expects = [
+                    { Baz: '___' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        qux
+                    from contact2
+                    where qux like '\\\\%'`;
+                const expects = [
+                    { Qux: '%' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        qux
+                    from contact2
+                    where qux like '\\\\%\\\\%'`;
+                const expects = [
+                    { Qux: '%%' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        qux
+                    from contact2
+                    where qux like '\\\\%\\\\%\\\\%'`;
+                const expects = [
+                    { Qux: '%%%' },
+                ];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact2
+                    where foo like '%\\\\\\\\%'`;
+                const expects = [
+                    { Foo: 'aaa\\z1' },
+                    { Foo: 'aaa\\\\z2' },
+                    { Foo: 'aaa\\\\\\z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact2
+                    where foo like '%\\\\\\\\\\\\\\\\%'`;
+                const expects = [
+                    { Foo: 'aaa\\\\z2' },
+                    { Foo: 'aaa\\\\\\z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact2
+                    where foo like '%\\\\\\\\\\\\\\\\\\\\\\\\%'`;
+                const expects = [
+                    { Foo: 'aaa\\\\\\z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        foo
+                    from contact2
+                    where foo like '%\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\%'`;
+                const expects = [] as any[];
+                expect(result).toEqual(expects);
+            }
+
+            {
+                const result = await soql`
+                    select
+                        bar
+                    from contact2
+                    where bar like '%/%'`;
+                const expects = [
+                    { Bar: 'bbb/z1' },
+                    { Bar: 'bbb//z2' },
+                    { Bar: 'bbb///z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        bar
+                    from contact2
+                    where bar like '%//%'`;
+                const expects = [
+                    { Bar: 'bbb//z2' },
+                    { Bar: 'bbb///z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        bar
+                    from contact2
+                    where bar like '%///%'`;
+                const expects = [
+                    { Bar: 'bbb///z3' },
+                ];
+                expect(result).toEqual(expects);
+            }
+            {
+                const result = await soql`
+                    select
+                        bar
+                    from contact2
+                    where bar like '%////%'`;
+                const expects = [] as any[];
+                expect(result).toEqual(expects);
+            }
+        }
+    });
 
     it("Operator 'not like' (1)", async function() {
         for (const cf of resolverConfigs) {
