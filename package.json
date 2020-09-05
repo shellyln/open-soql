@@ -26,14 +26,14 @@
     "node": ">=10.0"
   },
   "dependencies": {
-    "fruitsconfits": "^0.4.0"
+    "fruitsconfits": "^0.4.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.11.5",
-    "@babel/core": "^7.11.5",
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
     "@babel/preset-env": "^7.11.5",
     "@types/jasmine": "^3.5.14",
-    "@types/node": "^14.6.3",
+    "@types/node": "^14.6.4",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
     "@typescript-eslint/parser": "^4.0.1",
     "babel-loader": "^8.1.0",
