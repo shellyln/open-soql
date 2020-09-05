@@ -2,7 +2,8 @@
 
 ## v0.5.1
 
-* Stricter lint checking.
+* 📈 Stricter lint checking.
+* 🐞[FIX] Fix `like` pattern escaping.
 
 
 ## v0.5.0
