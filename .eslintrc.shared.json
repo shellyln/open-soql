@@ -9,7 +9,7 @@
     ],
     "rules": {
         "no-useless-escape": 1,
-        "no-unexpected-multiline": 0,
+        "no-unexpected-multiline": 1,
         "no-fallthrough": 1,
         "no-control-regex": 1,
         "no-prototype-builtins": 1,

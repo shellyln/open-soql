@@ -344,6 +344,7 @@ function getOp2Value(
 
                     switch (fnInfo?.type) {
                     case 'immediate-scalar':
+                        // NOTE: It is UNSAFE!
                         v = callImmediateScalarFunction(ctx, op, fnInfo, 'any', null, null) as PreparedPrimitiveAtomValue;
                         break;
                     default:
