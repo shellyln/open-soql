@@ -4,6 +4,7 @@
 
 * 📈 Stricter lint checking.
 * 🐞[FIX] Fix `like` pattern escaping.
+* Update dependencies.
 
 
 ## v0.5.0
