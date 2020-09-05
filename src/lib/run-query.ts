@@ -440,13 +440,14 @@ function getResolversInfo(builder: QueryBuilderInfoInternal, resolverNames: Map<
                 // for subquery's primary resolver
 
                 (builder.relationships[resolverName] ?? {})
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                // eslint-disable-next-line no-unexpected-multiline, @typescript-eslint/no-non-null-assertion
                 [parentResolverName!] as any
             ) : (
                 // for detail->master relationship
 
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 (builder.relationships[parentResolverName!] ?? {})
+                // eslint-disable-next-line no-unexpected-multiline
                 [resolverName] as any
             )
         ) ?? {});

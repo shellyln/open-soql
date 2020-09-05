@@ -32,7 +32,7 @@ export function isUnsafeVarNames(target: any, varName: string) {
         }
     }
     if (target === null || target === void 0 || target === objConstructor) {
-        if (objConstructor.hasOwnProperty(varName)) {
+        if (Object.prototype.hasOwnProperty.call(objConstructor, varName)) {
             return true;
         }
     }
@@ -41,7 +41,7 @@ export function isUnsafeVarNames(target: any, varName: string) {
         let con: any = funConstructor;
         while (con) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            if (con.hasOwnProperty(varName)) {
+            if (Object.prototype.hasOwnProperty.call(con, varName)) {
                 return true;
             }
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -50,7 +50,7 @@ export function isUnsafeVarNames(target: any, varName: string) {
     }
     if (typeof target === 'function') {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        if (! target.hasOwnProperty(varName)) {
+        if (! Object.prototype.hasOwnProperty.call(target, varName)) {
             // function's prototypes' members
             return true;
         }
@@ -260,7 +260,7 @@ export function convertPattern(v: string): string {
     // NOTE: wildcards are '%' (= /.*/) and '_' (= /./)
     //       wildcard escape sequences are '\%' and '\_'
 
-    const pat0 = v.replace(/[.*+?^=!:${}()|[\]\/]/g, '\\$&');
+    const pat0 = v.replace(/[.*+?^=!:${}()|[\]/]/g, '\\$&');
     let pattern = '';
     let prev: string | undefined = void 0;
 
@@ -281,6 +281,11 @@ export function convertPattern(v: string): string {
             }
             break;
         case '\\':
+            if (prev === '\\') {
+                pattern += '\\';
+                prev = '';
+                continue;
+            }
             break;
         default:
             if (prev === '\\') {

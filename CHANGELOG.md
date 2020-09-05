@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.1
+
+* Stricter lint checking.
+
+
 ## v0.5.0
 ### ⚠️ Breaking changes
 * 💥 Change `getIndexFieldConditions()` parameters.

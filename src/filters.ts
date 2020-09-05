@@ -344,13 +344,14 @@ function getOp2Value(
 
                     switch (fnInfo?.type) {
                     case 'immediate-scalar':
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        v = callImmediateScalarFunction(ctx, op, fnInfo, 'any', null, null);
+                        // NOTE: It is UNSAFE!
+                        v = callImmediateScalarFunction(ctx, op, fnInfo, 'any', null, null) as PreparedPrimitiveAtomValue;
                         break;
                     default:
                         throw new Error(`Unexpected type appears in the operand(2).`);
                     }
                 }
+                break;
             default:
                 switch (op.type) {
                 case 'date': case 'datetime':

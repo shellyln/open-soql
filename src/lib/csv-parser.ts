@@ -26,12 +26,12 @@ const {seq, cls, notCls, classes, numbers, cat,
 
 
 const decimalIntegerValue =
-    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 10)])
-    (numbers.int);
+    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 10)])(
+        numbers.int);
 
 const floatingPointNumberValue =
-    trans(tokens => [Number.parseFloat((tokens as string[])[0].replace(/_/g, ''))])
-    (numbers.float);
+    trans(tokens => [Number.parseFloat((tokens as string[])[0].replace(/_/g, ''))])(
+        numbers.float);
 
 const numberValue =
     first(floatingPointNumberValue,

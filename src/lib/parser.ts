@@ -201,49 +201,49 @@ const wordBoundary =
 
 
 const trueValue =
-    trans(tokens => [true])
-    (seqI('true'), wordBoundary);
+    trans(tokens => [true])(
+        seqI('true'), wordBoundary);
 
 const falseValue =
-    trans(tokens => [false])
-    (seqI('false'), wordBoundary);
+    trans(tokens => [false])(
+        seqI('false'), wordBoundary);
 
 const nullValue =
-    trans(tokens => [null])
-    (seqI('null'), wordBoundary);
+    trans(tokens => [null])(
+        seqI('null'), wordBoundary);
 
 const positiveInfinityValue =
-    trans(tokens => [Number.POSITIVE_INFINITY])
-    (qty(0, 1)(seq('+')), seq('Infinity'), wordBoundary);
+    trans(tokens => [Number.POSITIVE_INFINITY])(
+        qty(0, 1)(seq('+')), seq('Infinity'), wordBoundary);
 
 const negativeInfinityValue =
-    trans(tokens => [Number.NEGATIVE_INFINITY])
-    (seq('-Infinity'), wordBoundary);
+    trans(tokens => [Number.NEGATIVE_INFINITY])(
+        seq('-Infinity'), wordBoundary);
 
 const nanValue =
-    trans(tokens => [Number.NaN])
-    (seq('NaN'), wordBoundary);
+    trans(tokens => [Number.NaN])(
+        seq('NaN'), wordBoundary);
 
 
 const binaryIntegerValue =
-    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 2)])
-    (numbers.bin(seq('0b')));
+    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 2)])(
+        numbers.bin(seq('0b')));
 
 const octalIntegerValue =
-    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 8)])
-    (numbers.oct(seq('0o'), seq('0')));
+    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 8)])(
+        numbers.oct(seq('0o'), seq('0')));
 
 const hexIntegerValue =
-    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 16)])
-    (numbers.hex(seq('0x'), seq('0X')));
+    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 16)])(
+        numbers.hex(seq('0x'), seq('0X')));
 
 const decimalIntegerValue =
-    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 10)])
-    (numbers.int);
+    trans(tokens => [Number.parseInt((tokens as string[])[0].replace(/_/g, ''), 10)])(
+        numbers.int);
 
 const floatingPointNumberValue =
-    trans(tokens => [Number.parseFloat((tokens as string[])[0].replace(/_/g, ''))])
-    (numbers.float);
+    trans(tokens => [Number.parseFloat((tokens as string[])[0].replace(/_/g, ''))])(
+        numbers.float);
 
 const numberValue =
     first(octalIntegerValue,
@@ -258,8 +258,8 @@ const numberValue =
 
 const stringEscapeSeq = first(
     trans(t => ['\''])(seq('\\\'')),
-    trans(t => ['\"'])(seq('\\"')),
-    trans(t => ['\`'])(seq('\\`')),
+    trans(t => ['"'])(seq('\\"')),
+    trans(t => ['`'])(seq('\\`')),
     trans(t => ['/'])(seq('\\/')),
     trans(t => ['\\'])(seq('\\\\')),
     trans(t => [''])(seq('\\\r\n')),

@@ -69,8 +69,9 @@
     "build:dist:dev": "run-s build:dist:dev:1",
     "build:dist:prod:1": "cross-env NODE_ENV=production webpack-cli --mode=production --config webpack.dist.config.js",
     "build:dist:dev:1": "webpack-cli --mode=development --config webpack.dist.config.js",
-    "lint": "eslint ./src/** -c ./.eslintrc.build.json --ext .js,.ts --ignore-pattern src/_spec/**",
-    "lint:spec": "eslint ./src/_spec/** -c ./.eslintrc.spec.json --ext .js,.ts",
+    "lint": "run-s lint:main lint:spec",
+    "lint:main": "eslint -c ./.eslintrc.build.json --ext .js,.ts --ignore-pattern src/_spec/ ./src/",
+    "lint:spec": "eslint -c ./.eslintrc.spec.json --ext .js,.ts ./src/_spec/",
     "test": "jasmine",
     "prepublishOnly": "run-s clean build test lint"
   },
