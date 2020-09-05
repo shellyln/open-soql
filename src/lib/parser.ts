@@ -258,8 +258,8 @@ const numberValue =
 
 const stringEscapeSeq = first(
     trans(t => ['\''])(seq('\\\'')),
-    trans(t => ['\"'])(seq('\\"')),
-    trans(t => ['\`'])(seq('\\`')),
+    trans(t => ['"'])(seq('\\"')),
+    trans(t => ['`'])(seq('\\`')),
     trans(t => ['/'])(seq('\\/')),
     trans(t => ['\\'])(seq('\\\\')),
     trans(t => [''])(seq('\\\r\n')),
