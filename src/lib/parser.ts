@@ -14,10 +14,10 @@ import { PreparedValue,
          PreparedCondition,
          PreparedOrderByField,
          ParsedQuery }                from '../types';
+import { dummyTargetObject,
+         isUnsafeVarNames}            from './protection';
 import { DatePattern,
-         DateTimePattern,
-         dummyTargetObject,
-         isUnsafeVarNames }           from './util';
+         DateTimePattern }            from './util';
 
 
 
