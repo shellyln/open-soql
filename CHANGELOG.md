@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.2
+
+* 📈 Add fall back processing to get `globalThis`, `Object`, and `Function`. (to check for unsafe keywords)
+
+
 ## v0.5.1
 
 * 📈 Stricter lint checking.

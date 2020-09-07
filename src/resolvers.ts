@@ -7,8 +7,8 @@ import { QueryResolverFn,
          PreparedCondition,
          ResolverContext }      from './types';
 import { dummyTargetObject,
-         isUnsafeVarNames,
-         getObjectValue,
+         isUnsafeVarNames}      from './lib/protection';
+import { getObjectValue,
          getTrueCaseFieldName, 
          isEqualComplexName }   from './lib/util';
 import { parse as parseCsv }    from './lib/csv-parser';
