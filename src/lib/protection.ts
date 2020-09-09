@@ -4,6 +4,10 @@
 
 
 
+// tslint:disable: no-shadowed-variable
+// tslint:disable: function-constructor
+
+
 export const dummyTargetObject = {};
 
 
