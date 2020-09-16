@@ -3,6 +3,7 @@
 ## v0.5.2
 
 * 📈 Add fall back processing to get `globalThis`, `Object`, and `Function`. (to check for unsafe keywords)
+* Update dependencies.
 
 
 ## v0.5.1
