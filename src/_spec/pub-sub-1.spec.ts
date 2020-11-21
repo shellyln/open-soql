@@ -13,7 +13,7 @@ import { resolverConfigs }          from './helpers/config';
 
 
 function yieldFn() {
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<void>((resolve, reject) => {
         setTimeout(() => {
             resolve();
         }, 0);

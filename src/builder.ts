@@ -318,7 +318,7 @@ export function build(builder: QueryBuilderInfo) {
         async function runRemove<T>(resolver: string, obj: T): Promise<void> {
             const run = async (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const data: any[] = Array.isArray(obj) ? obj : [obj];
+                const data: any[] = (Array.isArray(obj) ? obj : [obj]) as any[]; // NOTE: Not assignable on `typescript >= 4.1.2`
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 await executeRemoveDML(preparedBI, tr, trOptions, resolver, data);
@@ -340,7 +340,7 @@ export function build(builder: QueryBuilderInfo) {
         async function runNotifyGen<T>(resolver: string, on: SubscriberParams['on'], obj: T): Promise<void> {
             const run = (tr: any, trOptions: any | undefined, publish: PublishFn) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const data: any[] = Array.isArray(obj) ? obj : [obj];
+                const data: any[] = (Array.isArray(obj) ? obj : [obj]) as any[]; // NOTE: Not assignable on `typescript >= 4.1.2`
 
                 publish(resolver, on, data);
 
